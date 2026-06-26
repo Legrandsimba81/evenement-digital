@@ -1,11 +1,12 @@
+// actions/upload-actions.ts
 "use server";
 
 import { v2 as cloudinary } from "cloudinary";
 
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME!,
+  api_key: process.env.CLOUDINARY_API_KEY!,
+  api_secret: process.env.CLOUDINARY_API_SECRET!,
 });
 
 export async function uploadImage(formData: FormData) {
@@ -21,7 +22,6 @@ export async function uploadImage(formData: FormData) {
         {
           folder: "simba-event",
           resource_type: "image",
-          // Transformation pour recadrer en format 16:9, qualité auto, et on limite la taille max
           transformation: [
             { width: 1200, height: 630, crop: "fill", aspect_ratio: "16:9", quality: "auto" },
           ],
