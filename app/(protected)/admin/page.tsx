@@ -10,7 +10,6 @@ export default async function AdminPage() {
     redirect("/dashboard")
   }
 
-  // ✅ Pas d'annotation de type explicite, TypeScript infère
   const users = await prisma.user.findMany({
     orderBy: { createdAt: "desc" },
   })
@@ -29,7 +28,7 @@ export default async function AdminPage() {
   return (
     <div className="p-8">
       <h1 className="text-3xl font-bold mb-6">Dashboard Administrateur</h1>
-
+      
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         <div className="bg-blue-100 p-4 rounded shadow">
           <h2 className="text-xl font-semibold">Utilisateurs</h2>
@@ -49,7 +48,7 @@ export default async function AdminPage() {
         <div>
           <h2 className="text-2xl font-bold mb-4">Derniers utilisateurs</h2>
           <ul className="space-y-2">
-            {users.slice(0, 10).map((user) => (
+            {users.slice(0, 10).map((user: any) => (
               <li key={user.id} className="border-b pb-2">
                 <p><strong>{user.name || "Anonyme"}</strong> ({user.email})</p>
                 <p className="text-sm text-gray-600">Rôle : {user.role}</p>
@@ -60,7 +59,7 @@ export default async function AdminPage() {
         <div>
           <h2 className="text-2xl font-bold mb-4">Derniers événements</h2>
           <ul className="space-y-2">
-            {events.slice(0, 10).map((event) => (
+            {events.slice(0, 10).map((event: EventWithRelations) => (
               <li key={event.id} className="border-b pb-2">
                 <p><strong>{event.title}</strong> - {event.type}</p>
                 <p className="text-sm text-gray-600">
