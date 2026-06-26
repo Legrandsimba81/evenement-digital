@@ -40,7 +40,9 @@ type Event = {
 
 export default function EventDetailsClient({ event }: { event: Event }) {
     const [activeTab, setActiveTab] = useState("invitation");
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL 
+  || process.env.NEXTAUTH_URL 
+  || (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000");
     const invitationLink = `${baseUrl}/invitation/${event.slug}`;
 
     const copyLink = () => {

@@ -2,7 +2,7 @@ import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import Link from "next/link"
-import { EventWithRelations } from "@/types" // Assurez-vous que le chemin est correct
+import { EventWithRelations } from "@/types"
 
 export default async function AdminPage() {
   const session = await auth()
@@ -23,7 +23,7 @@ export default async function AdminPage() {
     },
   })) as EventWithRelations[]
 
-  // ✅ Correction : typage explicite des deux paramètres de reduce
+  // ✅ Correction : typage explicite du paramètre e
   const totalMessages = events.reduce((acc: number, e: EventWithRelations) => acc + e.messages.length, 0)
 
   return (
