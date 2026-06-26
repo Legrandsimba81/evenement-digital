@@ -98,3 +98,10 @@ html.dark .input {
 html.dark .btn-google {
   @apply border-gray-700 bg-gray-900 text-gray-100 hover:bg-gray-800;
 }
+
+/* Empêcher le zoom automatique sur iPhone */
+input,
+select,
+textarea {
+  font-size: 16px !important;
+}
