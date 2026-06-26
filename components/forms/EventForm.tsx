@@ -31,9 +31,9 @@ export default function EventForm({ initialData }: { initialData?: any }) {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [crop, setCrop] = useState<Crop>({
     unit: "%",
-    width: 80,
-    height: 45,
-    x: 10,
+    width: 60,
+    height: 80,
+    x: 20,
     y: 10,
   });
   const [imageSrc, setImageSrc] = useState<string | null>(null);
@@ -46,7 +46,6 @@ export default function EventForm({ initialData }: { initialData?: any }) {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-    setValue,
   } = useForm<EventFormData>({
     resolver: zodResolver(eventSchema),
     defaultValues: initialData
@@ -140,7 +139,6 @@ export default function EventForm({ initialData }: { initialData?: any }) {
       }
     }
 
-    // S'assurer que la date est valide
     let parsedDate;
     try {
       parsedDate = new Date(data.date);
@@ -306,10 +304,10 @@ export default function EventForm({ initialData }: { initialData?: any }) {
         />
       </div>
 
-      {/* Image avec recadrage */}
+      {/* Image avec recadrage en portrait (3:4) */}
       <div>
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-          Image de l'événement
+          Photo principale (portrait)
         </label>
         {!showCrop && !imagePreview ? (
           <div className="flex items-center justify-center w-full">
@@ -336,7 +334,7 @@ export default function EventForm({ initialData }: { initialData?: any }) {
             <ReactCrop
               crop={crop}
               onChange={(c) => setCrop(c)}
-              aspect={16/9}
+              aspect={3/4}
               className="max-h-96"
             >
               <img
@@ -394,6 +392,7 @@ export default function EventForm({ initialData }: { initialData?: any }) {
             </button>
           </div>
         )}
+        <p className="text-xs text-gray-500 mt-1">Image au format portrait (3:4) pour la section héros</p>
       </div>
 
       <button

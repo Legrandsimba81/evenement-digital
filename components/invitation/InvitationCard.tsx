@@ -1,28 +1,126 @@
-import { Calendar, MapPin, Clock } from "lucide-react";
+"use client";
+
+import { useState, useRef, useEffect } from "react";
+import { Calendar, MapPin, Clock, Download, Check, X } from "lucide-react";
+import QRCode from "react-qr-code"; // ✅ Import fonctionnel
+import html2canvas from "html2canvas";
+
+type Guest = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  title?: string | null;
+  status?: string | null;
+};
+
+type Event = {
+  id: string;
+  title: string;
+  type: string;
+  date: string;
+  time: string;
+  location: string;
+  imageUrl: string | null;
+  invitationText: string | null;
+  program: string | null;
+  slug: string;
+};
 
 export default function InvitationCard({
   event,
   guestName,
   guestTitle,
+  guestId,
 }: {
-  event: any;
+  event: Event;
   guestName: string;
   guestTitle?: string;
+  guestId: string;
 }) {
+  const [status, setStatus] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+
   const fullName = guestTitle ? `${guestTitle} ${guestName}` : guestName;
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
+  const invitationLink = `${baseUrl}/invitation/${event.slug}?firstName=${encodeURIComponent(
+    guestName.split(" ")[0]
+  )}&lastName=${encodeURIComponent(guestName.split(" ").slice(1).join(" ") || "")}`;
+
+  useEffect(() => {
+    const savedStatus = localStorage.getItem(`status_${guestId}`);
+    if (savedStatus) {
+      setStatus(savedStatus);
+    }
+  }, [guestId]);
+
+  const handleAttendance = async (newStatus: string) => {
+    setIsLoading(true);
+    try {
+      const res = await fetch("/api/guest/attendance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          eventId: event.id,
+          guestName: guestName,
+          status: newStatus,
+        }),
+      });
+      if (res.ok) {
+        setStatus(newStatus);
+        localStorage.setItem(`status_${guestId}`, newStatus);
+      } else {
+        alert("Erreur lors de la mise à jour de votre statut.");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Erreur réseau.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const downloadInvitation = async () => {
+    if (!cardRef.current) return;
+    setIsDownloading(true);
+    try {
+      const canvas = await html2canvas(cardRef.current, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+      });
+      const link = document.createElement("a");
+      link.download = `invitation-${event.slug}.png`;
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+    } catch (error) {
+      console.error("Erreur de téléchargement", error);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-800">
-      {event.imageUrl && (
-        <div className="h-72 overflow-hidden">
+      {/* Hero Section */}
+      <div className="relative w-full h-[60vh] md:h-[70vh] overflow-hidden">
+        {event.imageUrl ? (
           <img
             src={event.imageUrl}
-            alt="Événement"
-            className="w-full h-full object-cover"
+            alt="Photo de l'événement"
+            className="w-full h-full object-cover object-center"
           />
-        </div>
-      )}
-      <div className="p-6 md:p-8">
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center">
+            <span className="text-white text-4xl font-bold">Simba Event</span>
+          </div>
+        )}
+        <div className="absolute inset-0 bg-black/10" />
+      </div>
+
+      {/* Contenu */}
+      <div ref={cardRef} className="p-6 md:p-8">
         <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
           Bonjour <span className="text-primary-500">{fullName}</span>
         </h1>
@@ -59,10 +157,60 @@ export default function InvitationCard({
           </div>
         )}
 
-        {event.description && (
-          <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-            <p className="text-gray-600 dark:text-gray-400">{event.description}</p>
+        {/* QR Code */}
+        <div className="mt-6 flex justify-center">
+          <div className="bg-white p-4 rounded-xl shadow-md flex flex-col items-center">
+            <QRCode value={invitationLink} size={150} />
+            <p className="text-center text-xs text-gray-500 mt-2">
+              Scannez pour accéder à l'invitation
+            </p>
           </div>
+        </div>
+
+        {/* Boutons */}
+        <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-between items-center">
+          <button
+            onClick={downloadInvitation}
+            disabled={isDownloading}
+            className="flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-6 py-3 rounded-xl transition disabled:opacity-50"
+          >
+            <Download size={20} />
+            {isDownloading ? "Téléchargement..." : "Télécharger l'invitation"}
+          </button>
+
+          <div className="flex gap-2">
+            <button
+              onClick={() => handleAttendance("attending")}
+              disabled={isLoading}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition ${
+                status === "attending"
+                  ? "bg-green-500 text-white border-green-500"
+                  : "border-gray-300 hover:bg-green-50 dark:border-gray-600 dark:hover:bg-green-900/20"
+              }`}
+            >
+              <Check size={18} />
+              {status === "attending" ? "Confirmé ✅" : "Je serai présent(e)"}
+            </button>
+            <button
+              onClick={() => handleAttendance("not_attending")}
+              disabled={isLoading}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition ${
+                status === "not_attending"
+                  ? "bg-red-500 text-white border-red-500"
+                  : "border-gray-300 hover:bg-red-50 dark:border-gray-600 dark:hover:bg-red-900/20"
+              }`}
+            >
+              <X size={18} />
+              {status === "not_attending" ? "Indisponible ❌" : "Indisponible"}
+            </button>
+          </div>
+        </div>
+        {status && (
+          <p className="text-center text-sm text-gray-500 mt-2">
+            {status === "attending"
+              ? "Merci ! Nous avons bien enregistré votre présence."
+              : "Nous avons bien noté votre indisponibilité."}
+          </p>
         )}
       </div>
     </div>

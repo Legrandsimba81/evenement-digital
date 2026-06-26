@@ -45,6 +45,7 @@ model Guest {
   title         String?   // Mr, Mme, Dr, Papa, Maman, Excellence
   firstName     String
   lastName      String
+  status        String?   // "attending" ou "not_attending" ou null (indéfini)
   eventId       String
   event         Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
 

@@ -48,6 +48,19 @@ export async function updateGuest(guestId: string, data: { title?: string; first
   revalidatePath(`/dashboard/${guest.event.slug}`);
 }
 
+export async function updateGuestStatus(guestId: string, status: string) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("Non authentifié");
+  const guest = await prisma.guest.findUnique({ where: { id: guestId }, include: { event: true } });
+  if (!guest || guest.event.userId !== session.user.id) throw new Error("Non autorisé");
+
+  await prisma.guest.update({
+    where: { id: guestId },
+    data: { status },
+  });
+  revalidatePath(`/dashboard/${guest.event.slug}`);
+}
+
 export async function getGuests(eventId: string, search?: string) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Non authentifié");
