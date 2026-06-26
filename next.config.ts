@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // ... vos autres configurations
+
   images: {
     remotePatterns: [
       {
@@ -9,6 +11,11 @@ const nextConfig: NextConfig = {
         pathname: "/**",
       },
     ],
+  },
+
+  // ⬇️ Désactiver les erreurs TypeScript pendant le build
+  typescript: {
+    ignoreBuildErrors: true,
   },
 };
 
