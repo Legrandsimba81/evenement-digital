@@ -2,6 +2,7 @@ import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import Link from "next/link"
+import { EventWithRelations } from "@/types"  // Import du type
 
 export default async function AdminPage() {
   const session = await auth()
@@ -13,17 +14,18 @@ export default async function AdminPage() {
     orderBy: { createdAt: "desc" },
   })
 
-  const events = await prisma.event.findMany({
+  // On caste le résultat avec le type EventWithRelations
+  const events = (await prisma.event.findMany({
     orderBy: { createdAt: "desc" },
     include: {
       user: true,
       guests: true,
       messages: true,
     },
-  })
+  })) as EventWithRelations[]
 
-  // 🔧 Correction : typage explicite de acc
-  const totalMessages = events.reduce((acc: number, e) => acc + e.messages.length, 0)
+  // Maintenant TypeScript connaît la structure
+  const totalMessages = events.reduce((acc: number, e: EventWithRelations) => acc + e.messages.length, 0)
 
   return (
     <div className="p-8">
