@@ -6,9 +6,9 @@ import { z } from "zod";
 import { uploadImage } from "@/actions/upload-actions";
 import { createEvent, updateEvent } from "@/actions/event-actions";
 import { useRouter } from "next/navigation";
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { ImageIcon, X } from "lucide-react";
-import ReactCrop, { type Crop } from "react-image-crop";
+import ReactCrop, { type Crop, type PixelCrop } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
 
 const eventSchema = z.object({
@@ -37,6 +37,8 @@ export default function EventForm({ initialData }: { initialData?: any }) {
     y: 10,
   });
   const [imageSrc, setImageSrc] = useState<string | null>(null);
+  const [showCrop, setShowCrop] = useState(false);
+  const [isCropping, setIsCropping] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
 
@@ -44,6 +46,7 @@ export default function EventForm({ initialData }: { initialData?: any }) {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
+    setValue,
   } = useForm<EventFormData>({
     resolver: zodResolver(eventSchema),
     defaultValues: initialData
@@ -62,41 +65,97 @@ export default function EventForm({ initialData }: { initialData?: any }) {
       const reader = new FileReader();
       reader.onload = () => {
         setImageSrc(reader.result as string);
-        setImagePreview(reader.result as string);
-        setImageFile(file);
+        setShowCrop(true);
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const onCropComplete = (crop: Crop) => {
-    if (!imageRef.current) return;
-    // La recadrage se fait côté serveur via Cloudinary, mais on conserve la prévisualisation
-    // On peut appliquer un crop manuellement en utilisant un canvas si besoin.
-    // Pour l'instant, on garde juste la sélection.
-  };
+  const generateCroppedImage = useCallback(async (image: HTMLImageElement, crop: PixelCrop) => {
+    const canvas = document.createElement("canvas");
+    const scaleX = image.naturalWidth / image.width;
+    const scaleY = image.naturalHeight / image.height;
+    canvas.width = crop.width * scaleX;
+    canvas.height = crop.height * scaleY;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(
+      image,
+      crop.x * scaleX,
+      crop.y * scaleY,
+      crop.width * scaleX,
+      crop.height * scaleY,
+      0,
+      0,
+      crop.width * scaleX,
+      crop.height * scaleY
+    );
+
+    return new Promise<Blob | null>((resolve) => {
+      canvas.toBlob((blob) => resolve(blob), "image/jpeg", 0.95);
+    });
+  }, []);
+
+  const handleCropComplete = useCallback(
+    async (crop: PixelCrop) => {
+      if (!imageRef.current) return;
+      setIsCropping(true);
+      const blob = await generateCroppedImage(imageRef.current, crop);
+      if (blob) {
+        const file = new File([blob], "cropped-image.jpg", { type: "image/jpeg" });
+        setImageFile(file);
+        const reader = new FileReader();
+        reader.onload = () => setImagePreview(reader.result as string);
+        reader.readAsDataURL(file);
+        setShowCrop(false);
+        setImageSrc(null);
+      }
+      setIsCropping(false);
+    },
+    [generateCroppedImage]
+  );
 
   const removeImage = () => {
     setImagePreview(null);
     setImageFile(null);
     setImageSrc(null);
+    setShowCrop(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const onSubmit = async (data: EventFormData) => {
     let imageUrl = initialData?.imageUrl || "";
     if (imageFile) {
-      // Ici on pourrait recadrer l'image avec un canvas avant d'uploader
-      // Mais pour simplifier, on upload directement et Cloudinary applique le recadrage
       const formData = new FormData();
       formData.append("file", imageFile);
-      const uploaded = await uploadImage(formData);
-      imageUrl = uploaded.url;
+      try {
+        const uploaded = await uploadImage(formData);
+        imageUrl = uploaded.url;
+      } catch (error) {
+        console.error("Erreur upload:", error);
+        alert("Erreur lors du téléchargement de l'image. Veuillez réessayer.");
+        return;
+      }
+    }
+
+    // S'assurer que la date est valide
+    let parsedDate;
+    try {
+      parsedDate = new Date(data.date);
+      if (isNaN(parsedDate.getTime())) {
+        alert("La date est invalide.");
+        return;
+      }
+    } catch {
+      alert("Format de date invalide.");
+      return;
     }
 
     const payload = {
       ...data,
-      date: new Date(data.date),
+      date: parsedDate,
       imageUrl,
     };
 
@@ -252,7 +311,7 @@ export default function EventForm({ initialData }: { initialData?: any }) {
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           Image de l'événement
         </label>
-        {!imageSrc ? (
+        {!showCrop && !imagePreview ? (
           <div className="flex items-center justify-center w-full">
             <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-gray-400 rounded-xl cursor-pointer hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800 transition">
               <div className="flex flex-col items-center justify-center pt-5 pb-6">
@@ -272,12 +331,11 @@ export default function EventForm({ initialData }: { initialData?: any }) {
               />
             </label>
           </div>
-        ) : (
+        ) : showCrop && imageSrc ? (
           <div className="relative">
             <ReactCrop
               crop={crop}
               onChange={(c) => setCrop(c)}
-              onComplete={onCropComplete}
               aspect={16/9}
               className="max-h-96"
             >
@@ -288,31 +346,39 @@ export default function EventForm({ initialData }: { initialData?: any }) {
                 className="w-full h-auto rounded-xl"
               />
             </ReactCrop>
-            <div className="flex gap-2 mt-2">
+            <div className="flex gap-2 mt-2 flex-wrap">
               <button
                 type="button"
-                onClick={() => {
-                  // Appliquer le recadrage en recréant un fichier à partir du canvas
-                  // Pour simplifier, on passe directement l'image originale à Cloudinary
-                  // qui appliquera le recadrage automatiquement.
-                  // Mais on peut aussi recadrer ici avec un canvas.
-                  alert("Le recadrage sera appliqué automatiquement par Cloudinary.");
+                onClick={async () => {
+                  if (imageRef.current) {
+                    const cropData = crop as PixelCrop;
+                    const blob = await generateCroppedImage(imageRef.current, cropData);
+                    if (blob) {
+                      const file = new File([blob], "cropped-image.jpg", { type: "image/jpeg" });
+                      setImageFile(file);
+                      const reader = new FileReader();
+                      reader.onload = () => setImagePreview(reader.result as string);
+                      reader.readAsDataURL(file);
+                      setShowCrop(false);
+                      setImageSrc(null);
+                    }
+                  }
                 }}
-                className="bg-primary-500 text-white px-4 py-2 rounded-xl hover:bg-primary-600 transition"
+                disabled={isCropping}
+                className="bg-primary-500 text-white px-4 py-2 rounded-xl hover:bg-primary-600 transition disabled:opacity-50"
               >
-                Appliquer le recadrage
+                {isCropping ? "Recadrage..." : "Valider le recadrage"}
               </button>
               <button
                 type="button"
                 onClick={removeImage}
                 className="bg-red-500 text-white px-4 py-2 rounded-xl hover:bg-red-600 transition"
               >
-                Supprimer
+                Annuler
               </button>
             </div>
           </div>
-        )}
-        {imagePreview && !imageSrc && (
+        ) : imagePreview && (
           <div className="relative mt-4 inline-block">
             <img
               src={imagePreview}
@@ -332,7 +398,7 @@ export default function EventForm({ initialData }: { initialData?: any }) {
 
       <button
         type="submit"
-        disabled={isSubmitting}
+        disabled={isSubmitting || isCropping}
         className="w-full bg-primary-500 text-white px-6 py-3 rounded-xl font-medium hover:bg-primary-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isSubmitting
