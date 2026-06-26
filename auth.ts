@@ -6,7 +6,6 @@ import { PrismaAdapter } from "@auth/prisma-adapter"
 import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
 
-// Log pour vérifier que la base est accessible
 console.log("🔍 Prisma client initialisé, test de connexion...")
 prisma.$connect()
   .then(() => console.log("✅ Connexion à la base de données réussie"))
