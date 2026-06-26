@@ -5,6 +5,7 @@ import MessageForm from "@/components/forms/MessageForm";
 import GuestVerificationForm from "@/components/invitation/GuestVerification";
 import { Heart } from "lucide-react";
 
+export const dynamic = 'force-dynamic'
 export default async function InvitationPage({
     params,
     searchParams,

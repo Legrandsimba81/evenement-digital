@@ -4,6 +4,7 @@ import { redirect } from "next/navigation"
 import Link from "next/link"
 import { EventWithRelations } from "@/types"
 
+export const dynamic = 'force-dynamic'
 export default async function AdminPage() {
   const session = await auth()
   if (!session?.user || session.user.role !== "ADMIN") {
