@@ -12,6 +12,7 @@ export default async function AdminPage() {
   const users = await prisma.user.findMany({
     orderBy: { createdAt: "desc" },
   })
+
   const events = await prisma.event.findMany({
     orderBy: { createdAt: "desc" },
     include: {
@@ -20,6 +21,9 @@ export default async function AdminPage() {
       messages: true,
     },
   })
+
+  // 🔧 Correction : typage explicite de acc
+  const totalMessages = events.reduce((acc: number, e) => acc + e.messages.length, 0)
 
   return (
     <div className="p-8">
@@ -36,7 +40,7 @@ export default async function AdminPage() {
         </div>
         <div className="bg-purple-100 p-4 rounded shadow">
           <h2 className="text-xl font-semibold">Messages</h2>
-          <p className="text-3xl">{events.reduce((acc, e) => acc + e.messages.length, 0)}</p>
+          <p className="text-3xl">{totalMessages}</p>
         </div>
       </div>
 
