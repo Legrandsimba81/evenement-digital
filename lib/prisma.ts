@@ -1,7 +1,7 @@
 // lib/prisma.ts
-import { PrismaClient } from '@prisma/client'
+// On utilise require pour éviter l'erreur de typage lors du build
+const { PrismaClient } = require('@prisma/client')
 
-// @ts-ignore - Ignorer l'erreur de typage pour le build
 const globalForPrisma = global as unknown as { prisma: any }
 
 export const prisma = globalForPrisma.prisma || new PrismaClient()
