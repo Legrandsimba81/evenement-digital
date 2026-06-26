@@ -6,6 +6,11 @@ import { PrismaAdapter } from "@auth/prisma-adapter"
 import { prisma } from "@/lib/prisma"   // ✅ Assurez-vous que prisma est bien exporté
 import bcrypt from "bcryptjs"
 
+// auth.ts (en haut)
+console.log('🔍 GOOGLE_CLIENT_ID:', process.env.GOOGLE_CLIENT_ID?.slice(0, 10) + '...')
+console.log('🔍 NEXTAUTH_SECRET:', process.env.NEXTAUTH_SECRET?.slice(0, 10) + '...')
+console.log('🔍 DATABASE_URL:', process.env.DATABASE_URL?.slice(0, 20) + '...')
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
   providers: [
