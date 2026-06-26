@@ -1,9 +1,21 @@
 // lib/prisma.ts
-// On utilise require pour éviter l'erreur de typage lors du build
-const { PrismaClient } = require('@prisma/client')
+import { PrismaClient } from '@prisma/client'
 
-const globalForPrisma = global as unknown as { prisma: any }
+let prismaInstance: PrismaClient | null = null
 
-export const prisma = globalForPrisma.prisma || new PrismaClient()
+function getPrisma(): PrismaClient {
+  if (!prismaInstance) {
+    prismaInstance = new PrismaClient({
+      log: process.env.NODE_ENV === 'development' ? ['query'] : [],
+    })
+  }
+  return prismaInstance
+}
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
+// Export d'un proxy qui délègue toutes les propriétés à getPrisma()
+// Ainsi l'instance n'est créée que lors du premier accès à une propriété.
+export const prisma = new Proxy({} as PrismaClient, {
+  get(_, prop) {
+    return getPrisma()[prop as keyof PrismaClient]
+  }
+})

@@ -1,9 +1,13 @@
+// auth.ts
 import NextAuth from "next-auth"
 import Google from "next-auth/providers/google"
 import Credentials from "next-auth/providers/credentials"
 import { PrismaAdapter } from "@auth/prisma-adapter"
-import { prisma } from "@/lib/prisma"
+import { getPrisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
+
+// Appel différé de getPrisma() pour éviter l'instanciation à l'import
+const prisma = getPrisma()
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
@@ -28,9 +32,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if (!isValid) return null
         return { id: user.id, name: user.name, email: user.email, role: user.role }
       }
-      
     })
-    
   ],
   callbacks: {
     async jwt({ token, user }) {
@@ -49,7 +51,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }
   },
   pages: {
-    signIn: "/login",  // la page de connexion personnalisée
+    signIn: "/login",
   },
   session: {
     strategy: "jwt",
