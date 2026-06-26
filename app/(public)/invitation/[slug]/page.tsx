@@ -71,10 +71,11 @@ export default async function InvitationPage({
     m.content.toLowerCase().includes("love")
   );
 
-  // ✅ Conversion de la date en string avant de la passer au composant client
   const eventForCard = {
     ...event,
     date: event.date.toISOString(),
+    imageUrl: event.imageUrl,
+    invitationImageUrl: event.invitationImageUrl,
   };
 
   return (

@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"  // au lieu de "sqlite"
+  provider = "postgresql"  // au lieu de "sqlite" en production "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -25,11 +25,12 @@ model Event {
   type           String
   description    String?
   invitationText String?
-  program        String?   // programme de la fête (texte formaté)
+  program        String?
   location       String
   date           DateTime
   time           String
-  imageUrl       String?
+  imageUrl       String?   // Image héros (portrait)
+  invitationImageUrl String? // Image de l'invitation (paysage)
   userId         String
   user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   guests         Guest[]

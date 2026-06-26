@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Calendar, MapPin, Clock, Download, Check, X } from "lucide-react";
-import QRCode from "react-qr-code"; // ✅ Import fonctionnel
+import QRCode from "react-qr-code";
 import html2canvas from "html2canvas";
 
 type Guest = {
@@ -21,6 +21,7 @@ type Event = {
   time: string;
   location: string;
   imageUrl: string | null;
+  invitationImageUrl: string | null;
   invitationText: string | null;
   program: string | null;
   slug: string;
@@ -103,7 +104,7 @@ export default function InvitationCard({
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-800">
-      {/* Hero Section */}
+      {/* Hero Section avec photo en portrait (sans texte par-dessus) */}
       <div className="relative w-full h-[60vh] md:h-[70vh] overflow-hidden">
         {event.imageUrl ? (
           <img
@@ -116,10 +117,9 @@ export default function InvitationCard({
             <span className="text-white text-4xl font-bold">Simba Event</span>
           </div>
         )}
-        <div className="absolute inset-0 bg-black/10" />
       </div>
 
-      {/* Contenu */}
+      {/* Contenu de l'invitation (pour téléchargement) */}
       <div ref={cardRef} className="p-6 md:p-8">
         <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
           Bonjour <span className="text-primary-500">{fullName}</span>
@@ -130,6 +130,17 @@ export default function InvitationCard({
             <p className="text-gray-800 dark:text-gray-200 italic text-lg">
               {event.invitationText}
             </p>
+          </div>
+        )}
+
+        {/* Image de l'invitation (paysage) */}
+        {event.invitationImageUrl && (
+          <div className="mt-4 rounded-xl overflow-hidden">
+            <img
+              src={event.invitationImageUrl}
+              alt="Invitation"
+              className="w-full h-auto"
+            />
           </div>
         )}
 
@@ -167,7 +178,7 @@ export default function InvitationCard({
           </div>
         </div>
 
-        {/* Boutons */}
+        {/* Boutons d'action */}
         <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-between items-center">
           <button
             onClick={downloadInvitation}
