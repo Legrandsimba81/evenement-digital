@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Calendar, MapPin, Clock, Download, Check, X, Heart, Gift, Trophy, Music, User, Users, QrCode } from "lucide-react";
 import QRCode from "react-qr-code";
 import html2canvas from "html2canvas";
@@ -21,6 +21,7 @@ type Event = {
   time: string;
   location: string;
   imageUrl: string | null;
+  invitationImageUrl: string | null;
   invitationText: string | null;
   program: string | null;
   slug: string;
@@ -62,7 +63,6 @@ export default function InvitationCard({
     guestName.split(" ")[0]
   )}&lastName=${encodeURIComponent(guestName.split(" ").slice(1).join(" ") || "")}`;
 
-  // Charger le statut depuis localStorage
   useEffect(() => {
     const savedStatus = localStorage.getItem(`status_${guestId}`);
     if (savedStatus) {
@@ -70,7 +70,6 @@ export default function InvitationCard({
     }
   }, [guestId]);
 
-  // Vérifier que les images sont chargées pour le téléchargement
   useEffect(() => {
     const images = document.querySelectorAll("img");
     let loaded = 0;
@@ -90,7 +89,7 @@ export default function InvitationCard({
     return () => {
       images.forEach((img) => img.removeEventListener("load", onLoad));
     };
-  }, [event.imageUrl]);
+  }, [event.imageUrl, event.invitationImageUrl]);
 
   const type = (event.type as EventType) || "AUTRE";
   const config = typeConfigs[type] || typeConfigs["AUTRE"];
@@ -124,7 +123,6 @@ export default function InvitationCard({
 
   const downloadInvitation = async () => {
     if (!cardRef.current) return;
-    // Attendre que les images soient chargées
     await new Promise((resolve) => setTimeout(resolve, 500));
     setIsDownloading(true);
     try {
@@ -171,8 +169,8 @@ export default function InvitationCard({
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-800">
-      {/* Hero Section - portrait avec object-cover pour remplir le conteneur sans déformation */}
-      <div className="relative w-full aspect-[3/4] md:aspect-[4/5] overflow-hidden bg-gray-100 dark:bg-gray-800">
+      {/* ✅ Image héros en paysage (16:9) */}
+      <div className="relative w-full aspect-video overflow-hidden bg-gray-100 dark:bg-gray-800">
         {event.imageUrl ? (
           <img
             src={event.imageUrl}
@@ -189,9 +187,8 @@ export default function InvitationCard({
         )}
       </div>
 
-      {/* Contenu de l'invitation (pour téléchargement) */}
+      {/* Contenu de l'invitation */}
       <div ref={cardRef} className="p-6 md:p-8">
-        {/* Type d'événement */}
         <div className="flex items-center gap-2 mb-2">
           <TypeIcon size={20} className={config.accent} />
           <span className={`text-sm font-semibold ${config.accent}`}>{config.label}</span>
@@ -201,7 +198,6 @@ export default function InvitationCard({
           Bonjour <span className="text-primary-500">{fullName}</span>
         </h1>
 
-        {/* Numéro d'invitation */}
         {event.invitationNumber && (
           <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-xl flex flex-wrap items-center gap-3">
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -223,6 +219,17 @@ export default function InvitationCard({
             <p className="text-gray-800 dark:text-gray-200 italic text-lg">
               {event.invitationText}
             </p>
+          </div>
+        )}
+
+        {/* ✅ Image d'invitation en paysage */}
+        {event.invitationImageUrl && (
+          <div className="mt-4 rounded-xl overflow-hidden">
+            <img
+              src={event.invitationImageUrl}
+              alt="Invitation"
+              className="w-full h-auto aspect-video object-cover"
+            />
           </div>
         )}
 

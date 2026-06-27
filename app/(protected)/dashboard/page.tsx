@@ -17,7 +17,6 @@ export default async function DashboardPage() {
   if (!userId) redirect("/login");
 
   const eventsCount = await prisma.event.count({ where: { userId } });
-
   if (eventsCount === 0) {
     redirect("/dashboard/event/new");
   }
@@ -32,35 +31,24 @@ export default async function DashboardPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-6 md:p-8">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Mes événements
-          </h1>
-          <Link
-            href="/dashboard/event/new"
-            className="mt-4 md:mt-0 inline-flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-6 py-3 rounded-xl transition"
-          >
-            <Plus size={20} />
-            Nouvel événement
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Mes événements</h1>
+          <Link href="/dashboard/event/new" className="mt-4 md:mt-0 inline-flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-6 py-3 rounded-xl transition">
+            <Plus size={20} /> Nouvel événement
           </Link>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {events.map((event) => {
             const Icon = typeIcons[event.type] || Calendar;
-            // Vérifier que le slug existe
-            if (!event.slug) {
-              console.warn("⚠️ Événement sans slug :", event.id);
-              return null;
-            }
             return (
               <Link
                 key={event.id}
                 href={`/dashboard/${event.slug}`}
                 className="group bg-white dark:bg-gray-900 rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-gray-200 dark:border-gray-800"
               >
-                {/* Image en portrait (aspect 3:4) */}
+                {/* ✅ Miniature en paysage (16:9) */}
                 {event.imageUrl && (
-                  <div className="relative w-full aspect-[3/4] overflow-hidden bg-gray-100 dark:bg-gray-800">
+                  <div className="relative w-full aspect-video overflow-hidden bg-gray-100 dark:bg-gray-800">
                     <img
                       src={event.imageUrl}
                       alt={event.title}
@@ -77,22 +65,10 @@ export default async function DashboardPage() {
                     {event.title}
                   </h3>
                   <div className="mt-3 space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                    <div className="flex items-center gap-2">
-                      <Calendar size={16} />
-                      <span>{new Date(event.date).toLocaleDateString('fr-FR')}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Clock size={16} />
-                      <span>{event.time}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <MapPin size={16} />
-                      <span>{event.location}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Users size={16} />
-                      <span>{event.guests.length} invités</span>
-                    </div>
+                    <div className="flex items-center gap-2"><Calendar size={16} /><span>{new Date(event.date).toLocaleDateString('fr-FR')}</span></div>
+                    <div className="flex items-center gap-2"><Clock size={16} /><span>{event.time}</span></div>
+                    <div className="flex items-center gap-2"><MapPin size={16} /><span>{event.location}</span></div>
+                    <div className="flex items-center gap-2"><Users size={16} /><span>{event.guests.length} invités</span></div>
                   </div>
                   <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 text-primary-500 font-medium text-sm">
                     Gérer l'événement →
