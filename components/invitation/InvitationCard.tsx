@@ -123,28 +123,43 @@ export default function InvitationCard({
 
   const downloadInvitation = async () => {
     if (!cardRef.current) return;
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, 600));
     setIsDownloading(true);
     try {
       const canvas = await html2canvas(cardRef.current, {
         scale: 2,
         useCORS: true,
-        allowTaint: true,
+        allowTaint: false,
         backgroundColor: "#ffffff",
         logging: false,
         onclone: (clonedDoc) => {
-          // Remplacer toutes les couleurs 'lab' par du RGB pour éviter l'erreur
+          // Parcourir tous les éléments et remplacer les couleurs contenant 'lab' par du noir/blanc
           const allElements = clonedDoc.querySelectorAll("*");
           allElements.forEach((el) => {
+            // Pour l'élément lui-même
             const style = (el as HTMLElement).style;
-            // Vérifier et remplacer les couleurs qui contiennent 'lab'
-            if (style.color && style.color.includes("lab")) {
-              style.color = "#000000";
+            let changed = false;
+            // Vérifier les propriétés courantes
+            const props = ["color", "backgroundColor", "borderColor", "background"];
+            props.forEach((prop) => {
+              const value = style[prop as any];
+              if (value && typeof value === "string" && value.includes("lab")) {
+                if (prop === "color") style.color = "#000000";
+                else style.backgroundColor = "#ffffff";
+                changed = true;
+              }
+            });
+            // S'il y a un style inline, on le nettoie
+            if (el.hasAttribute("style")) {
+              const inlineStyle = el.getAttribute("style");
+              if (inlineStyle && inlineStyle.includes("lab")) {
+                // Remplacer les occurrences lab
+                const newStyle = inlineStyle.replace(/lab\([^)]*\)/g, "#ffffff");
+                el.setAttribute("style", newStyle);
+              }
             }
-            if (style.backgroundColor && style.backgroundColor.includes("lab")) {
-              style.backgroundColor = "#ffffff";
-            }
-            // Parcourir toutes les propriétés CSS
+            // Pour les classes, on ne peut pas facilement les modifier, mais on peut forcer un style inline
+            // On ajoute un style inline pour les éléments avec des couleurs problématiques
             const computed = window.getComputedStyle(el);
             if (computed.color && computed.color.includes("lab")) {
               (el as HTMLElement).style.color = "#000000";
@@ -210,7 +225,7 @@ export default function InvitationCard({
       </div>
 
       {/* Contenu */}
-      <div ref={cardRef} className="p-6 md:p-8">
+      <div ref={cardRef} className="p-6 md:p-8 bg-white dark:bg-gray-900">
         <div className="flex items-center gap-2 mb-2">
           <TypeIcon size={20} className={config.accent} />
           <span className={`text-sm font-semibold ${config.accent}`}>{config.label}</span>
