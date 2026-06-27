@@ -78,13 +78,13 @@ export default function Footer() {
               </li>
               <li className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                 <FaPhone size={16} />
-                <a href="tel:+2250102030405" className="hover:text-primary-500 transition">
-                  +225 01 02 03 04 05
+                <a href="tel:+243827733286" className="hover:text-primary-500 transition">
+                  +243 827733286
                 </a>
               </li>
               <li className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                 <FaMapMarkerAlt size={16} />
-                <span>Abidjan, Côte d'Ivoire</span>
+                <span>RDC, Nord-kivu</span>
               </li>
             </ul>
           </div>
@@ -115,8 +115,7 @@ export default function Footer() {
         {/* Copyright */}
         <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-800 text-center text-sm text-gray-500 dark:text-gray-400">
           <p>
-            &copy; {currentYear} Simba Event. Tous droits réservés. Fait avec{" "}
-            <FaHeart size={14} className="inline text-red-500" /> en Côte d'Ivoire.
+            &copy; {currentYear} Simba Event. Tous droits réservés. pour vos événements numerique en RDcongo
           </p>
         </div>
       </div>

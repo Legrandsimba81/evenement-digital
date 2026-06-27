@@ -240,7 +240,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Event Types */}
       <section className="bg-gray-50 py-20 dark:bg-gray-900/50">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center">
@@ -252,10 +251,12 @@ export default function HomePage() {
           <div className="mt-12 grid grid-cols-2 gap-4 md:grid-cols-4">
             {eventTypes.map((type, index) => {
               const Icon = type.icon;
+              const href = session ? `/dashboard/event/new/${type.label.toUpperCase()}` : "/register";
               return (
-                <div
+                <Link
                   key={index}
-                  className="flex flex-col items-center rounded-2xl border border-gray-200 bg-white p-6 transition hover:shadow-lg dark:border-gray-800 dark:bg-gray-900"
+                  href={href}
+                  className="flex flex-col items-center rounded-2xl border border-gray-200 bg-white p-6 transition hover:shadow-lg hover:border-primary-500 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-primary-400"
                 >
                   <div className={`rounded-full p-3 ${type.color}`}>
                     <Icon className="h-8 w-8" />
@@ -263,7 +264,7 @@ export default function HomePage() {
                   <span className="mt-3 font-medium text-gray-900 dark:text-white">
                     {type.label}
                   </span>
-                </div>
+                </Link>
               );
             })}
           </div>
