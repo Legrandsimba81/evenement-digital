@@ -2,8 +2,14 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Search, CheckCircle, User, Users } from "lucide-react";
+import { Search, CheckCircle, Users, User, Camera } from "lucide-react";
 import { updateGuestStatus } from "@/actions/guest-actions";
+import dynamic from "next/dynamic";
+
+// Chargement dynamique avec gestion de l'export par défaut
+const QrReader = dynamic(() => import("react-qr-scanner").then(mod => mod.default), {
+  ssr: false,
+});
 
 type Guest = {
   id: string;
@@ -26,6 +32,8 @@ export default function GateClient({ event }: { event: Event }) {
   const [search, setSearch] = useState("");
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
+  const [scanning, setScanning] = useState(false);
+  const [scanResult, setScanResult] = useState<string | null>(null);
 
   const filteredGuests = event.guests.filter(
     (g) =>
@@ -39,6 +47,50 @@ export default function GateClient({ event }: { event: Event }) {
       await updateGuestStatus(guestId, "entre");
       router.refresh();
     });
+  };
+
+  const handleScan = (result: { text: string } | null) => {
+    if (result?.text) {
+      const data = result.text;
+      setScanResult(data);
+      // Extraire les paramètres de l'URL
+      try {
+        const url = new URL(data);
+        const firstName = url.searchParams.get("firstName");
+        const lastName = url.searchParams.get("lastName");
+        if (firstName && lastName) {
+          const guest = event.guests.find(
+            (g) =>
+              g.firstName.toLowerCase() === firstName.toLowerCase() &&
+              g.lastName.toLowerCase() === lastName.toLowerCase()
+          );
+          if (guest) {
+            if (guest.status === "entre") {
+              alert(`✅ ${guest.firstName} ${guest.lastName} est déjà entré.`);
+            } else if (guest.status === "annule") {
+              alert(`❌ ${guest.firstName} ${guest.lastName} a annulé sa présence.`);
+            } else {
+              if (confirm(`Valider l'entrée de ${guest.firstName} ${guest.lastName} ?`)) {
+                handleValidateEntry(guest.id);
+              }
+            }
+          } else {
+            alert("❌ Invité non trouvé.");
+          }
+        } else {
+          alert("QR code invalide : paramètres manquants.");
+        }
+      } catch (error) {
+        alert("QR code invalide.");
+      }
+      setScanning(false);
+    }
+  };
+
+  const handleError = (err: any) => {
+    console.error(err);
+    alert("Erreur du scanner. Réessayez.");
+    setScanning(false);
   };
 
   const statusColors: Record<string, string> = {
@@ -65,6 +117,37 @@ export default function GateClient({ event }: { event: Event }) {
           <p className="text-sm text-gray-500 dark:text-gray-400">
             {event.title}
           </p>
+        </div>
+
+        {/* Scanner QR */}
+        <div className="mb-6 p-4 bg-white dark:bg-gray-900 rounded-2xl shadow-md border border-gray-200 dark:border-gray-800">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Scanner un QR d'invitation
+            </h2>
+            <button
+              onClick={() => setScanning(!scanning)}
+              className="inline-flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-xl transition"
+            >
+              <Camera size={18} />
+              {scanning ? "Arrêter" : "Scanner"}
+            </button>
+          </div>
+          {scanning && (
+            <div className="relative aspect-square max-w-sm mx-auto overflow-hidden rounded-xl border border-gray-300 dark:border-gray-700">
+              <QrReader
+                onResult={handleScan}
+                onError={handleError}
+                constraints={{ facingMode: "environment" }}
+                className="w-full h-full"
+              />
+            </div>
+          )}
+          {scanResult && (
+            <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+              Dernier scan : {scanResult}
+            </div>
+          )}
         </div>
 
         <div className="relative mb-6">
@@ -103,14 +186,13 @@ export default function GateClient({ event }: { event: Event }) {
                     const colorClass = statusColors[statusKey] || statusColors.en_attente;
                     const label = statusLabels[statusKey] || "En attente";
                     const isEntered = statusKey === "entre";
-                    const isConfirmed = statusKey === "attending";
                     const isCancelled = statusKey === "annule";
 
                     return (
                       <tr
                         key={guest.id}
                         className={`border-b dark:border-gray-700 ${
-                          isEntered ? "bg-blue-50 dark:bg-blue-900/10" : ""
+                          isEntered ? "bg-green-50 dark:bg-green-900/10" : ""
                         }`}
                       >
                         <td className="px-4 py-3 font-mono font-semibold">
@@ -137,12 +219,12 @@ export default function GateClient({ event }: { event: Event }) {
                         </td>
                         <td className="px-4 py-3">
                           {isEntered ? (
-                            <span className="text-blue-600 font-medium flex items-center gap-1">
+                            <span className="text-green-600 font-medium flex items-center gap-1">
                               <CheckCircle size={16} /> Déjà entré
                             </span>
                           ) : isCancelled ? (
                             <span className="text-red-500 font-medium">Annulé</span>
-                          ) : isConfirmed ? (
+                          ) : (
                             <button
                               onClick={() => handleValidateEntry(guest.id)}
                               disabled={isPending}
@@ -150,8 +232,6 @@ export default function GateClient({ event }: { event: Event }) {
                             >
                               Valider l'entrée
                             </button>
-                          ) : (
-                            <span className="text-yellow-500 font-medium">En attente de confirmation</span>
                           )}
                         </td>
                       </tr>
@@ -163,14 +243,10 @@ export default function GateClient({ event }: { event: Event }) {
           </div>
         </div>
 
-        <div className="mt-6 flex flex-wrap gap-4 text-sm text-gray-500 dark:text-gray-400">
+        <div className="mt-6 flex gap-4 text-sm text-gray-500 dark:text-gray-400">
           <div className="flex items-center gap-2">
             <span className="inline-block w-3 h-3 rounded-full bg-yellow-400"></span>
             En attente
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="inline-block w-3 h-3 rounded-full bg-green-500"></span>
-            Confirmé
           </div>
           <div className="flex items-center gap-2">
             <span className="inline-block w-3 h-3 rounded-full bg-blue-500"></span>
@@ -179,6 +255,10 @@ export default function GateClient({ event }: { event: Event }) {
           <div className="flex items-center gap-2">
             <span className="inline-block w-3 h-3 rounded-full bg-red-500"></span>
             Annulé
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="inline-block w-3 h-3 rounded-full bg-green-500"></span>
+            Confirmé
           </div>
         </div>
       </div>

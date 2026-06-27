@@ -73,6 +73,7 @@ model Event {
   user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   guests            Guest[]
   messages          Message[]
+  gateSecret   String?   // secret pour le contrôle d’accès
   slug              String    @unique
   whatsappNumber    String?
   invitationNumber  String?
@@ -90,6 +91,7 @@ model Guest {
   invitationType    String?
   invitationNumber  String?
   eventId           String
+  gateToken    String?   // token unique (optionnel, mais plus sûr)
   event             Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt

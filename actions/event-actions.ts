@@ -3,7 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
-import { randomUUID } from "crypto";
+import { randomUUID, randomBytes } from "crypto";
 
 export async function createEvent(data: any) {
   try {
@@ -12,7 +12,6 @@ export async function createEvent(data: any) {
       throw new Error("Non authentifié");
     }
 
-    // ✅ Liste des champs autorisés pour le modèle Event
     const allowedFields = [
       "title",
       "type",
@@ -28,7 +27,6 @@ export async function createEvent(data: any) {
       "invitationType",
     ];
 
-    // Nettoyer les données
     const cleanData: any = {};
     for (const key of allowedFields) {
       if (data[key] !== undefined && data[key] !== null) {
@@ -36,7 +34,6 @@ export async function createEvent(data: any) {
       }
     }
 
-    // ✅ Valider et convertir la date
     if (!cleanData.date) {
       throw new Error("La date est requise");
     }
@@ -46,14 +43,14 @@ export async function createEvent(data: any) {
     }
 
     const slug = randomUUID();
+    const gateSecret = randomBytes(32).toString("hex"); // 🔐 Génération du secret
+
     const eventData = {
       ...cleanData,
       userId: session.user.id,
       slug,
+      gateSecret,
     };
-
-    // ✅ Log pour déboguer (visible sur Vercel)
-    console.log("📦 Payload final pour Prisma:", JSON.stringify(eventData, null, 2));
 
     const event = await prisma.event.create({
       data: eventData,
@@ -63,7 +60,6 @@ export async function createEvent(data: any) {
     return { success: true, event };
   } catch (error: any) {
     console.error("❌ Erreur createEvent:", error);
-    // En production, on renvoie un message d'erreur générique
     throw new Error(error.message || "Erreur lors de la création de l'événement");
   }
 }
@@ -138,7 +134,6 @@ export async function deleteEvent(slug: string) {
     throw new Error(error.message || "Erreur lors de la suppression");
   }
 }
-// ... dans actions/event-actions.ts
 
 export async function deleteEventAsAdmin(slug: string) {
   try {

@@ -62,6 +62,9 @@ importers:
       react-qr-code:
         specifier: ^2.2.0
         version: 2.2.0(react@19.2.4)
+      react-qr-scanner:
+        specifier: 1.0.0-alpha.11
+        version: 1.0.0-alpha.11(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       tailwind-merge:
         specifier: ^3.6.0
         version: 3.6.0
@@ -1173,6 +1176,13 @@ packages:
     cpu: [x64]
     os: [win32]
 
+  '@zxing/library@0.19.3':
+    resolution: {integrity: sha512-RUv5svewpDoD0ymXleOP8yVTO5BLkR0zn5coGC/Vs1671u0OBJ4xdtR8WVWf08OcvrieEMHdSfQY3ZKtqII/hg==}
+    engines: {node: '>= 10.4.0'}
+
+  '@zxing/text-encoding@0.9.0':
+    resolution: {integrity: sha512-U/4aVJ2mxI0aDNI8Uq0wEhMgY+u4CNtEb0om3+y3+niDAsoTCOB33UF0sxpzqzdqXLqmvc+vZyAt4O8pPdfkwA==}
+
   acorn-jsx@5.3.2:
     resolution: {integrity: sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ==}
     peerDependencies:
@@ -2267,6 +2277,12 @@ packages:
     peerDependencies:
       react: '*'
 
+  react-qr-scanner@1.0.0-alpha.11:
+    resolution: {integrity: sha512-TdaygL+4U9iapskJgK5Ilb1Cw4wwzQ3bVpIfzzbrEsxPaEJzmjQ7VuMz8E9hBQGCU4Ee+YtgglE3byEtgtRpkA==}
+    peerDependencies:
+      react: ^17.0.0 || ^18.0.0
+      react-dom: ^17.0.0 || ^18.0.0
+
   react@19.2.4:
     resolution: {integrity: sha512-9nfp2hYpCwOjAN+8TZFGhtWEwgvWHXqESH8qT89AT/lWklpLON22Lc8pEtnpsZz7VmawabSU0gCjnj8aC0euHQ==}
     engines: {node: '>=0.10.0'}
@@ -2451,6 +2467,10 @@ packages:
     engines: {node: '>=18.12'}
     peerDependencies:
       typescript: '>=4.8.4'
+
+  ts-custom-error@3.3.1:
+    resolution: {integrity: sha512-5OX1tzOjxWEgsr/YEUWSuPrQ00deKLh6D7OTWcvNHm12/7QPyRh8SYpyWvA4IZv8H/+GQWQEh/kwo95Q9OVW1A==}
+    engines: {node: '>=14.0.0'}
 
   ts-node@10.9.2:
     resolution: {integrity: sha512-f0FFpIdcHgn8zcPSbf1dRevwt047YMnaiJM3u2w2RewrB+fob/zePZcrOyQoLMMO7aBIddLcQIEK5dYjkLnGrQ==}
@@ -3460,6 +3480,15 @@ snapshots:
     optional: true
 
   '@unrs/resolver-binding-win32-x64-msvc@1.12.2':
+    optional: true
+
+  '@zxing/library@0.19.3':
+    dependencies:
+      ts-custom-error: 3.3.1
+    optionalDependencies:
+      '@zxing/text-encoding': 0.9.0
+
+  '@zxing/text-encoding@0.9.0':
     optional: true
 
   acorn-jsx@5.3.2(acorn@8.17.0):
@@ -4704,6 +4733,13 @@ snapshots:
       qrcode-generator: 2.0.4
       react: 19.2.4
 
+  react-qr-scanner@1.0.0-alpha.11(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
+    dependencies:
+      '@zxing/library': 0.19.3
+      prop-types: 15.8.1
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+
   react@19.2.4: {}
 
   reflect.getprototypeof@1.0.10:
@@ -4957,6 +4993,8 @@ snapshots:
   ts-api-utils@2.5.0(typescript@5.9.3):
     dependencies:
       typescript: 5.9.3
+
+  ts-custom-error@3.3.1: {}
 
   ts-node@10.9.2(@types/node@20.19.43)(typescript@5.9.3):
     dependencies:
