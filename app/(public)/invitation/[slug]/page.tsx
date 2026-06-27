@@ -78,6 +78,26 @@ export default async function InvitationPage({
     date: event.date.toISOString(),
   };
 
+  // Vérifier si l'invité est déjà entré
+  if (guest.status === "entre") {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-950">
+        <div className="max-w-md mx-auto p-8 bg-white dark:bg-gray-900 rounded-2xl shadow-xl text-center border border-gray-200 dark:border-gray-800">
+          <div className="text-6xl mb-4">🚪</div>
+          <h1 className="text-2xl font-bold text-green-600">
+            {guest.title ? `${guest.title} ${guest.firstName} ${guest.lastName}` : `${guest.firstName} ${guest.lastName}`}
+          </h1>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">
+            est déjà dans la salle de fête.
+          </p>
+          <p className="mt-2 text-sm text-gray-500 dark:text-gray-500">
+            Bienvenue et profitez de l'événement !
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-primary-500/5 to-secondary-500/5 py-12 px-4">
       <FloatingHearts />
