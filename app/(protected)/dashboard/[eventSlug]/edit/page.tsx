@@ -17,20 +17,15 @@ export default async function EditEventPage({
     where: { slug: eventSlug },
   });
 
-  if (!event || event.userId !== userId) return notFound();
-
-  // ✅ Passer les données au formulaire, en convertissant la date en string
-  const eventData = {
-    ...event,
-    date: event.date.toISOString().split("T")[0], // format YYYY-MM-DD pour le champ date
-  };
+  if (!event || event.userId !== userId) {
+    return notFound();
+  }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 md:p-8">
-      <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
-        Modifier l'événement : {event.title}
-      </h1>
-      <EventForm initialData={eventData} />
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-8">
+      <div className="max-w-2xl mx-auto px-4">
+        <EventForm initialData={event} />
+      </div>
     </div>
   );
 }
