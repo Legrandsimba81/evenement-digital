@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Calendar, MapPin, Clock, Download, Check, X, Heart, Gift, Trophy, Music, User, Users, QrCode } from "lucide-react";
 import QRCode from "react-qr-code";
 import html2canvas from "html2canvas";
@@ -30,12 +30,12 @@ type Event = {
 
 type EventType = "MARIAGE" | "ANNIVERSAIRE" | "SOUTENANCE" | "AUTRE";
 
-const typeConfigs: Record<EventType, { icon: any; bg: string; border: string; accent: string; label: string }> = {
+const typeConfigs = {
   MARIAGE: { icon: Heart, bg: "bg-red-50 dark:bg-red-950/20", border: "border-red-200", accent: "text-red-600", label: "Mariage" },
   ANNIVERSAIRE: { icon: Gift, bg: "bg-pink-50 dark:bg-pink-950/20", border: "border-pink-200", accent: "text-pink-600", label: "Anniversaire" },
   SOUTENANCE: { icon: Trophy, bg: "bg-purple-50 dark:bg-purple-950/20", border: "border-purple-200", accent: "text-purple-600", label: "Soutenance" },
   AUTRE: { icon: Music, bg: "bg-blue-50 dark:bg-blue-950/20", border: "border-blue-200", accent: "text-blue-600", label: "Autre" },
-};
+} as const;
 
 export default function InvitationCard({
   event,
@@ -54,6 +54,7 @@ export default function InvitationCard({
   const [isDownloadingQR, setIsDownloadingQR] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const qrRef = useRef<HTMLDivElement>(null);
+  const [imagesLoaded, setImagesLoaded] = useState(false);
 
   const fullName = guestTitle ? `${guestTitle} ${guestName}` : guestName;
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
@@ -61,12 +62,35 @@ export default function InvitationCard({
     guestName.split(" ")[0]
   )}&lastName=${encodeURIComponent(guestName.split(" ").slice(1).join(" ") || "")}`;
 
+  // Charger le statut depuis localStorage
   useEffect(() => {
     const savedStatus = localStorage.getItem(`status_${guestId}`);
     if (savedStatus) {
       setStatus(savedStatus);
     }
   }, [guestId]);
+
+  // Vérifier que les images sont chargées pour le téléchargement
+  useEffect(() => {
+    const images = document.querySelectorAll("img");
+    let loaded = 0;
+    const total = images.length;
+    if (total === 0) {
+      setImagesLoaded(true);
+      return;
+    }
+    const onLoad = () => {
+      loaded++;
+      if (loaded === total) setImagesLoaded(true);
+    };
+    images.forEach((img) => {
+      if (img.complete) onLoad();
+      else img.addEventListener("load", onLoad);
+    });
+    return () => {
+      images.forEach((img) => img.removeEventListener("load", onLoad));
+    };
+  }, [event.imageUrl]);
 
   const type = (event.type as EventType) || "AUTRE";
   const config = typeConfigs[type] || typeConfigs["AUTRE"];
@@ -100,12 +124,16 @@ export default function InvitationCard({
 
   const downloadInvitation = async () => {
     if (!cardRef.current) return;
+    // Attendre que les images soient chargées
+    await new Promise((resolve) => setTimeout(resolve, 500));
     setIsDownloading(true);
     try {
       const canvas = await html2canvas(cardRef.current, {
         scale: 2,
         useCORS: true,
+        allowTaint: true,
         backgroundColor: "#ffffff",
+        logging: false,
       });
       const link = document.createElement("a");
       link.download = `invitation-${event.slug}.png`;
@@ -113,6 +141,7 @@ export default function InvitationCard({
       link.click();
     } catch (error) {
       console.error("Erreur de téléchargement", error);
+      alert("Erreur lors du téléchargement. Réessayez.");
     } finally {
       setIsDownloading(false);
     }
@@ -126,6 +155,7 @@ export default function InvitationCard({
         scale: 2,
         useCORS: true,
         backgroundColor: "#ffffff",
+        logging: false,
       });
       const link = document.createElement("a");
       link.download = `qr-${event.slug}.png`;
@@ -133,6 +163,7 @@ export default function InvitationCard({
       link.click();
     } catch (error) {
       console.error("Erreur de téléchargement du QR", error);
+      alert("Erreur lors du téléchargement du QR.");
     } finally {
       setIsDownloadingQR(false);
     }
@@ -140,13 +171,13 @@ export default function InvitationCard({
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-800">
-      {/* Hero Section - photo en portrait sans zoom */}
+      {/* Hero Section - portrait avec object-cover pour remplir le conteneur sans déformation */}
       <div className="relative w-full aspect-[3/4] md:aspect-[4/5] overflow-hidden bg-gray-100 dark:bg-gray-800">
         {event.imageUrl ? (
           <img
             src={event.imageUrl}
             alt="Photo de l'événement"
-            className="w-full h-full object-contain" // ✅ object-contain pour éviter le zoom
+            className="w-full h-full object-cover object-center"
           />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center">
@@ -174,7 +205,7 @@ export default function InvitationCard({
         {event.invitationNumber && (
           <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-xl flex flex-wrap items-center gap-3">
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              <span className="text-primary-500">#</span> {event.invitationNumber}
+              <span className="text-primary-500 font-bold">#</span> {event.invitationNumber}
             </span>
             <span className="text-sm text-gray-400">•</span>
             <span className="text-sm text-gray-700 dark:text-gray-300 flex items-center gap-1">
@@ -241,7 +272,7 @@ export default function InvitationCard({
         <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-between items-center">
           <button
             onClick={downloadInvitation}
-            disabled={isDownloading}
+            disabled={isDownloading || !imagesLoaded}
             className="flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-6 py-3 rounded-xl transition disabled:opacity-50"
           >
             <Download size={20} />
