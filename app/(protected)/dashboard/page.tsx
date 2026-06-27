@@ -24,7 +24,7 @@ export default async function DashboardPage() {
 
   const events = await prisma.event.findMany({
     where: { userId },
-    include: { guests: true }, // ✅ Ajout pour avoir le nombre d'invités
+    include: { guests: true }, // ✅ Ajout de guests
     orderBy: { createdAt: "desc" },
   });
 
@@ -85,7 +85,7 @@ export default async function DashboardPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <Users size={16} />
-                      <span>{event.guests?.length || 0} invités</span>
+                      <span>{event.guests.length} invités</span>
                     </div>
                   </div>
                   <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 text-primary-500 font-medium text-sm">

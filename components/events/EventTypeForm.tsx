@@ -6,10 +6,8 @@ import { z } from "zod";
 import { uploadImage } from "@/actions/upload-actions";
 import { createEvent } from "@/actions/event-actions";
 import { useRouter } from "next/navigation";
-import { useState, useRef } from "react";
-import { ImageIcon, X, Heart, Gift, Trophy, Music } from "lucide-react";
-import ReactCrop, { type Crop, type PixelCrop } from "react-image-crop";
-import "react-image-crop/dist/ReactCrop.css";
+import { useState } from "react";
+import { Gift, Heart, Trophy, Music, Sparkles } from "lucide-react";
 import ImageUploadWithCrop from "@/components/forms/ImageUploadWithCrop";
 
 type EventType = "ANNIVERSAIRE" | "MARIAGE" | "SOUTENANCE" | "AUTRE";
@@ -28,7 +26,30 @@ const typeIcons = {
   AUTRE: Music,
 };
 
-// Schéma de base commun à tous
+// Suggestions par type
+const suggestions = {
+  ANNIVERSAIRE: {
+    title: "Anniversaire de [Prénom]",
+    invitationText: "Nous avons le plaisir de vous inviter à célébrer l'anniversaire de [Prénom] qui aura lieu le [Date].",
+    locations: ["Hotel Believe", "Hotel Auberge", "Monde Juste"],
+  },
+  MARIAGE: {
+    title: "Mariage de [Marié] et [Mariée]",
+    invitationText: "Nous avons le plaisir de vous inviter à notre mariage qui sera célébré le [Date].",
+    locations: ["Hotel Believe", "Hotel Auberge", "Monde Juste"],
+  },
+  SOUTENANCE: {
+    title: "Soutenance de thèse de [Nom]",
+    invitationText: "Nous avons le plaisir de vous inviter à la soutenance de thèse de [Nom] qui aura lieu le [Date].",
+    locations: ["Université", "Amphithéâtre", "Salle de conférence"],
+  },
+  AUTRE: {
+    title: "Événement de [Nom]",
+    invitationText: "Nous avons le plaisir de vous inviter à notre événement qui aura lieu le [Date].",
+    locations: ["Hotel Believe", "Hotel Auberge", "Monde Juste"],
+  },
+};
+
 const baseSchema = z.object({
   title: z.string().min(1, "Le titre est requis"),
   type: z.string().min(1, "Type requis"),
@@ -41,15 +62,11 @@ const baseSchema = z.object({
   whatsappNumber: z.string().optional(),
 });
 
-// Champs supplémentaires selon le type
 const extendedSchema = z.object({
   ...baseSchema.shape,
-  // Pour les mariages
   brideName: z.string().optional(),
   groomName: z.string().optional(),
-  // Pour anniversaire
   age: z.string().optional(),
-  // Pour soutenance
   thesisTitle: z.string().optional(),
 });
 
@@ -65,6 +82,8 @@ export default function EventTypeForm({ type }: { type: EventType }) {
   const {
     register,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<EventFormData>({
     resolver: zodResolver(extendedSchema),
@@ -79,6 +98,10 @@ export default function EventTypeForm({ type }: { type: EventType }) {
   const handleInvitationImageChange = (file: File | null, preview: string | null) => {
     setInvitationImageFile(file);
     setInvitationImagePreview(preview);
+  };
+
+  const fillSuggestion = (field: keyof EventFormData, value: string) => {
+    setValue(field, value);
   };
 
   const onSubmit = async (data: EventFormData) => {
@@ -116,6 +139,7 @@ export default function EventTypeForm({ type }: { type: EventType }) {
 
   const Icon = typeIcons[type];
   const colorClass = typeColors[type];
+  const sugg = suggestions[type];
 
   return (
     <div className="max-w-2xl mx-auto p-6 md:p-8">
@@ -130,11 +154,20 @@ export default function EventTypeForm({ type }: { type: EventType }) {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <input type="hidden" {...register("type")} value={type} />
 
-        {/* Titre */}
+        {/* Titre avec suggestions */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Titre de l'événement
           </label>
+          <div className="flex flex-wrap gap-2 mb-2">
+            <button
+              type="button"
+              onClick={() => fillSuggestion("title", sugg.title)}
+              className="text-xs bg-gray-200 dark:bg-gray-700 px-3 py-1 rounded-full hover:bg-gray-300"
+            >
+              {sugg.title}
+            </button>
+          </div>
           <input
             {...register("title")}
             placeholder="Ex: Mariage de Jean et Marie"
@@ -197,14 +230,23 @@ export default function EventTypeForm({ type }: { type: EventType }) {
           </div>
         )}
 
-        {/* Champs communs */}
+        {/* Texte d'invitation avec suggestions */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Texte d'invitation
           </label>
+          <div className="flex flex-wrap gap-2 mb-2">
+            <button
+              type="button"
+              onClick={() => fillSuggestion("invitationText", sugg.invitationText)}
+              className="text-xs bg-gray-200 dark:bg-gray-700 px-3 py-1 rounded-full hover:bg-gray-300"
+            >
+              Suggestion
+            </button>
+          </div>
           <textarea
             {...register("invitationText")}
-            placeholder={type === "MARIAGE" ? "Nous avons le plaisir de vous inviter à notre mariage..." : "Venez célébrer avec nous..."}
+            placeholder={sugg.invitationText}
             className="w-full px-4 py-3 border-2 border-gray-400 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-900 dark:border-gray-600 dark:text-white"
             rows={4}
           />
@@ -222,10 +264,23 @@ export default function EventTypeForm({ type }: { type: EventType }) {
           />
         </div>
 
+        {/* Lieu avec suggestions */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Lieu
           </label>
+          <div className="flex flex-wrap gap-2 mb-2">
+            {sugg.locations.map((loc) => (
+              <button
+                key={loc}
+                type="button"
+                onClick={() => fillSuggestion("location", loc)}
+                className="text-xs bg-gray-200 dark:bg-gray-700 px-3 py-1 rounded-full hover:bg-gray-300"
+              >
+                {loc}
+              </button>
+            ))}
+          </div>
           <input
             {...register("location")}
             placeholder="Adresse"
@@ -273,7 +328,6 @@ export default function EventTypeForm({ type }: { type: EventType }) {
           />
         </div>
 
-        {/* Images */}
         <ImageUploadWithCrop
           label="Photo héros (portrait)"
           aspect={3/4}
