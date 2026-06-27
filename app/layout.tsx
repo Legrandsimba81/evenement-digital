@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { SessionProvider } from "next-auth/react";
 import Navbar from "@/components/Navbar";
+import BackButtonWrapper from "@/components/ui/BackButtonWrapper";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -21,6 +22,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <SessionProvider>
           <Navbar />
+          <BackButtonWrapper />
           {children}
         </SessionProvider>
       </body>
