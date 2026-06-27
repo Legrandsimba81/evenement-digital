@@ -1,18 +1,34 @@
 "use client";
+
 import { addMessage } from "@/actions/message-actions";
 import { useRef } from "react";
 
-export default function MessageForm({ eventId, guestName }: { eventId: string, guestName: string }) {
+export default function MessageForm({ eventId, guestName }: { eventId: string; guestName: string }) {
   const formRef = useRef<HTMLFormElement>(null);
-  async function handleAction(formData: FormData) {
+
+  const handleAction = async (formData: FormData) => {
     const content = formData.get("content") as string;
-    await addMessage(eventId, guestName, content);
-    formRef.current?.reset();
-  }
+    if (content.trim()) {
+      await addMessage(eventId, guestName, content.trim());
+      formRef.current?.reset();
+    }
+  };
+
   return (
-    <form ref={formRef} action={handleAction} className="mt-4">
-      <textarea name="content" placeholder="Hereux Mariage, anniversaire, Defence..." className="w-full p-2 border rounded" rows={3} required />
-      <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded mt-2">Envoyer</button>
+    <form ref={formRef} action={handleAction} className="space-y-4">
+      <textarea
+        name="content"
+        placeholder="Écrivez votre message..."
+        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-800 dark:text-white resize-none"
+        rows={3}
+        required
+      />
+      <button
+        type="submit"
+        className="w-full bg-primary-500 hover:bg-primary-600 text-white font-medium px-4 py-3 rounded-xl transition"
+      >
+        Envoyer le message
+      </button>
     </form>
   );
 }

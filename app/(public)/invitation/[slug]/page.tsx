@@ -4,8 +4,35 @@ import InvitationCard from "@/components/invitation/InvitationCard";
 import MessageForm from "@/components/forms/MessageForm";
 import GuestVerificationForm from "@/components/invitation/GuestVerificationForm";
 import FloatingHearts from "@/components/invitation/FloatingHearts";
-import { Heart, Frown, CheckCircle, RefreshCw } from "lucide-react"; // Ajout des icônes
-import Link from "next/link"; // Pour le bouton réessayer
+import { Heart, UserX, CircleCheckBig, Phone } from "lucide-react";
+
+// Suggestions de messages selon le type
+const messageSuggestions: Record<string, string[]> = {
+  MARIAGE: [
+    "Félicitations aux jeunes mariés ! 💍",
+    "Que votre amour dure toujours ! ❤️",
+    "Merci pour ce moment magique !",
+    "Vive les mariés ! 🥂",
+  ],
+  ANNIVERSAIRE: [
+    "Joyeux anniversaire ! 🎂",
+    "Que cette journée soit inoubliable ! 🎉",
+    "Bon anniversaire et plein de bonheur !",
+    "Profitez bien de ce jour spécial !",
+  ],
+  SOUTENANCE: [
+    "Félicitations pour cette soutenance ! 🎓",
+    "Bravo pour ce travail remarquable !",
+    "La fin d’un long parcours, bravo !",
+    "Succès garanti, continuez ainsi !",
+  ],
+  AUTRE: [
+    "Merci pour cette belle célébration !",
+    "Vive la fête ! 🎊",
+    "Quelle belle occasion !",
+    "Profitez bien de ce moment !",
+  ],
+};
 
 export default async function InvitationPage({
   params,
@@ -24,7 +51,7 @@ export default async function InvitationPage({
 
   if (!event) return notFound();
 
-  // Si pas de paramètres, afficher le formulaire de vérification
+  // Formulaire de vérification si pas de noms
   if (!firstName || !lastName) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary-500/5 to-secondary-500/5 flex items-center justify-center p-4">
@@ -33,24 +60,25 @@ export default async function InvitationPage({
     );
   }
 
-  // Trouver l'invité par nom
+  // Recherche de l'invité
   const guest = event.guests.find(
     (g) =>
       g.firstName.toLowerCase() === firstName.toLowerCase() &&
       g.lastName.toLowerCase() === lastName.toLowerCase()
   );
 
+  // Si invité non trouvé
   if (!guest) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-950">
-        <div className="max-w-md mx-auto p-8 bg-white dark:bg-gray-900 rounded-2xl shadow-xl text-center border border-gray-200 dark:border-gray-800">
+        <div className="max-w-md mx-auto p-6 sm:p-8 bg-white dark:bg-gray-900 rounded-2xl shadow-xl text-center border border-gray-200 dark:border-gray-800">
           <div className="flex justify-center mb-4">
-            <Frown size={64} className="text-red-500" /> {/* Remplacer 😢 */}
+            <UserX size={64} className="text-red-500" />
           </div>
           <h1 className="text-2xl font-bold text-red-500">
             Vous n'êtes pas sur la liste des invités.
           </h1>
-          <p className="mt-4 text-gray-600 dark:text-gray-400">
+          <p className="mt-4 text-gray-600 dark:text-gray-400 text-sm sm:text-base">
             Si c'est une erreur, contactez-nous sur WhatsApp.
           </p>
           {event.whatsappNumber && (
@@ -59,25 +87,44 @@ export default async function InvitationPage({
                 event.title
               )}`}
               target="_blank"
-              className="inline-flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-xl mt-6 transition"
+              className="inline-flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-5 py-2.5 rounded-xl mt-4 transition text-sm"
             >
+              <Phone size={18} />
               Contacter l'organisateur
             </a>
           )}
-          {/* Bouton Réessayer */}
-          <Link
-            href={`/invitation/${slug}`}
-            className="inline-flex items-center gap-2 mt-4 text-primary-500 hover:text-primary-600 font-medium"
-          >
-            <RefreshCw size={16} />
-            Réessayer
-          </Link>
         </div>
       </div>
     );
   }
 
+  // Si invité déjà entré
+  if (guest.status === "entre") {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-950">
+        <div className="max-w-md mx-auto p-6 sm:p-8 bg-white dark:bg-gray-900 rounded-2xl shadow-xl text-center border border-gray-200 dark:border-gray-800">
+          <div className="flex justify-center mb-4">
+            <CircleCheckBig size={64} className="text-green-500" />
+          </div>
+          <h1 className="text-2xl font-bold text-green-600">
+            {guest.title ? `${guest.title} ${guest.firstName} ${guest.lastName}` : `${guest.firstName} ${guest.lastName}`}
+          </h1>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">
+            est déjà dans la salle de fête.
+          </p>
+          <p className="mt-2 text-sm text-gray-500">
+            Bienvenue et profitez de l'événement !
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Sinon, afficher l'invitation
   const guestName = `${guest.firstName} ${guest.lastName}`;
+  const eventType = event.type as keyof typeof messageSuggestions;
+  const suggestions = messageSuggestions[eventType] || messageSuggestions["AUTRE"];
+
   const messagesLove = event.messages.filter((m) =>
     m.content.toLowerCase().includes("amour") ||
     m.content.toLowerCase().includes("❤") ||
@@ -89,30 +136,8 @@ export default async function InvitationPage({
     date: event.date.toISOString(),
   };
 
-  // Vérifier si l'invité est déjà entré
-  if (guest.status === "entre") {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-950">
-        <div className="max-w-md mx-auto p-8 bg-white dark:bg-gray-900 rounded-2xl shadow-xl text-center border border-gray-200 dark:border-gray-800">
-          <div className="flex justify-center mb-4">
-            <CheckCircle size={64} className="text-green-500" /> {/* Remplacer 🚪 */}
-          </div>
-          <h1 className="text-2xl font-bold text-green-600">
-            {guest.title ? `${guest.title} ${guest.firstName} ${guest.lastName}` : `${guest.firstName} ${guest.lastName}`}
-          </h1>
-          <p className="mt-4 text-gray-600 dark:text-gray-400">
-            est déjà dans la salle de fête.
-          </p>
-          <p className="mt-2 text-sm text-gray-500 dark:text-gray-500">
-            Bienvenue et profitez de l'événement !
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="relative min-h-screen bg-gradient-to-br from-primary-500/5 to-secondary-500/5 py-12 px-4">
+    <div className="relative min-h-screen bg-gradient-to-br from-primary-500/5 to-secondary-500/5 py-8 px-4 sm:py-12 sm:px-6">
       <FloatingHearts />
       <div className="max-w-3xl mx-auto relative z-10">
         <InvitationCard
@@ -122,10 +147,11 @@ export default async function InvitationPage({
           guestId={guest.id}
         />
 
+        {/* Messages d'amour pour les mariages */}
         {event.type === "MARIAGE" && messagesLove.length > 0 && (
-          <div className="mt-8 p-6 bg-pink-50 dark:bg-pink-950/20 rounded-2xl border border-pink-200 dark:border-pink-800">
-            <h2 className="text-2xl font-bold flex items-center gap-2 text-pink-600 dark:text-pink-400">
-              <Heart size={24} className="fill-pink-500" />
+          <div className="mt-6 p-5 bg-rose-50 dark:bg-rose-950/20 rounded-2xl border border-rose-200 dark:border-rose-800">
+            <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-2 text-rose-600 dark:text-rose-400">
+              <Heart size={24} className="fill-rose-500" />
               Messages d'amour
             </h2>
             <div className="mt-4 space-y-4">
@@ -141,8 +167,9 @@ export default async function InvitationPage({
           </div>
         )}
 
-        <div className="mt-8">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+        {/* Messages des invités */}
+        <div className="mt-6">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-4">
             Messages des invités
           </h2>
           {event.messages.length === 0 ? (
@@ -156,7 +183,7 @@ export default async function InvitationPage({
                   key={msg.id}
                   className="bg-white dark:bg-gray-900 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800"
                 >
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between flex-wrap gap-1">
                     <p className="font-semibold text-gray-900 dark:text-white">
                       {msg.guestName}
                     </p>
@@ -171,11 +198,33 @@ export default async function InvitationPage({
           )}
         </div>
 
-        <div className="mt-8">
-          <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-800">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-              Laissez un petit mot d'or
+        {/* Formulaire de message avec suggestions */}
+        <div className="mt-6">
+          <div className="bg-white dark:bg-gray-900 p-5 sm:p-6 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-800">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-4">
+              Laissez un message
             </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              Partagez vos vœux avec les organisateurs.
+            </p>
+            <div className="flex flex-wrap gap-2 mb-4">
+              {suggestions.map((suggestion, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  className="text-xs px-3 py-1 rounded-full bg-primary-100 text-primary-700 hover:bg-primary-200 transition dark:bg-primary-900/30 dark:text-primary-300"
+                  onClick={() => {
+                    const textarea = document.querySelector('textarea[name="content"]') as HTMLTextAreaElement;
+                    if (textarea) {
+                      textarea.value = suggestion;
+                      textarea.dispatchEvent(new Event('input', { bubbles: true }));
+                    }
+                  }}
+                >
+                  {suggestion}
+                </button>
+              ))}
+            </div>
             <MessageForm eventId={event.id} guestName={guestName} />
           </div>
         </div>
