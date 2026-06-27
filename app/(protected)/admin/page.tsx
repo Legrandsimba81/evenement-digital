@@ -121,10 +121,12 @@ export default async function AdminPage() {
                         </p>
                       </div>
                       <div className="flex items-center gap-2 ml-4">
+                        {/* ✅ Lien vers l'invitation publique (accessible sans authentification) */}
                         <Link
-                          href={`/dashboard/${event.slug}`}
+                          href={`/invitation/${event.slug}`}
+                          target="_blank"
                           className="text-blue-500 hover:text-blue-700 p-1"
-                          title="Voir"
+                          title="Voir l'invitation"
                         >
                           <Eye size={16} />
                         </Link>
