@@ -148,7 +148,7 @@ export default function InvitationCard({
     }
   };
 
-  // ✅ Téléchargement corrigé : remplacement des couleurs "lab" dans onclone
+  // ✅ Téléchargement corrigé en modifiant le DOM avant capture et restauration
   const downloadInvitation = async () => {
     if (!cardRef.current) {
       alert("Référence de la carte non trouvée.");
@@ -159,51 +159,41 @@ export default function InvitationCard({
       return;
     }
     setIsDownloading(true);
+    const element = cardRef.current;
+    const backupStyles: { el: Element; prop: string; value: string }[] = [];
+
     try {
-      const canvas = await html2canvas(cardRef.current, {
+      // Parcourir tous les éléments pour sauvegarder et remplacer les couleurs "lab"
+      const allElements = element.querySelectorAll("*");
+      allElements.forEach((el) => {
+        const style = (el as HTMLElement).style;
+        const propsToCheck = ["color", "backgroundColor", "borderColor", "backgroundImage"];
+        propsToCheck.forEach((prop) => {
+          const val = style[prop as any];
+          if (val && typeof val === "string" && val.includes("lab")) {
+            backupStyles.push({ el, prop, value: val });
+            // Remplacer par une valeur RGB sûre
+            if (prop === "color" || prop === "borderColor") {
+              style[prop as any] = "#000000";
+            } else if (prop === "backgroundColor") {
+              style[prop as any] = "#ffffff";
+            } else if (prop === "backgroundImage") {
+              style[prop as any] = "none";
+            }
+          }
+        });
+      });
+
+      // Capturer
+      const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
         allowTaint: true,
         backgroundColor: "#ffffff",
         logging: false,
-        onclone: (clonedDoc) => {
-          const allElements = clonedDoc.querySelectorAll("*");
-          allElements.forEach((el) => {
-            const style = (el as HTMLElement).style;
-            // Remplacer les couleurs lab()
-            if (style.color && style.color.includes("lab")) {
-              style.color = "#000000";
-            }
-            if (style.backgroundColor && style.backgroundColor.includes("lab")) {
-              style.backgroundColor = "#ffffff";
-            }
-            if (style.borderColor && style.borderColor.includes("lab")) {
-              style.borderColor = "#000000";
-            }
-            if (style.backgroundImage && style.backgroundImage.includes("lab")) {
-              style.backgroundImage = "none";
-            }
-            // Vérifier les styles calculés
-            const win = (el as HTMLElement).ownerDocument?.defaultView;
-            if (win) {
-              const computed = win.getComputedStyle(el);
-              if (computed.color && computed.color.includes("lab")) {
-                (el as HTMLElement).style.color = "#000000";
-              }
-              if (computed.backgroundColor && computed.backgroundColor.includes("lab")) {
-                (el as HTMLElement).style.backgroundColor = "#ffffff";
-              }
-              if (computed.borderColor && computed.borderColor.includes("lab")) {
-                (el as HTMLElement).style.borderColor = "#000000";
-              }
-              if (computed.backgroundImage && computed.backgroundImage.includes("lab")) {
-                (el as HTMLElement).style.backgroundImage = "none";
-              }
-            }
-          });
-        },
       });
 
+      // Télécharger
       const link = document.createElement("a");
       link.download = `invitation-${event.slug}.png`;
       link.href = canvas.toDataURL("image/png");
@@ -212,6 +202,10 @@ export default function InvitationCard({
       console.error("Erreur de téléchargement:", error);
       alert("Erreur lors du téléchargement. Veuillez réessayer.");
     } finally {
+      // Restaurer les styles sauvegardés
+      backupStyles.forEach(({ el, prop, value }) => {
+        (el as HTMLElement).style[prop as any] = value;
+      });
       setIsDownloading(false);
     }
   };
