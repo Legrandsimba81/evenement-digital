@@ -143,6 +143,14 @@ export default function Navbar() {
 
                     <div className="mt-2 space-y-1">
                       <Link
+                        href="/profile"
+                        onClick={() => setMenuOpen(false)}
+                        className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-gray-700 transition hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-900"
+                      >
+                        <UserRound size={16} className="text-primary" />
+                        Mon profil
+                      </Link>
+                      <Link
                         href="/dashboard"
                         onClick={() => setMenuOpen(false)}
                         className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-gray-700 transition hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-900"

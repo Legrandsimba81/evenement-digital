@@ -77,8 +77,8 @@ export default function AuthForm({ initialMode = "signin" }: AuthFormProps) {
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-950 lg:flex-row">
-      {/* Partie gauche */}
-      <div className="flex flex-col justify-between bg-primary-500/10 p-8 lg:w-[44%] lg:p-10">
+      {/* Partie gauche - masquée sur mobile, visible sur lg+ */}
+      <div className="hidden lg:flex lg:flex-col lg:justify-between bg-primary-500/10 p-8 lg:w-[44%] lg:p-10">
         <div>
           <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-500/15 text-primary">
             <Sparkles size={22} />
@@ -104,7 +104,7 @@ export default function AuthForm({ initialMode = "signin" }: AuthFormProps) {
         </div>
       </div>
 
-      {/* Partie droite */}
+      {/* Partie droite - pleine largeur sur mobile */}
       <div className="flex-1 p-6 sm:p-8 lg:p-10">
         <div className="mb-6 flex rounded-full border border-gray-200 p-1 dark:border-gray-800">
           <button

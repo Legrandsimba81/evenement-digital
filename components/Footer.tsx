@@ -11,13 +11,12 @@ import {
   FaFacebook, 
   FaInstagram 
 } from "react-icons/fa";
-import { SiGmail } from "react-icons/si";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-white dark:bg-gray-950 border-t border-gray-200 dark:border-gray-800">
+    <footer className="bg-white dark:bg-gray-950 border-t border-gray-200 dark:border-gray-800 mt-auto">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Colonne 1 - Brand */}
@@ -59,8 +58,8 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/login" className="text-sm text-gray-600 dark:text-gray-400 hover:text-primary-500 transition">
-                  Connexion
+                <Link href="/profile" className="text-sm text-gray-600 dark:text-gray-400 hover:text-primary-500 transition">
+                  Mon profil
                 </Link>
               </li>
             </ul>
@@ -84,7 +83,7 @@ export default function Footer() {
               </li>
               <li className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                 <FaMapMarkerAlt size={16} />
-                <span>RDC, Nord-kivu</span>
+                <span>RDC, Nord-Kivu</span>
               </li>
             </ul>
           </div>
@@ -94,18 +93,23 @@ export default function Footer() {
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider">À propos</h3>
             <ul className="mt-4 space-y-2">
               <li>
-                <Link href="#" className="text-sm text-gray-600 dark:text-gray-400 hover:text-primary-500 transition">
+                <Link href="/mentions-legales" className="text-sm text-gray-600 dark:text-gray-400 hover:text-primary-500 transition">
                   Mentions légales
                 </Link>
               </li>
               <li>
-                <Link href="#" className="text-sm text-gray-600 dark:text-gray-400 hover:text-primary-500 transition">
+                <Link href="/politique-confidentialite" className="text-sm text-gray-600 dark:text-gray-400 hover:text-primary-500 transition">
                   Politique de confidentialité
                 </Link>
               </li>
               <li>
-                <Link href="#" className="text-sm text-gray-600 dark:text-gray-400 hover:text-primary-500 transition">
+                <Link href="/cgu" className="text-sm text-gray-600 dark:text-gray-400 hover:text-primary-500 transition">
                   CGU
+                </Link>
+              </li>
+              <li>
+                <Link href="/guide-utilisation" className="text-sm text-gray-600 dark:text-gray-400 hover:text-primary-500 transition">
+                  Guide d'utilisation
                 </Link>
               </li>
             </ul>
@@ -115,7 +119,7 @@ export default function Footer() {
         {/* Copyright */}
         <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-800 text-center text-sm text-gray-500 dark:text-gray-400">
           <p>
-            &copy; {currentYear} Simba Event. Tous droits réservés. pour vos événements numerique en RDcongo
+            &copy; {currentYear} Simba Event. Tous droits réservés. pour vos événements numériques en RDCongo.
           </p>
         </div>
       </div>
