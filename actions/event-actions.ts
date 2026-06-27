@@ -12,24 +12,27 @@ export async function createEvent(data: any) {
       throw new Error("Non authentifié");
     }
 
-    const slug = randomUUID();
-
-    // Nettoyer les données pour éviter les champs inconnus
+    // Nettoyer les données
     const { brideName, groomName, age, thesisTitle, ...cleanData } = data;
 
+    const slug = randomUUID();
+    const eventData = {
+      ...cleanData,
+      userId: session.user.id,
+      slug,
+    };
+
+    console.log("🔍 Création événement:", JSON.stringify(eventData, null, 2));
+
     const event = await prisma.event.create({
-      data: {
-        ...cleanData,
-        userId: session.user.id,
-        slug,
-      },
+      data: eventData,
     });
 
     revalidatePath("/dashboard");
     return { success: true, event };
-  } catch (error) {
-    console.error("Erreur createEvent:", error);
-    throw new Error("Erreur lors de la création de l'événement");
+  } catch (error: any) {
+    console.error("❌ Erreur createEvent:", error);
+    throw new Error(error.message || "Erreur lors de la création de l'événement");
   }
 }
 
@@ -52,9 +55,9 @@ export async function updateEvent(slug: string, data: any) {
 
     revalidatePath(`/dashboard/${slug}`);
     return { success: true, event: updated };
-  } catch (error) {
-    console.error("Erreur updateEvent:", error);
-    throw new Error("Erreur lors de la mise à jour");
+  } catch (error: any) {
+    console.error("❌ Erreur updateEvent:", error);
+    throw new Error(error.message || "Erreur lors de la mise à jour");
   }
 }
 
@@ -71,8 +74,8 @@ export async function deleteEvent(slug: string) {
     await prisma.event.delete({ where: { slug } });
     revalidatePath("/dashboard");
     return { success: true };
-  } catch (error) {
-    console.error("Erreur deleteEvent:", error);
-    throw new Error("Erreur lors de la suppression");
+  } catch (error: any) {
+    console.error("❌ Erreur deleteEvent:", error);
+    throw new Error(error.message || "Erreur lors de la suppression");
   }
 }

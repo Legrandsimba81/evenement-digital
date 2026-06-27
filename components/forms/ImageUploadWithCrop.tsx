@@ -25,7 +25,7 @@ export default function ImageUploadWithCrop({
   const [crop, setCrop] = useState<Crop>({
     unit: "%",
     width: 80,
-    height: aspect === 4 / 3 ? 75 : 60, // adapté selon aspect
+    height: aspect === 4/3 ? 75 : 60,
     x: 10,
     y: 10,
   });

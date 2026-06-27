@@ -7,7 +7,7 @@ import { uploadImage } from "@/actions/upload-actions";
 import { createEvent } from "@/actions/event-actions";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Gift, Heart, Trophy, Music, Sparkles } from "lucide-react";
+import { Gift, Heart, Trophy, Music } from "lucide-react";
 import ImageUploadWithCrop from "@/components/forms/ImageUploadWithCrop";
 
 type EventType = "ANNIVERSAIRE" | "MARIAGE" | "SOUTENANCE" | "AUTRE";
@@ -26,7 +26,6 @@ const typeIcons = {
   AUTRE: Music,
 };
 
-// Suggestions pour les champs
 const suggestions = {
   ANNIVERSAIRE: {
     titles: ["Anniversaire de Sarah", "Anniversaire de Jean", "Fête d'anniversaire"],
@@ -62,8 +61,8 @@ const suggestions = {
   },
 };
 
-// Schéma de base commun à tous
-const baseSchema = z.object({
+// Schéma avec tous les champs
+const eventSchema = z.object({
   title: z.string().min(1, "Le titre est requis"),
   type: z.string().min(1, "Type requis"),
   description: z.string().optional(),
@@ -73,19 +72,15 @@ const baseSchema = z.object({
   date: z.string().min(1, "La date est requise"),
   time: z.string().regex(/^\d{2}:\d{2}$/, "Format HH:MM requis"),
   whatsappNumber: z.string().optional(),
-});
-
-// Champs supplémentaires selon le type (uniquement pour la validation)
-const extendedSchema = baseSchema.extend({
+  invitationType: z.enum(["single", "couple"]).default("single"),
   brideName: z.string().optional(),
   groomName: z.string().optional(),
   age: z.string().optional(),
   thesisTitle: z.string().optional(),
 });
 
-type EventFormData = z.infer<typeof extendedSchema>;
+type EventFormData = z.infer<typeof eventSchema>;
 
-// Champs valides pour Prisma
 const VALID_EVENT_FIELDS = [
   "title",
   "type",
@@ -98,8 +93,7 @@ const VALID_EVENT_FIELDS = [
   "whatsappNumber",
   "imageUrl",
   "invitationImageUrl",
-  "userId",
-  "slug",
+  "invitationType",
 ];
 
 export default function EventTypeForm({ type }: { type: EventType }) {
@@ -109,14 +103,32 @@ export default function EventTypeForm({ type }: { type: EventType }) {
   const [invitationImageFile, setInvitationImageFile] = useState<File | null>(null);
   const [invitationImagePreview, setInvitationImagePreview] = useState<string | null>(null);
 
+  const defaultValues: EventFormData = {
+    type,
+    invitationType: "single",
+    title: "",
+    location: "",
+    date: "",
+    time: "",
+    description: "",
+    invitationText: "",
+    program: "",
+    whatsappNumber: "",
+    brideName: "",
+    groomName: "",
+    age: "",
+    thesisTitle: "",
+  };
+
   const {
     register,
     handleSubmit,
     setValue,
     formState: { errors, isSubmitting },
   } = useForm<EventFormData>({
-    resolver: zodResolver(extendedSchema),
-    defaultValues: { type },
+    // ✅ Contournement du typage avec as any
+    resolver: zodResolver(eventSchema) as any,
+    defaultValues,
   });
 
   const handleHeroImageChange = (file: File | null, preview: string | null) => {
@@ -129,48 +141,49 @@ export default function EventTypeForm({ type }: { type: EventType }) {
     setInvitationImagePreview(preview);
   };
 
-  // Fonction pour appliquer une suggestion
   const applySuggestion = (field: keyof EventFormData, value: string) => {
     setValue(field, value as any);
   };
 
   const onSubmit = async (data: EventFormData) => {
-    let heroImageUrl = "";
-    let invitationImageUrl = "";
-
-    if (heroImageFile) {
-      const formData = new FormData();
-      formData.append("file", heroImageFile);
-      const uploaded = await uploadImage(formData);
-      heroImageUrl = uploaded.url;
-    }
-    if (invitationImageFile) {
-      const formData = new FormData();
-      formData.append("file", invitationImageFile);
-      const uploaded = await uploadImage(formData);
-      invitationImageUrl = uploaded.url;
-    }
-
-    // ✅ Filtrer les données pour ne garder que les champs valides pour Prisma
-    const cleanData: any = {};
-    for (const key of VALID_EVENT_FIELDS) {
-      if (data[key as keyof EventFormData] !== undefined) {
-        cleanData[key] = data[key as keyof EventFormData];
-      }
-    }
-
-    const payload = {
-      ...cleanData,
-      date: new Date(data.date),
-      imageUrl: heroImageUrl,
-      invitationImageUrl,
-    };
-
     try {
-      await createEvent(payload);
-      router.push("/dashboard");
+      let heroImageUrl = "";
+      let invitationImageUrl = "";
+
+      if (heroImageFile) {
+        const formData = new FormData();
+        formData.append("file", heroImageFile);
+        const uploaded = await uploadImage(formData);
+        heroImageUrl = uploaded.url;
+      }
+      if (invitationImageFile) {
+        const formData = new FormData();
+        formData.append("file", invitationImageFile);
+        const uploaded = await uploadImage(formData);
+        invitationImageUrl = uploaded.url;
+      }
+
+      const cleanData: any = {};
+      for (const key of VALID_EVENT_FIELDS) {
+        const value = data[key as keyof EventFormData];
+        if (value !== undefined && value !== null) {
+          cleanData[key] = value;
+        }
+      }
+
+      const payload = {
+        ...cleanData,
+        date: new Date(data.date),
+        imageUrl: heroImageUrl,
+        invitationImageUrl,
+      };
+
+      const result = await createEvent(payload);
+      if (result.success) {
+        router.push("/dashboard");
+      }
     } catch (error) {
-      console.error("Erreur lors de la création:", error);
+      console.error("❌ Erreur:", error);
       alert("Une erreur est survenue lors de la création de l'événement.");
     }
   };
@@ -192,7 +205,7 @@ export default function EventTypeForm({ type }: { type: EventType }) {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <input type="hidden" {...register("type")} value={type} />
 
-        {/* Titre avec suggestions */}
+        {/* Titre */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Titre de l'événement
@@ -218,7 +231,7 @@ export default function EventTypeForm({ type }: { type: EventType }) {
           </div>
         </div>
 
-        {/* Champs spécifiques selon le type */}
+        {/* Champs spécifiques */}
         {type === "MARIAGE" && (
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -271,7 +284,7 @@ export default function EventTypeForm({ type }: { type: EventType }) {
           </div>
         )}
 
-        {/* Texte d'invitation avec suggestions */}
+        {/* Texte d'invitation */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Texte d'invitation
@@ -309,7 +322,7 @@ export default function EventTypeForm({ type }: { type: EventType }) {
           />
         </div>
 
-        {/* Lieu avec suggestions */}
+        {/* Lieu */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Lieu
@@ -335,6 +348,7 @@ export default function EventTypeForm({ type }: { type: EventType }) {
           </div>
         </div>
 
+        {/* Date / Heure */}
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -362,6 +376,21 @@ export default function EventTypeForm({ type }: { type: EventType }) {
           </div>
         </div>
 
+        {/* Type d'invitation */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Type d'invitation
+          </label>
+          <select
+            {...register("invitationType")}
+            className="w-full px-4 py-3 border-2 border-gray-400 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-900 dark:border-gray-600 dark:text-white"
+          >
+            <option value="single">1 personne</option>
+            <option value="couple">2 personnes (couple/famille)</option>
+          </select>
+        </div>
+
+        {/* WhatsApp */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             WhatsApp (contact)
