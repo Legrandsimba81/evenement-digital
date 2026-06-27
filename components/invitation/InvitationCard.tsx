@@ -284,7 +284,7 @@ export default function InvitationCard({
         </div>
 
         {event.program && (
-          <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+          <div className="mt-6 p-4 bg-gray-100 dark:bg-gray-800 rounded-xl">
             <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Programme</h3>
             <div className="text-gray-700 dark:text-gray-300 whitespace-pre-line text-sm sm:text-base">
               {event.program}

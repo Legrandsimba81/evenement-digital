@@ -2,15 +2,15 @@
 import html2canvas from "html2canvas";
 
 /**
- * Capture un élément DOM en le clonant dans un conteneur hors écran,
- * en remplaçant toutes les occurrences de "lab" par des valeurs RGB,
- * puis en utilisant html2canvas sur le clone.
+ * Capture un élément DOM en le clonant hors écran,
+ * en remplaçant toutes les couleurs "lab" par du RGB,
+ * et en forçant les couleurs calculées en inline pour les propriétés clés.
  */
 export async function captureElement(
   element: HTMLElement,
   options?: any
 ): Promise<HTMLCanvasElement> {
-  // Créer un conteneur hors écran
+  // 1. Créer un conteneur hors écran
   const container = document.createElement("div");
   container.style.position = "fixed";
   container.style.left = "-9999px";
@@ -20,15 +20,36 @@ export async function captureElement(
   container.style.background = "white";
   document.body.appendChild(container);
 
-  // Cloner l'élément
+  // 2. Cloner l'élément
   const clone = element.cloneNode(true) as HTMLElement;
   container.appendChild(clone);
 
-  // Remplacer toutes les couleurs "lab" dans le clone
+  // 3. Forcer les couleurs calculées en inline pour éviter les variables CSS
   const allElements = clone.querySelectorAll("*");
   allElements.forEach((el) => {
     const style = (el as HTMLElement).style;
-    // Parcourir toutes les propriétés inline
+    const win = (el as HTMLElement).ownerDocument?.defaultView;
+    if (win) {
+      const computed = win.getComputedStyle(el);
+      // Couleurs clés à forcer
+      const props = ["color", "backgroundColor", "borderColor", "backgroundImage"];
+      props.forEach((prop) => {
+        const val = computed.getPropertyValue(prop);
+        if (val && !val.includes("lab") && !val.includes("var(")) {
+          // On ne force que si la valeur n'est pas déjà une variable ou lab
+          // Pour éviter d'écraser les dégradés, on saute backgroundImage si ce n'est pas un dégradé
+          if (prop === "backgroundImage" && val !== "none" && !val.includes("gradient")) {
+            return;
+          }
+          style.setProperty(prop, val);
+        }
+      });
+    }
+  });
+
+  // 4. Maintenant, remplacer toutes les occurrences restantes de "lab" dans les styles inline
+  allElements.forEach((el) => {
+    const style = (el as HTMLElement).style;
     for (let i = 0; i < style.length; i++) {
       const prop = style[i];
       const val = style[prop as any];
@@ -42,7 +63,7 @@ export async function captureElement(
         }
       }
     }
-    // Vérifier les styles calculés (via getComputedStyle)
+    // Vérifier aussi via getComputedStyle si des lab subsistent
     const win = (el as HTMLElement).ownerDocument?.defaultView;
     if (win) {
       const computed = win.getComputedStyle(el);
@@ -62,11 +83,11 @@ export async function captureElement(
     }
   });
 
-  // Appliquer les styles du parent au clone (padding, marges, etc.)
+  // 5. S'assurer que le clone a les bonnes dimensions
   clone.style.width = element.offsetWidth + "px";
   clone.style.height = element.offsetHeight + "px";
 
-  // Capturer avec html2canvas
+  // 6. Capturer
   const canvas = await html2canvas(clone, {
     scale: 2,
     useCORS: true,
@@ -76,7 +97,7 @@ export async function captureElement(
     ...options,
   });
 
-  // Nettoyer le DOM
+  // 7. Nettoyer
   document.body.removeChild(container);
 
   return canvas;
