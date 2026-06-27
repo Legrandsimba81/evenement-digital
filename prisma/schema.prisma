@@ -1,24 +1,65 @@
+// prisma/schema.prisma
+
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"  // au lieu de "sqlite" en production "postgresql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model User {
   id            String    @id @default(cuid())
-  email         String    @unique
   name          String?
-  password      String?
+  email         String    @unique
+  emailVerified DateTime?
   image         String?
-  role          String    @default("USER") // Valeurs possibles: USER, ADMIN
+  password      String?   // pour les credentials
+  role          String    @default("USER")
   events        Event[]
+  accounts      Account[]
+  sessions      Session[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
 
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// Vos modèles existants (Event, Guest, Message) restent inchangés
 model Event {
   id             String    @id @default(cuid())
   title          String
@@ -29,8 +70,8 @@ model Event {
   location       String
   date           DateTime
   time           String
-  imageUrl       String?   // Image héros (portrait)
-  invitationImageUrl String? // Image de l'invitation (paysage)
+  imageUrl       String?
+  invitationImageUrl String?
   userId         String
   user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   guests         Guest[]
@@ -43,10 +84,10 @@ model Event {
 
 model Guest {
   id            String    @id @default(cuid())
-  title         String?   // Mr, Mme, Dr, Papa, Maman, Excellence
+  title         String?
   firstName     String
   lastName      String
-  status        String?   // "attending" ou "not_attending" ou null (indéfini)
+  status        String?
   eventId       String
   event         Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
