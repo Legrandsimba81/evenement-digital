@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Calendar, MapPin, Clock, Download, Check, X, Heart, Gift, Trophy, Music, User, Users, QrCode } from "lucide-react";
 import QRCode from "react-qr-code";
-import html2canvas from "html2canvas";
+import { captureElement } from "@/lib/captureImage";
 
 type Guest = {
   id: string;
@@ -148,7 +148,6 @@ export default function InvitationCard({
     }
   };
 
-  // ✅ Téléchargement corrigé en modifiant le DOM avant capture et restauration
   const downloadInvitation = async () => {
     if (!cardRef.current) {
       alert("Référence de la carte non trouvée.");
@@ -159,41 +158,8 @@ export default function InvitationCard({
       return;
     }
     setIsDownloading(true);
-    const element = cardRef.current;
-    const backupStyles: { el: Element; prop: string; value: string }[] = [];
-
     try {
-      // Parcourir tous les éléments pour sauvegarder et remplacer les couleurs "lab"
-      const allElements = element.querySelectorAll("*");
-      allElements.forEach((el) => {
-        const style = (el as HTMLElement).style;
-        const propsToCheck = ["color", "backgroundColor", "borderColor", "backgroundImage"];
-        propsToCheck.forEach((prop) => {
-          const val = style[prop as any];
-          if (val && typeof val === "string" && val.includes("lab")) {
-            backupStyles.push({ el, prop, value: val });
-            // Remplacer par une valeur RGB sûre
-            if (prop === "color" || prop === "borderColor") {
-              style[prop as any] = "#000000";
-            } else if (prop === "backgroundColor") {
-              style[prop as any] = "#ffffff";
-            } else if (prop === "backgroundImage") {
-              style[prop as any] = "none";
-            }
-          }
-        });
-      });
-
-      // Capturer
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: "#ffffff",
-        logging: false,
-      });
-
-      // Télécharger
+      const canvas = await captureElement(cardRef.current);
       const link = document.createElement("a");
       link.download = `invitation-${event.slug}.png`;
       link.href = canvas.toDataURL("image/png");
@@ -202,10 +168,6 @@ export default function InvitationCard({
       console.error("Erreur de téléchargement:", error);
       alert("Erreur lors du téléchargement. Veuillez réessayer.");
     } finally {
-      // Restaurer les styles sauvegardés
-      backupStyles.forEach(({ el, prop, value }) => {
-        (el as HTMLElement).style[prop as any] = value;
-      });
       setIsDownloading(false);
     }
   };
@@ -214,12 +176,7 @@ export default function InvitationCard({
     if (!qrRef.current) return;
     setIsDownloadingQR(true);
     try {
-      const canvas = await html2canvas(qrRef.current, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: "#ffffff",
-        logging: false,
-      });
+      const canvas = await captureElement(qrRef.current);
       const link = document.createElement("a");
       link.download = `qr-${event.slug}.png`;
       link.href = canvas.toDataURL("image/png");
@@ -271,7 +228,6 @@ export default function InvitationCard({
           </span>
         </div>
 
-        {/* Bonjour {nom} en plus petit */}
         <p className="text-base sm:text-lg text-gray-600 dark:text-gray-400 mb-1">
           Bonjour <span className="font-semibold text-gray-900 dark:text-white">{fullName}</span>
         </p>
