@@ -138,3 +138,25 @@ export async function deleteEvent(slug: string) {
     throw new Error(error.message || "Erreur lors de la suppression");
   }
 }
+// ... dans actions/event-actions.ts
+
+export async function deleteEventAsAdmin(slug: string) {
+  try {
+    const session = await auth();
+    if (!session?.user || session.user.role !== "ADMIN") {
+      throw new Error("Non autorisé");
+    }
+
+    const event = await prisma.event.findUnique({ where: { slug } });
+    if (!event) {
+      throw new Error("Événement non trouvé");
+    }
+
+    await prisma.event.delete({ where: { slug } });
+    revalidatePath("/admin");
+    return { success: true };
+  } catch (error: any) {
+    console.error("❌ Erreur deleteEventAsAdmin:", error);
+    throw new Error(error.message || "Erreur lors de la suppression");
+  }
+}
