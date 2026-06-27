@@ -2,17 +2,21 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Calendar, MapPin, Plus, Users, Clock } from "lucide-react";
+import { Calendar, MapPin, Plus, Users, Clock, Gift, Heart, Trophy, Music } from "lucide-react";
 
-export const dynamic = 'force-dynamic'
+const typeIcons: Record<string, any> = {
+  ANNIVERSAIRE: Gift,
+  MARIAGE: Heart,
+  SOUTENANCE: Trophy,
+  AUTRE: Music,
+};
+
 export default async function DashboardPage() {
   const session = await auth();
   const userId = session?.user?.id;
   if (!userId) redirect("/login");
 
-  const eventsCount = await prisma.event.count({
-    where: { userId },
-  });
+  const eventsCount = await prisma.event.count({ where: { userId } });
 
   if (eventsCount === 0) {
     redirect("/dashboard/event/new");
@@ -20,11 +24,9 @@ export default async function DashboardPage() {
 
   const events = await prisma.event.findMany({
     where: { userId },
+    include: { guests: true }, // ✅ Ajout pour avoir le nombre d'invités
     orderBy: { createdAt: "desc" },
   });
-
-  // Calcul du nombre d'événements à venir
-  const upcomingEvents = events.filter((e: any) => new Date(e.date) > new Date()).length;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-6 md:p-8">
@@ -38,37 +40,14 @@ export default async function DashboardPage() {
             className="mt-4 md:mt-0 inline-flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-6 py-3 rounded-xl transition"
           >
             <Plus size={20} />
-            Créer un événement
+            Nouvel événement
           </Link>
         </div>
 
-        {/* Statistiques */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <div className="bg-white dark:bg-gray-900 p-4 rounded-xl shadow border border-gray-200 dark:border-gray-800">
-            <p className="text-sm text-gray-500 dark:text-gray-400">Total événements</p>
-            <p className="text-3xl font-bold text-gray-900 dark:text-white">{events.length}</p>
-          </div>
-          <div className="bg-white dark:bg-gray-900 p-4 rounded-xl shadow border border-gray-200 dark:border-gray-800">
-            <p className="text-sm text-gray-500 dark:text-gray-400">Événements à venir</p>
-            <p className="text-3xl font-bold text-gray-900 dark:text-white">{upcomingEvents}</p>
-          </div>
-          <div className="bg-white dark:bg-gray-900 p-4 rounded-xl shadow border border-gray-200 dark:border-gray-800">
-            <p className="text-sm text-gray-500 dark:text-gray-400">Total invités</p>
-            <p className="text-3xl font-bold text-gray-900 dark:text-white">
-              {events.reduce((acc: number, e: any) => acc + (e.guests?.length || 0), 0)}
-            </p>
-          </div>
-        </div>
-
-        {events.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-500 dark:text-gray-400">
-              Aucun événement pour le moment. Commencez par en créer un !
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {events.map((event: any) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {events.map((event) => {
+            const Icon = typeIcons[event.type] || Calendar;
+            return (
               <Link
                 key={event.id}
                 href={`/dashboard/${event.slug}`}
@@ -84,7 +63,11 @@ export default async function DashboardPage() {
                   </div>
                 )}
                 <div className="p-5">
-                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white group-hover:text-primary-500 transition-colors">
+                  <div className="flex items-center gap-2 text-primary-500">
+                    <Icon size={18} />
+                    <span className="text-sm font-medium">{event.type}</span>
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white group-hover:text-primary-500 transition-colors mt-1">
                     {event.title}
                   </h3>
                   <div className="mt-3 space-y-2 text-sm text-gray-600 dark:text-gray-400">
@@ -102,7 +85,7 @@ export default async function DashboardPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <Users size={16} />
-                      <span>{event.type}</span>
+                      <span>{event.guests?.length || 0} invités</span>
                     </div>
                   </div>
                   <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 text-primary-500 font-medium text-sm">
@@ -110,9 +93,9 @@ export default async function DashboardPage() {
                   </div>
                 </div>
               </Link>
-            ))}
-          </div>
-        )}
+            );
+          })}
+        </div>
       </div>
     </div>
   );

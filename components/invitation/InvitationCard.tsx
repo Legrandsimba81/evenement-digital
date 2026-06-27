@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Calendar, MapPin, Clock, Download, Check, X } from "lucide-react";
+import { Calendar, MapPin, Clock, Download, Check, X, Heart, Gift, Trophy, Music } from "lucide-react";
 import QRCode from "react-qr-code";
 import html2canvas from "html2canvas";
 
@@ -27,6 +27,14 @@ type Event = {
   slug: string;
 };
 
+// Configuration des styles par type d'événement
+const typeConfigs: Record<string, { icon: any; bg: string; border: string; accent: string; label: string }> = {
+  MARIAGE: { icon: Heart, bg: "bg-red-50 dark:bg-red-950/20", border: "border-red-200", accent: "text-red-600", label: "Mariage" },
+  ANNIVERSAIRE: { icon: Gift, bg: "bg-pink-50 dark:bg-pink-950/20", border: "border-pink-200", accent: "text-pink-600", label: "Anniversaire" },
+  SOUTENANCE: { icon: Trophy, bg: "bg-purple-50 dark:bg-purple-950/20", border: "border-purple-200", accent: "text-purple-600", label: "Soutenance" },
+  AUTRE: { icon: Music, bg: "bg-blue-50 dark:bg-blue-950/20", border: "border-blue-200", accent: "text-blue-600", label: "Autre" },
+};
+
 export default function InvitationCard({
   event,
   guestName,
@@ -49,12 +57,17 @@ export default function InvitationCard({
     guestName.split(" ")[0]
   )}&lastName=${encodeURIComponent(guestName.split(" ").slice(1).join(" ") || "")}`;
 
+  // Récupération du statut depuis localStorage
   useEffect(() => {
     const savedStatus = localStorage.getItem(`status_${guestId}`);
     if (savedStatus) {
       setStatus(savedStatus);
     }
   }, [guestId]);
+
+  // Configuration selon le type
+  const config = typeConfigs[event.type] || typeConfigs["AUTRE"];
+  const TypeIcon = config.icon;
 
   const handleAttendance = async (newStatus: string) => {
     setIsLoading(true);
@@ -103,7 +116,7 @@ export default function InvitationCard({
   };
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-800">
+    <div className={`bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-800`}>
       {/* Hero Section avec photo en portrait (sans texte par-dessus) */}
       <div className="relative w-full h-[60vh] md:h-[70vh] overflow-hidden">
         {event.imageUrl ? (
@@ -114,13 +127,22 @@ export default function InvitationCard({
           />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center">
-            <span className="text-white text-4xl font-bold">Simba Event</span>
+            <div className="flex flex-col items-center text-white">
+              <TypeIcon size={64} className="mb-4" />
+              <span className="text-4xl font-bold">{config.label}</span>
+            </div>
           </div>
         )}
       </div>
 
       {/* Contenu de l'invitation (pour téléchargement) */}
       <div ref={cardRef} className="p-6 md:p-8">
+        {/* En-tête avec icône de type */}
+        <div className="flex items-center gap-2 mb-2">
+          <TypeIcon size={20} className={config.accent} />
+          <span className={`text-sm font-semibold ${config.accent}`}>{config.label}</span>
+        </div>
+
         <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
           Bonjour <span className="text-primary-500">{fullName}</span>
         </h1>
