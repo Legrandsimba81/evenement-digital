@@ -123,52 +123,15 @@ export default function InvitationCard({
 
   const downloadInvitation = async () => {
     if (!cardRef.current) return;
-    await new Promise((resolve) => setTimeout(resolve, 600));
+    await new Promise((resolve) => setTimeout(resolve, 500));
     setIsDownloading(true);
     try {
       const canvas = await html2canvas(cardRef.current, {
         scale: 2,
         useCORS: true,
-        allowTaint: false,
+        allowTaint: true,
         backgroundColor: "#ffffff",
         logging: false,
-        onclone: (clonedDoc) => {
-          // Parcourir tous les éléments et remplacer les couleurs contenant 'lab' par du noir/blanc
-          const allElements = clonedDoc.querySelectorAll("*");
-          allElements.forEach((el) => {
-            // Pour l'élément lui-même
-            const style = (el as HTMLElement).style;
-            let changed = false;
-            // Vérifier les propriétés courantes
-            const props = ["color", "backgroundColor", "borderColor", "background"];
-            props.forEach((prop) => {
-              const value = style[prop as any];
-              if (value && typeof value === "string" && value.includes("lab")) {
-                if (prop === "color") style.color = "#000000";
-                else style.backgroundColor = "#ffffff";
-                changed = true;
-              }
-            });
-            // S'il y a un style inline, on le nettoie
-            if (el.hasAttribute("style")) {
-              const inlineStyle = el.getAttribute("style");
-              if (inlineStyle && inlineStyle.includes("lab")) {
-                // Remplacer les occurrences lab
-                const newStyle = inlineStyle.replace(/lab\([^)]*\)/g, "#ffffff");
-                el.setAttribute("style", newStyle);
-              }
-            }
-            // Pour les classes, on ne peut pas facilement les modifier, mais on peut forcer un style inline
-            // On ajoute un style inline pour les éléments avec des couleurs problématiques
-            const computed = window.getComputedStyle(el);
-            if (computed.color && computed.color.includes("lab")) {
-              (el as HTMLElement).style.color = "#000000";
-            }
-            if (computed.backgroundColor && computed.backgroundColor.includes("lab")) {
-              (el as HTMLElement).style.backgroundColor = "#ffffff";
-            }
-          });
-        },
       });
       const link = document.createElement("a");
       link.download = `invitation-${event.slug}.png`;
@@ -206,7 +169,7 @@ export default function InvitationCard({
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-800">
-      {/* Image héros en paysage */}
+      {/* Image héros */}
       <div className="relative w-full aspect-video overflow-hidden bg-gray-100 dark:bg-gray-800">
         {event.imageUrl ? (
           <img
@@ -225,7 +188,7 @@ export default function InvitationCard({
       </div>
 
       {/* Contenu */}
-      <div ref={cardRef} className="p-6 md:p-8 bg-white dark:bg-gray-900">
+      <div ref={cardRef} className="p-6 md:p-8">
         <div className="flex items-center gap-2 mb-2">
           <TypeIcon size={20} className={config.accent} />
           <span className={`text-sm font-semibold ${config.accent}`}>{config.label}</span>
@@ -333,19 +296,19 @@ export default function InvitationCard({
               }`}
             >
               <Check size={18} />
-              {status === "attending" ? "Confirmé" : "Je serai présent(e)"}
+              {status === "attending" ? "Confirmé ✅" : "Je serai présent(e)"}
             </button>
             <button
-              onClick={() => handleAttendance("not_attending")}
+              onClick={() => handleAttendance("annule")}
               disabled={isLoading}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition ${
-                status === "not_attending"
+                status === "annule"
                   ? "bg-red-500 text-white border-red-500"
                   : "border-gray-300 hover:bg-red-50 dark:border-gray-600 dark:hover:bg-red-900/20"
               }`}
             >
               <X size={18} />
-              {status === "not_attending" ? "Indisponible" : "Indisponible"}
+              {status === "annule" ? "Indisponible ❌" : "Indisponible"}
             </button>
           </div>
         </div>
@@ -353,7 +316,9 @@ export default function InvitationCard({
           <p className="text-center text-sm text-gray-500 mt-2">
             {status === "attending"
               ? "Merci ! Nous avons bien enregistré votre présence."
-              : "Nous avons bien noté votre indisponibilité."}
+              : status === "annule"
+              ? "Nous avons bien noté votre indisponibilité."
+              : "Statut en attente de confirmation."}
           </p>
         )}
       </div>

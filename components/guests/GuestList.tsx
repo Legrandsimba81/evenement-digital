@@ -7,8 +7,16 @@ import { Search, Copy, Users, User } from "lucide-react";
 
 const statusColors: Record<string, string> = {
   en_attente: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300",
+  attending: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
   annule: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
-  entre: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
+  entre: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
+};
+
+const statusLabels: Record<string, string> = {
+  en_attente: "En attente",
+  attending: "Confirmé",
+  annule: "Annulé",
+  entre: "Entré",
 };
 
 export default function GuestList({ guests, eventId, eventSlug }: { guests: any[]; eventId: string; eventSlug: string }) {
@@ -44,7 +52,6 @@ export default function GuestList({ guests, eventId, eventSlug }: { guests: any[
     });
   };
 
-  // ✅ Lien personnel avec le slug et les noms
   const copyInvitationLink = (firstName: string, lastName: string) => {
     const link = `${baseUrl}/invitation/${eventSlug}?firstName=${encodeURIComponent(firstName)}&lastName=${encodeURIComponent(lastName)}`;
     navigator.clipboard.writeText(link);
@@ -83,6 +90,7 @@ export default function GuestList({ guests, eventId, eventSlug }: { guests: any[
               {filteredGuests.map((guest) => {
                 const statusKey = guest.status || "en_attente";
                 const colorClass = statusColors[statusKey] || statusColors.en_attente;
+                const label = statusLabels[statusKey] || "En attente";
                 return (
                   <tr key={guest.id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50">
                     <td className="px-3 py-2 font-mono font-semibold">{guest.invitationNumber}</td>
@@ -104,6 +112,7 @@ export default function GuestList({ guests, eventId, eventSlug }: { guests: any[
                         disabled={isPending}
                       >
                         <option value="en_attente">En attente</option>
+                        <option value="attending">Confirmé</option>
                         <option value="annule">Annulé</option>
                         <option value="entre">Entré</option>
                       </select>
