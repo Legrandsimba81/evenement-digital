@@ -26,17 +26,17 @@ export default function FloatingHearts() {
   }, [hearts.length]);
 
   return (
-    <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+    <div className="fixed inset-0 pointer-events-none overflow-hidden z-50">
       {hearts.map((heart) => (
         <Heart
           key={heart.id}
-          className="absolute text-pink-500/50"
+          className="absolute text-pink-500/40"
           style={{
             left: `${heart.x}%`,
             top: "-10%",
             fontSize: heart.size,
             animation: `floatDown ${heart.duration}s linear forwards`,
-            opacity: 0.7,
+            opacity: 0.6,
           }}
           fill="currentColor"
         />
@@ -45,7 +45,7 @@ export default function FloatingHearts() {
         @keyframes floatDown {
           0% {
             transform: translateY(0) rotate(0deg);
-            opacity: 0.7;
+            opacity: 0.6;
           }
           100% {
             transform: translateY(110vh) rotate(720deg);
