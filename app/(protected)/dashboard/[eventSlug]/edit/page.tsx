@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { notFound, redirect } from "next/navigation";
-import EventForm from "@/components/forms/EventForm";
+import EventTypeForm from "@/components/events/EventTypeForm";
 
 export default async function EditEventPage({
   params,
@@ -17,15 +17,11 @@ export default async function EditEventPage({
     where: { slug: eventSlug },
   });
 
-  if (!event || event.userId !== userId) {
-    return notFound();
-  }
+  if (!event || event.userId !== userId) return notFound();
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-8">
-      <div className="max-w-2xl mx-auto px-4">
-        <EventForm initialData={event} />
-      </div>
+    <div className="max-w-4xl mx-auto">
+      <EventTypeForm initialData={event} />
     </div>
   );
 }

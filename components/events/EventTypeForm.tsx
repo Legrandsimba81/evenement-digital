@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { uploadImage } from "@/actions/upload-actions";
-import { createEvent } from "@/actions/event-actions";
+import { createEvent, updateEvent } from "@/actions/event-actions";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Gift, Heart, Trophy, Music } from "lucide-react";
@@ -74,28 +74,32 @@ const VALID_EVENT_FIELDS = [
   "imageUrl", "invitationImageUrl", "invitationType",
 ];
 
-export default function EventTypeForm({ type }: { type: EventType }) {
+export default function EventTypeForm({ type, initialData }: { type?: EventType; initialData?: any }) {
   const router = useRouter();
+  const isEdit = !!initialData;
+
+  // États pour les images
   const [heroImageFile, setHeroImageFile] = useState<File | null>(null);
-  const [heroImagePreview, setHeroImagePreview] = useState<string | null>(null);
+  const [heroImagePreview, setHeroImagePreview] = useState<string | null>(initialData?.imageUrl || null);
   const [invitationImageFile, setInvitationImageFile] = useState<File | null>(null);
-  const [invitationImagePreview, setInvitationImagePreview] = useState<string | null>(null);
+  const [invitationImagePreview, setInvitationImagePreview] = useState<string | null>(initialData?.invitationImageUrl || null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const defaultValues: EventFormData = {
-    type,
-    invitationType: "single",
-    title: "",
-    location: "",
-    date: "",
-    time: "",
-    description: "",
-    invitationText: "",
-    program: "",
-    whatsappNumber: "",
-    brideName: "",
-    groomName: "",
-    age: "",
-    thesisTitle: "",
+    type: type || initialData?.type || "AUTRE",
+    invitationType: initialData?.invitationType || "single",
+    title: initialData?.title || "",
+    location: initialData?.location || "",
+    date: initialData?.date ? new Date(initialData.date).toISOString().split("T")[0] : "",
+    time: initialData?.time || "",
+    description: initialData?.description || "",
+    invitationText: initialData?.invitationText || "",
+    program: initialData?.program || "",
+    whatsappNumber: initialData?.whatsappNumber || "",
+    brideName: initialData?.brideName || "",
+    groomName: initialData?.groomName || "",
+    age: initialData?.age || "",
+    thesisTitle: initialData?.thesisTitle || "",
   };
 
   const { register, handleSubmit, setValue, formState: { errors, isSubmitting } } = useForm<EventFormData>({
@@ -106,41 +110,67 @@ export default function EventTypeForm({ type }: { type: EventType }) {
   const handleHeroImageChange = (file: File | null, preview: string | null) => {
     setHeroImageFile(file);
     setHeroImagePreview(preview);
+    setErrorMessage(null);
   };
 
   const handleInvitationImageChange = (file: File | null, preview: string | null) => {
     setInvitationImageFile(file);
     setInvitationImagePreview(preview);
+    setErrorMessage(null);
   };
 
   const applySuggestion = (field: keyof EventFormData, value: string) => {
     setValue(field, value as any);
+    setErrorMessage(null);
   };
 
   const onSubmit = async (data: EventFormData) => {
-    console.log("📝 Soumission du formulaire avec les données:", data);
+    setErrorMessage(null);
+
+    // Validation des champs obligatoires
+    if (!data.title || !data.location || !data.date || !data.time) {
+      setErrorMessage("Veuillez remplir tous les champs obligatoires.");
+      return;
+    }
+
+    const dateObj = new Date(data.date);
+    if (isNaN(dateObj.getTime())) {
+      setErrorMessage("La date est invalide.");
+      return;
+    }
 
     try {
-      let heroImageUrl = "";
-      let invitationImageUrl = "";
+      let heroImageUrl = initialData?.imageUrl || "";
+      let invitationImageUrl = initialData?.invitationImageUrl || "";
 
+      // Upload des nouvelles images si elles ont été changées
       if (heroImageFile) {
-        console.log("📤 Upload de l'image héros...");
-        const formData = new FormData();
-        formData.append("file", heroImageFile);
-        const uploaded = await uploadImage(formData);
-        heroImageUrl = uploaded.url;
-        console.log("✅ Image héros uploadée:", heroImageUrl);
-      }
-      if (invitationImageFile) {
-        console.log("📤 Upload de l'image invitation...");
-        const formData = new FormData();
-        formData.append("file", invitationImageFile);
-        const uploaded = await uploadImage(formData);
-        invitationImageUrl = uploaded.url;
-        console.log("✅ Image invitation uploadée:", invitationImageUrl);
+        try {
+          const formData = new FormData();
+          formData.append("file", heroImageFile);
+          const uploaded = await uploadImage(formData);
+          heroImageUrl = uploaded.url;
+        } catch (err) {
+          console.error("❌ Erreur upload image héros:", err);
+          setErrorMessage("Erreur lors du téléchargement de l'image héros.");
+          return;
+        }
       }
 
+      if (invitationImageFile) {
+        try {
+          const formData = new FormData();
+          formData.append("file", invitationImageFile);
+          const uploaded = await uploadImage(formData);
+          invitationImageUrl = uploaded.url;
+        } catch (err) {
+          console.error("❌ Erreur upload image invitation:", err);
+          setErrorMessage("Erreur lors du téléchargement de l'image invitation.");
+          return;
+        }
+      }
+
+      // Nettoyer les données
       const cleanData: any = {};
       for (const key of VALID_EVENT_FIELDS) {
         const value = data[key as keyof EventFormData];
@@ -151,45 +181,54 @@ export default function EventTypeForm({ type }: { type: EventType }) {
 
       const payload = {
         ...cleanData,
-        date: new Date(data.date),
+        date: dateObj,
         imageUrl: heroImageUrl,
         invitationImageUrl,
       };
 
-      console.log("📦 Payload envoyé à createEvent:", payload);
+      console.log("📦 Payload:", payload);
 
-      const result = await createEvent(payload);
-      console.log("✅ Résultat de createEvent:", result);
+      let result;
+      if (isEdit) {
+        result = await updateEvent(initialData.slug, payload);
+      } else {
+        result = await createEvent(payload);
+      }
 
       if (result.success) {
-        console.log("🚀 Redirection vers /dashboard");
         router.push("/dashboard");
       } else {
-        console.error("❌ createEvent n'a pas retourné success:true");
-        alert("Une erreur est survenue lors de la création.");
+        setErrorMessage("Une erreur est survenue. Veuillez réessayer.");
       }
-    } catch (error) {
-      console.error("❌ Erreur dans onSubmit:", error);
-      alert("Une erreur est survenue lors de la création de l'événement. Veuillez réessayer.");
+    } catch (error: any) {
+      console.error("❌ Erreur:", error);
+      setErrorMessage(error.message || "Une erreur est survenue. Veuillez réessayer.");
     }
   };
 
-  const Icon = typeIcons[type];
-  const colorClass = typeColors[type];
-  const typeSuggestions = suggestions[type];
+  const currentType = type || initialData?.type || "AUTRE";
+  const Icon = typeIcons[currentType as EventType];
+  const colorClass = typeColors[currentType as EventType];
+  const typeSuggestions = suggestions[currentType as EventType] || suggestions["AUTRE"];
 
   return (
     <div className="max-w-2xl mx-auto p-6 md:p-8">
       <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${colorClass} text-white mb-4`}>
         <Icon size={18} />
-        <span className="font-medium">{type}</span>
+        <span className="font-medium">{currentType}</span>
       </div>
       <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
-        Créer une invitation pour {type.toLowerCase()}
+        {isEdit ? "Modifier l'invitation" : `Créer une invitation pour ${currentType.toLowerCase()}`}
       </h1>
 
+      {errorMessage && (
+        <div className="mb-4 p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl text-red-600 dark:text-red-400 text-sm">
+          {errorMessage}
+        </div>
+      )}
+
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <input type="hidden" {...register("type")} value={type} />
+        <input type="hidden" {...register("type")} value={currentType} />
 
         {/* Titre */}
         <div>
@@ -204,7 +243,7 @@ export default function EventTypeForm({ type }: { type: EventType }) {
         </div>
 
         {/* Champs spécifiques */}
-        {type === "MARIAGE" && (
+        {currentType === "MARIAGE" && (
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Marié</label>
@@ -216,13 +255,13 @@ export default function EventTypeForm({ type }: { type: EventType }) {
             </div>
           </div>
         )}
-        {type === "ANNIVERSAIRE" && (
+        {currentType === "ANNIVERSAIRE" && (
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Âge</label>
             <input {...register("age")} type="number" placeholder="30" className="w-full px-4 py-3 border-2 border-gray-400 rounded-xl focus:ring-2 focus:ring-primary-500 dark:bg-gray-900 dark:border-gray-600 dark:text-white" />
           </div>
         )}
-        {type === "SOUTENANCE" && (
+        {currentType === "SOUTENANCE" && (
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sujet de thèse</label>
             <input {...register("thesisTitle")} placeholder="Titre de la thèse" className="w-full px-4 py-3 border-2 border-gray-400 rounded-xl focus:ring-2 focus:ring-primary-500 dark:bg-gray-900 dark:border-gray-600 dark:text-white" />
@@ -287,19 +326,23 @@ export default function EventTypeForm({ type }: { type: EventType }) {
           <input {...register("whatsappNumber")} placeholder="+225 01 23 45 67 89" className="w-full px-4 py-3 border-2 border-gray-400 rounded-xl focus:ring-2 focus:ring-primary-500 dark:bg-gray-900 dark:border-gray-600 dark:text-white" />
         </div>
 
-        {/* Deux images en paysage (16:9) */}
+        {/* Deux images paysage avec compression */}
         <ImageUploadWithCrop
           label="Image héros (paysage)"
           aspect={16/9}
+          initialPreview={heroImagePreview}
           onImageChange={handleHeroImageChange}
           description="Image au format paysage (16:9) pour la section héros"
+          maxSizeMB={1.5}
         />
 
         <ImageUploadWithCrop
           label="Image de l'invitation (paysage)"
           aspect={16/9}
+          initialPreview={invitationImagePreview}
           onImageChange={handleInvitationImageChange}
           description="Image au format paysage (16:9) pour l'invitation téléchargeable"
+          maxSizeMB={1.5}
         />
 
         <button
@@ -308,7 +351,7 @@ export default function EventTypeForm({ type }: { type: EventType }) {
           className="w-full bg-primary-500 text-white px-6 py-3 rounded-xl font-medium hover:bg-primary-600 transition disabled:opacity-50 active:scale-[0.98] touch-manipulation"
           style={{ touchAction: "manipulation" }}
         >
-          {isSubmitting ? "Création..." : "Créer l'événement"}
+          {isSubmitting ? "Enregistrement..." : isEdit ? "Modifier l'événement" : "Créer l'événement"}
         </button>
       </form>
     </div>
