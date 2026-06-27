@@ -32,37 +32,37 @@ type Event = {
 type EventType = "MARIAGE" | "ANNIVERSAIRE" | "SOUTENANCE" | "AUTRE";
 
 const typeConfigs = {
-  MARIAGE: { 
-    icon: Heart, 
-    bg: "bg-rose-50 dark:bg-rose-950/20", 
-    border: "border-rose-200", 
-    accent: "text-rose-600", 
+  MARIAGE: {
+    icon: Heart,
+    bg: "bg-rose-50 dark:bg-rose-950/20",
+    border: "border-rose-200",
+    accent: "text-rose-600",
     label: "Mariage",
-    invitationTitle: "Invitation de mariage"
+    invitationTitle: "Invitation de mariage",
   },
-  ANNIVERSAIRE: { 
-    icon: Gift, 
-    bg: "bg-pink-50 dark:bg-pink-950/20", 
-    border: "border-pink-200", 
-    accent: "text-pink-600", 
+  ANNIVERSAIRE: {
+    icon: Gift,
+    bg: "bg-pink-50 dark:bg-pink-950/20",
+    border: "border-pink-200",
+    accent: "text-pink-600",
     label: "Anniversaire",
-    invitationTitle: "Invitation d'anniversaire"
+    invitationTitle: "Invitation d'anniversaire",
   },
-  SOUTENANCE: { 
-    icon: Trophy, 
-    bg: "bg-purple-50 dark:bg-purple-950/20", 
-    border: "border-purple-200", 
-    accent: "text-purple-600", 
+  SOUTENANCE: {
+    icon: Trophy,
+    bg: "bg-purple-50 dark:bg-purple-950/20",
+    border: "border-purple-200",
+    accent: "text-purple-600",
     label: "Soutenance",
-    invitationTitle: "Invitation à la soutenance"
+    invitationTitle: "Invitation à la soutenance",
   },
-  AUTRE: { 
-    icon: Music, 
-    bg: "bg-blue-50 dark:bg-blue-950/20", 
-    border: "border-blue-200", 
-    accent: "text-blue-600", 
+  AUTRE: {
+    icon: Music,
+    bg: "bg-blue-50 dark:bg-blue-950/20",
+    border: "border-blue-200",
+    accent: "text-blue-600",
     label: "Autre",
-    invitationTitle: "Invitation"
+    invitationTitle: "Invitation",
   },
 } as const;
 
@@ -148,7 +148,7 @@ export default function InvitationCard({
     }
   };
 
-  // ✅ Fonction corrigée pour le téléchargement
+  // ✅ Téléchargement corrigé : remplacement des couleurs "lab" dans onclone
   const downloadInvitation = async () => {
     if (!cardRef.current) {
       alert("Référence de la carte non trouvée.");
@@ -160,45 +160,50 @@ export default function InvitationCard({
     }
     setIsDownloading(true);
     try {
-      // 1. Sauvegarder les styles qui pourraient contenir "lab"
-      const element = cardRef.current;
-      const styleBackups: { el: Element; prop: string; value: string }[] = [];
-      const allElements = element.querySelectorAll("*");
-      allElements.forEach((el) => {
-        const style = (el as HTMLElement).style;
-        // Vérifier les propriétés qui pourraient contenir "lab"
-        const propsToCheck = ["color", "backgroundColor", "backgroundImage", "borderColor"];
-        propsToCheck.forEach((prop) => {
-          const val = style[prop as any];
-          if (val && typeof val === "string" && val.includes("lab")) {
-            styleBackups.push({ el, prop, value: val });
-            // Remplacer par une valeur sûre
-            if (prop === "color" || prop === "borderColor") {
-              style[prop as any] = "#000000";
-            } else if (prop === "backgroundColor") {
-              style[prop as any] = "#ffffff";
-            } else if (prop === "backgroundImage") {
-              style[prop as any] = "none";
-            }
-          }
-        });
-      });
-
-      // 2. Capturer
-      const canvas = await html2canvas(element, {
+      const canvas = await html2canvas(cardRef.current, {
         scale: 2,
         useCORS: true,
         allowTaint: true,
         backgroundColor: "#ffffff",
         logging: false,
+        onclone: (clonedDoc) => {
+          const allElements = clonedDoc.querySelectorAll("*");
+          allElements.forEach((el) => {
+            const style = (el as HTMLElement).style;
+            // Remplacer les couleurs lab()
+            if (style.color && style.color.includes("lab")) {
+              style.color = "#000000";
+            }
+            if (style.backgroundColor && style.backgroundColor.includes("lab")) {
+              style.backgroundColor = "#ffffff";
+            }
+            if (style.borderColor && style.borderColor.includes("lab")) {
+              style.borderColor = "#000000";
+            }
+            if (style.backgroundImage && style.backgroundImage.includes("lab")) {
+              style.backgroundImage = "none";
+            }
+            // Vérifier les styles calculés
+            const win = (el as HTMLElement).ownerDocument?.defaultView;
+            if (win) {
+              const computed = win.getComputedStyle(el);
+              if (computed.color && computed.color.includes("lab")) {
+                (el as HTMLElement).style.color = "#000000";
+              }
+              if (computed.backgroundColor && computed.backgroundColor.includes("lab")) {
+                (el as HTMLElement).style.backgroundColor = "#ffffff";
+              }
+              if (computed.borderColor && computed.borderColor.includes("lab")) {
+                (el as HTMLElement).style.borderColor = "#000000";
+              }
+              if (computed.backgroundImage && computed.backgroundImage.includes("lab")) {
+                (el as HTMLElement).style.backgroundImage = "none";
+              }
+            }
+          });
+        },
       });
 
-      // 3. Restaurer les styles
-      styleBackups.forEach(({ el, prop, value }) => {
-        (el as HTMLElement).style[prop as any] = value;
-      });
-
-      // 4. Télécharger
       const link = document.createElement("a");
       link.download = `invitation-${event.slug}.png`;
       link.href = canvas.toDataURL("image/png");
@@ -233,7 +238,6 @@ export default function InvitationCard({
     }
   };
 
-  // Déterminer le libellé pour 1 ou 2 personnes
   const peopleLabel = event.invitationType === "couple" ? "2 personnes" : "1 personne";
   const peopleIcon = event.invitationType === "couple" ? Users : User;
 
@@ -259,11 +263,13 @@ export default function InvitationCard({
 
       {/* Contenu */}
       <div ref={cardRef} className="p-4 sm:p-6 md:p-8">
-        {/* En-tête avec titre d'invitation et badge */}
+        {/* En-tête : titre d'invitation + badge personnes */}
         <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
           <div className="flex items-center gap-2">
             <TypeIcon size={20} className={config.accent} />
-            <span className={`text-sm font-semibold ${config.accent}`}>{config.invitationTitle}</span>
+            <span className={`text-sm font-semibold ${config.accent}`}>
+              {config.invitationTitle}
+            </span>
           </div>
           <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
             {peopleIcon === Users ? <Users size={14} /> : <User size={14} />}
@@ -313,7 +319,9 @@ export default function InvitationCard({
         <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
           <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
             <Calendar size={18} className="text-primary-500 flex-shrink-0" />
-            <span className="text-sm sm:text-base">{new Date(event.date).toLocaleDateString('fr-FR')}</span>
+            <span className="text-sm sm:text-base">
+              {new Date(event.date).toLocaleDateString('fr-FR')}
+            </span>
           </div>
           <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
             <Clock size={18} className="text-primary-500 flex-shrink-0" />
