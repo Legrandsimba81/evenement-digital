@@ -116,7 +116,7 @@ export default function EventDetailsClient({ event }: { event: Event }) {
                         {event.type} - {event.location}
                     </p>
                 </div>
-                <div className="flex gap-3 mt-4 md:mt-0">
+                <div className="flex flex-wrap gap-3 mt-4 md:mt-0">
                     <Link
                         href={`/dashboard/${event.slug}/edit`}
                         className="inline-flex items-center gap-2 bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-xl transition"
