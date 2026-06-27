@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Search, CheckCircle, XCircle, User, Users } from "lucide-react";
+import { Search, CheckCircle, User, Users } from "lucide-react";
 import { updateGuestStatus } from "@/actions/guest-actions";
 
 type Guest = {
@@ -43,12 +43,14 @@ export default function GateClient({ event }: { event: Event }) {
 
   const statusColors: Record<string, string> = {
     en_attente: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300",
+    attending: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
     annule: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
-    entre: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
+    entre: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
   };
 
   const statusLabels: Record<string, string> = {
     en_attente: "En attente",
+    attending: "Confirmé",
     annule: "Annulé",
     entre: "Entré",
   };
@@ -101,13 +103,14 @@ export default function GateClient({ event }: { event: Event }) {
                     const colorClass = statusColors[statusKey] || statusColors.en_attente;
                     const label = statusLabels[statusKey] || "En attente";
                     const isEntered = statusKey === "entre";
+                    const isConfirmed = statusKey === "attending";
                     const isCancelled = statusKey === "annule";
 
                     return (
                       <tr
                         key={guest.id}
                         className={`border-b dark:border-gray-700 ${
-                          isEntered ? "bg-green-50 dark:bg-green-900/10" : ""
+                          isEntered ? "bg-blue-50 dark:bg-blue-900/10" : ""
                         }`}
                       >
                         <td className="px-4 py-3 font-mono font-semibold">
@@ -134,12 +137,12 @@ export default function GateClient({ event }: { event: Event }) {
                         </td>
                         <td className="px-4 py-3">
                           {isEntered ? (
-                            <span className="text-green-600 font-medium flex items-center gap-1">
+                            <span className="text-blue-600 font-medium flex items-center gap-1">
                               <CheckCircle size={16} /> Déjà entré
                             </span>
                           ) : isCancelled ? (
                             <span className="text-red-500 font-medium">Annulé</span>
-                          ) : (
+                          ) : isConfirmed ? (
                             <button
                               onClick={() => handleValidateEntry(guest.id)}
                               disabled={isPending}
@@ -147,6 +150,8 @@ export default function GateClient({ event }: { event: Event }) {
                             >
                               Valider l'entrée
                             </button>
+                          ) : (
+                            <span className="text-yellow-500 font-medium">En attente de confirmation</span>
                           )}
                         </td>
                       </tr>
@@ -158,13 +163,17 @@ export default function GateClient({ event }: { event: Event }) {
           </div>
         </div>
 
-        <div className="mt-6 flex gap-4 text-sm text-gray-500 dark:text-gray-400">
+        <div className="mt-6 flex flex-wrap gap-4 text-sm text-gray-500 dark:text-gray-400">
           <div className="flex items-center gap-2">
             <span className="inline-block w-3 h-3 rounded-full bg-yellow-400"></span>
             En attente
           </div>
           <div className="flex items-center gap-2">
             <span className="inline-block w-3 h-3 rounded-full bg-green-500"></span>
+            Confirmé
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="inline-block w-3 h-3 rounded-full bg-blue-500"></span>
             Entré
           </div>
           <div className="flex items-center gap-2">
