@@ -53,8 +53,8 @@ export default function GuestList({ guests, eventId, eventSlug }: { guests: any[
     });
   };
 
-  const copyInvitationLink = (invitationNumber: string) => {
-    const link = `${baseUrl}/invitation/${eventSlug}?token=${invitationNumber}`;
+  const copyInvitationLink = (firstName: string, lastName: string) => {
+    const link = `${baseUrl}/invitation/${eventSlug}?firstName=${encodeURIComponent(firstName)}&lastName=${encodeURIComponent(lastName)}`;
     navigator.clipboard.writeText(link);
     alert("Lien copié !");
   };
@@ -118,7 +118,7 @@ export default function GuestList({ guests, eventId, eventSlug }: { guests: any[
                     </td>
                     <td className="px-3 py-2">
                       <button
-                        onClick={() => copyInvitationLink(guest.invitationNumber)}
+                        onClick={() => copyInvitationLink(guest.firstName, guest.lastName)}
                         className="text-primary-500 hover:text-primary-700"
                         title="Copier le lien d'invitation"
                       >

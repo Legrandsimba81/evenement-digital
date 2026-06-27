@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Calendar, MapPin, Clock, Download, Check, X, Heart, Gift, Trophy, Music, QrCode } from "lucide-react";
+import { Calendar, MapPin, Clock, Download, Check, X, Heart, Gift, Trophy, Music, User, Users, QrCode } from "lucide-react";
 import QRCode from "react-qr-code";
 import html2canvas from "html2canvas";
 
@@ -11,8 +11,6 @@ type Guest = {
   lastName: string;
   title?: string | null;
   status?: string | null;
-  invitationNumber?: string | null;
-  invitationType?: string | null;
 };
 
 type Event = {
@@ -23,7 +21,6 @@ type Event = {
   time: string;
   location: string;
   imageUrl: string | null;
-  invitationImageUrl: string | null;
   invitationText: string | null;
   program: string | null;
   slug: string;
@@ -45,15 +42,13 @@ export default function InvitationCard({
   guestName,
   guestTitle,
   guestId,
-  guest,
 }: {
   event: Event;
   guestName: string;
   guestTitle?: string;
   guestId: string;
-  guest?: any;
 }) {
-  const [status, setStatus] = useState<string | null>(guest?.status || null);
+  const [status, setStatus] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isDownloadingQR, setIsDownloadingQR] = useState(false);
@@ -62,14 +57,16 @@ export default function InvitationCard({
 
   const fullName = guestTitle ? `${guestTitle} ${guestName}` : guestName;
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
-  // Créer un lien avec le token pour accès direct
-  const invitationLink = `${baseUrl}/invitation/${event.slug}?token=${guest?.invitationNumber || ""}`;
+  const invitationLink = `${baseUrl}/invitation/${event.slug}?firstName=${encodeURIComponent(
+    guestName.split(" ")[0]
+  )}&lastName=${encodeURIComponent(guestName.split(" ").slice(1).join(" ") || "")}`;
 
   useEffect(() => {
-    if (guest?.status) {
-      setStatus(guest.status);
+    const savedStatus = localStorage.getItem(`status_${guestId}`);
+    if (savedStatus) {
+      setStatus(savedStatus);
     }
-  }, [guest]);
+  }, [guestId]);
 
   const type = (event.type as EventType) || "AUTRE";
   const config = typeConfigs[type] || typeConfigs["AUTRE"];
@@ -116,7 +113,6 @@ export default function InvitationCard({
       link.click();
     } catch (error) {
       console.error("Erreur de téléchargement", error);
-      alert("Erreur lors du téléchargement. Veuillez réessayer.");
     } finally {
       setIsDownloading(false);
     }
@@ -132,12 +128,11 @@ export default function InvitationCard({
         backgroundColor: "#ffffff",
       });
       const link = document.createElement("a");
-      link.download = `qr-invitation-${event.slug}.png`;
+      link.download = `qr-${event.slug}.png`;
       link.href = canvas.toDataURL("image/png");
       link.click();
     } catch (error) {
-      console.error("Erreur téléchargement QR", error);
-      alert("Erreur lors du téléchargement du QR.");
+      console.error("Erreur de téléchargement du QR", error);
     } finally {
       setIsDownloadingQR(false);
     }
@@ -145,13 +140,13 @@ export default function InvitationCard({
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-800">
-      {/* Hero Section - image en portrait, sans zoom, object-fit: cover mais bien cadrée */}
-      <div className="relative w-full h-[60vh] md:h-[70vh] overflow-hidden bg-gray-100 dark:bg-gray-800">
+      {/* Hero Section - photo en portrait sans zoom */}
+      <div className="relative w-full aspect-[3/4] md:aspect-[4/5] overflow-hidden bg-gray-100 dark:bg-gray-800">
         {event.imageUrl ? (
           <img
             src={event.imageUrl}
             alt="Photo de l'événement"
-            className="w-full h-full object-contain object-center" // Utiliser object-contain pour ne pas zoomer
+            className="w-full h-full object-contain" // ✅ object-contain pour éviter le zoom
           />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center">
@@ -161,17 +156,11 @@ export default function InvitationCard({
             </div>
           </div>
         )}
-        <div className="absolute bottom-4 left-4 right-4 flex justify-center">
-          <div className="bg-black/50 text-white px-4 py-2 rounded-xl text-sm backdrop-blur flex items-center gap-2">
-            <span>📋 {event.invitationNumber || "N/A"}</span>
-            <span>•</span>
-            <span>{event.invitationType === "couple" ? "👫" : "🧑"}</span>
-          </div>
-        </div>
       </div>
 
       {/* Contenu de l'invitation (pour téléchargement) */}
       <div ref={cardRef} className="p-6 md:p-8">
+        {/* Type d'événement */}
         <div className="flex items-center gap-2 mb-2">
           <TypeIcon size={20} className={config.accent} />
           <span className={`text-sm font-semibold ${config.accent}`}>{config.label}</span>
@@ -181,21 +170,28 @@ export default function InvitationCard({
           Bonjour <span className="text-primary-500">{fullName}</span>
         </h1>
 
+        {/* Numéro d'invitation */}
+        {event.invitationNumber && (
+          <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-xl flex flex-wrap items-center gap-3">
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              <span className="text-primary-500">#</span> {event.invitationNumber}
+            </span>
+            <span className="text-sm text-gray-400">•</span>
+            <span className="text-sm text-gray-700 dark:text-gray-300 flex items-center gap-1">
+              {event.invitationType === "couple" ? (
+                <><Users size={16} className="text-purple-500" /> 2 personnes</>
+              ) : (
+                <><User size={16} className="text-blue-500" /> 1 personne</>
+              )}
+            </span>
+          </div>
+        )}
+
         {event.invitationText && (
           <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border-l-4 border-primary-500">
             <p className="text-gray-800 dark:text-gray-200 italic text-lg">
               {event.invitationText}
             </p>
-          </div>
-        )}
-
-        {event.invitationImageUrl && (
-          <div className="mt-4 rounded-xl overflow-hidden">
-            <img
-              src={event.invitationImageUrl}
-              alt="Invitation"
-              className="w-full h-auto"
-            />
           </div>
         )}
 
@@ -216,43 +212,41 @@ export default function InvitationCard({
 
         {event.program && (
           <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
-            <h3 className="font-semibold text-gray-900 dark:text-white mb-2">📅 Programme</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Programme</h3>
             <div className="text-gray-700 dark:text-gray-300 whitespace-pre-line">
               {event.program}
             </div>
           </div>
         )}
 
-        {/* QR Code (pour téléchargement séparé) */}
-        <div ref={qrRef} className="mt-6 flex justify-center">
-          <div className="bg-white p-4 rounded-xl shadow-md flex flex-col items-center">
+        {/* QR Code avec bouton de téléchargement */}
+        <div className="mt-6 flex flex-col items-center">
+          <div ref={qrRef} className="bg-white p-4 rounded-xl shadow-md flex flex-col items-center">
             <QRCode value={invitationLink} size={150} />
             <p className="text-center text-xs text-gray-500 mt-2">
               Scannez pour accéder à l'invitation
             </p>
           </div>
+          <button
+            onClick={downloadQR}
+            disabled={isDownloadingQR}
+            className="mt-3 flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-xl transition disabled:opacity-50 text-sm"
+          >
+            <QrCode size={16} />
+            {isDownloadingQR ? "Téléchargement..." : "Télécharger le QR"}
+          </button>
         </div>
 
         {/* Boutons d'action */}
         <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-between items-center">
-          <div className="flex gap-2 flex-wrap">
-            <button
-              onClick={downloadInvitation}
-              disabled={isDownloading}
-              className="flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-xl transition disabled:opacity-50"
-            >
-              <Download size={18} />
-              {isDownloading ? "..." : "Invitation"}
-            </button>
-            <button
-              onClick={downloadQR}
-              disabled={isDownloadingQR}
-              className="flex items-center gap-2 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-xl transition disabled:opacity-50"
-            >
-              <QrCode size={18} />
-              {isDownloadingQR ? "..." : "QR Code"}
-            </button>
-          </div>
+          <button
+            onClick={downloadInvitation}
+            disabled={isDownloading}
+            className="flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-6 py-3 rounded-xl transition disabled:opacity-50"
+          >
+            <Download size={20} />
+            {isDownloading ? "Téléchargement..." : "Télécharger l'invitation"}
+          </button>
 
           <div className="flex gap-2">
             <button
@@ -265,7 +259,7 @@ export default function InvitationCard({
               }`}
             >
               <Check size={18} />
-              {status === "attending" ? "Confirmé ✅" : "Je serai présent(e)"}
+              {status === "attending" ? "Confirmé" : "Je serai présent(e)"}
             </button>
             <button
               onClick={() => handleAttendance("not_attending")}
@@ -277,7 +271,7 @@ export default function InvitationCard({
               }`}
             >
               <X size={18} />
-              {status === "not_attending" ? "Indisponible ❌" : "Indisponible"}
+              {status === "not_attending" ? "Indisponible" : "Indisponible"}
             </button>
           </div>
         </div>
