@@ -3,19 +3,12 @@
 import { useState, useTransition } from "react";
 import { removeGuest, updateGuestStatus } from "@/actions/guest-actions";
 import EditGuestButton from "@/components/guests/EditGuestButton";
-import { Search, Copy, Check, X, User, Users } from "lucide-react";
+import { Search, Copy, Users, User } from "lucide-react";
 
-// Typage explicite des objets
 const statusColors: Record<string, string> = {
   en_attente: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300",
   annule: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
   entre: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
-};
-
-const statusLabels: Record<string, string> = {
-  en_attente: "En attente",
-  annule: "Annulé",
-  entre: "Entré",
 };
 
 export default function GuestList({ guests, eventId, eventSlug }: { guests: any[]; eventId: string; eventSlug: string }) {
@@ -27,18 +20,16 @@ export default function GuestList({ guests, eventId, eventSlug }: { guests: any[
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value.toLowerCase();
     setSearch(query);
-    if (query === "") {
-      setFilteredGuests(guests);
-    } else {
-      setFilteredGuests(
-        guests.filter(
-          (g) =>
-            g.firstName.toLowerCase().includes(query) ||
-            g.lastName.toLowerCase().includes(query) ||
-            g.invitationNumber?.toLowerCase().includes(query)
-        )
-      );
-    }
+    setFilteredGuests(
+      query === ""
+        ? guests
+        : guests.filter(
+            (g) =>
+              g.firstName.toLowerCase().includes(query) ||
+              g.lastName.toLowerCase().includes(query) ||
+              g.invitationNumber?.toLowerCase().includes(query)
+          )
+    );
   };
 
   const handleRemove = (guestId: string) => {
@@ -53,6 +44,7 @@ export default function GuestList({ guests, eventId, eventSlug }: { guests: any[
     });
   };
 
+  // ✅ Lien personnel avec le slug et les noms
   const copyInvitationLink = (firstName: string, lastName: string) => {
     const link = `${baseUrl}/invitation/${eventSlug}?firstName=${encodeURIComponent(firstName)}&lastName=${encodeURIComponent(lastName)}`;
     navigator.clipboard.writeText(link);

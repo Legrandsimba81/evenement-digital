@@ -20,7 +20,6 @@ export default async function EventPage({
 
   if (!event || event.userId !== userId) return notFound();
 
-  // ✅ Correction : typage explicite de msg avec any
   const eventData = {
     ...event,
     date: event.date.toISOString(),

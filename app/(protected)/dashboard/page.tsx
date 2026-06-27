@@ -24,7 +24,7 @@ export default async function DashboardPage() {
 
   const events = await prisma.event.findMany({
     where: { userId },
-    include: { guests: true }, // ✅ Ajout de guests
+    include: { guests: true },
     orderBy: { createdAt: "desc" },
   });
 
@@ -44,17 +44,23 @@ export default async function DashboardPage() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {events.map((event) => {
             const Icon = typeIcons[event.type] || Calendar;
+            // Vérifier que le slug existe
+            if (!event.slug) {
+              console.warn("⚠️ Événement sans slug :", event.id);
+              return null;
+            }
             return (
               <Link
                 key={event.id}
                 href={`/dashboard/${event.slug}`}
                 className="group bg-white dark:bg-gray-900 rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-gray-200 dark:border-gray-800"
               >
+                {/* Image en portrait (aspect 3:4) */}
                 {event.imageUrl && (
-                  <div className="h-48 overflow-hidden">
+                  <div className="relative w-full aspect-[3/4] overflow-hidden bg-gray-100 dark:bg-gray-800">
                     <img
                       src={event.imageUrl}
                       alt={event.title}
