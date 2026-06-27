@@ -12,8 +12,38 @@ export async function createEvent(data: any) {
       throw new Error("Non authentifié");
     }
 
+    // ✅ Liste des champs autorisés pour le modèle Event
+    const allowedFields = [
+      "title",
+      "type",
+      "description",
+      "invitationText",
+      "program",
+      "location",
+      "date",
+      "time",
+      "whatsappNumber",
+      "imageUrl",
+      "invitationImageUrl",
+      "invitationType",
+    ];
+
     // Nettoyer les données
-    const { brideName, groomName, age, thesisTitle, ...cleanData } = data;
+    const cleanData: any = {};
+    for (const key of allowedFields) {
+      if (data[key] !== undefined && data[key] !== null) {
+        cleanData[key] = data[key];
+      }
+    }
+
+    // ✅ Valider et convertir la date
+    if (!cleanData.date) {
+      throw new Error("La date est requise");
+    }
+    cleanData.date = new Date(cleanData.date);
+    if (isNaN(cleanData.date.getTime())) {
+      throw new Error("Date invalide");
+    }
 
     const slug = randomUUID();
     const eventData = {
@@ -22,7 +52,8 @@ export async function createEvent(data: any) {
       slug,
     };
 
-    console.log("🔍 Création événement:", JSON.stringify(eventData, null, 2));
+    // ✅ Log pour déboguer (visible sur Vercel)
+    console.log("📦 Payload final pour Prisma:", JSON.stringify(eventData, null, 2));
 
     const event = await prisma.event.create({
       data: eventData,
@@ -32,6 +63,7 @@ export async function createEvent(data: any) {
     return { success: true, event };
   } catch (error: any) {
     console.error("❌ Erreur createEvent:", error);
+    // En production, on renvoie un message d'erreur générique
     throw new Error(error.message || "Erreur lors de la création de l'événement");
   }
 }
@@ -46,7 +78,34 @@ export async function updateEvent(slug: string, data: any) {
       throw new Error("Non autorisé");
     }
 
-    const { brideName, groomName, age, thesisTitle, ...cleanData } = data;
+    const allowedFields = [
+      "title",
+      "type",
+      "description",
+      "invitationText",
+      "program",
+      "location",
+      "date",
+      "time",
+      "whatsappNumber",
+      "imageUrl",
+      "invitationImageUrl",
+      "invitationType",
+    ];
+
+    const cleanData: any = {};
+    for (const key of allowedFields) {
+      if (data[key] !== undefined && data[key] !== null) {
+        cleanData[key] = data[key];
+      }
+    }
+
+    if (cleanData.date) {
+      cleanData.date = new Date(cleanData.date);
+      if (isNaN(cleanData.date.getTime())) {
+        throw new Error("Date invalide");
+      }
+    }
 
     const updated = await prisma.event.update({
       where: { slug },
