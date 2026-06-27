@@ -132,6 +132,28 @@ export default function InvitationCard({
         allowTaint: true,
         backgroundColor: "#ffffff",
         logging: false,
+        onclone: (clonedDoc) => {
+          // Remplacer toutes les couleurs 'lab' par du RGB pour éviter l'erreur
+          const allElements = clonedDoc.querySelectorAll("*");
+          allElements.forEach((el) => {
+            const style = (el as HTMLElement).style;
+            // Vérifier et remplacer les couleurs qui contiennent 'lab'
+            if (style.color && style.color.includes("lab")) {
+              style.color = "#000000";
+            }
+            if (style.backgroundColor && style.backgroundColor.includes("lab")) {
+              style.backgroundColor = "#ffffff";
+            }
+            // Parcourir toutes les propriétés CSS
+            const computed = window.getComputedStyle(el);
+            if (computed.color && computed.color.includes("lab")) {
+              (el as HTMLElement).style.color = "#000000";
+            }
+            if (computed.backgroundColor && computed.backgroundColor.includes("lab")) {
+              (el as HTMLElement).style.backgroundColor = "#ffffff";
+            }
+          });
+        },
       });
       const link = document.createElement("a");
       link.download = `invitation-${event.slug}.png`;
@@ -169,7 +191,7 @@ export default function InvitationCard({
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-800">
-      {/* ✅ Image héros en paysage (16:9) */}
+      {/* Image héros en paysage */}
       <div className="relative w-full aspect-video overflow-hidden bg-gray-100 dark:bg-gray-800">
         {event.imageUrl ? (
           <img
@@ -187,7 +209,7 @@ export default function InvitationCard({
         )}
       </div>
 
-      {/* Contenu de l'invitation */}
+      {/* Contenu */}
       <div ref={cardRef} className="p-6 md:p-8">
         <div className="flex items-center gap-2 mb-2">
           <TypeIcon size={20} className={config.accent} />
@@ -222,7 +244,6 @@ export default function InvitationCard({
           </div>
         )}
 
-        {/* ✅ Image d'invitation en paysage */}
         {event.invitationImageUrl && (
           <div className="mt-4 rounded-xl overflow-hidden">
             <img
@@ -257,7 +278,7 @@ export default function InvitationCard({
           </div>
         )}
 
-        {/* QR Code avec bouton de téléchargement */}
+        {/* QR Code */}
         <div className="mt-6 flex flex-col items-center">
           <div ref={qrRef} className="bg-white p-4 rounded-xl shadow-md flex flex-col items-center">
             <QRCode value={invitationLink} size={150} />
