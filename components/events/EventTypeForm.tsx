@@ -118,21 +118,27 @@ export default function EventTypeForm({ type }: { type: EventType }) {
   };
 
   const onSubmit = async (data: EventFormData) => {
+    console.log("📝 Soumission du formulaire avec les données:", data);
+
     try {
       let heroImageUrl = "";
       let invitationImageUrl = "";
 
       if (heroImageFile) {
+        console.log("📤 Upload de l'image héros...");
         const formData = new FormData();
         formData.append("file", heroImageFile);
         const uploaded = await uploadImage(formData);
         heroImageUrl = uploaded.url;
+        console.log("✅ Image héros uploadée:", heroImageUrl);
       }
       if (invitationImageFile) {
+        console.log("📤 Upload de l'image invitation...");
         const formData = new FormData();
         formData.append("file", invitationImageFile);
         const uploaded = await uploadImage(formData);
         invitationImageUrl = uploaded.url;
+        console.log("✅ Image invitation uploadée:", invitationImageUrl);
       }
 
       const cleanData: any = {};
@@ -150,13 +156,21 @@ export default function EventTypeForm({ type }: { type: EventType }) {
         invitationImageUrl,
       };
 
+      console.log("📦 Payload envoyé à createEvent:", payload);
+
       const result = await createEvent(payload);
+      console.log("✅ Résultat de createEvent:", result);
+
       if (result.success) {
+        console.log("🚀 Redirection vers /dashboard");
         router.push("/dashboard");
+      } else {
+        console.error("❌ createEvent n'a pas retourné success:true");
+        alert("Une erreur est survenue lors de la création.");
       }
     } catch (error) {
-      console.error("❌ Erreur:", error);
-      alert("Une erreur est survenue lors de la création de l'événement.");
+      console.error("❌ Erreur dans onSubmit:", error);
+      alert("Une erreur est survenue lors de la création de l'événement. Veuillez réessayer.");
     }
   };
 
@@ -273,7 +287,7 @@ export default function EventTypeForm({ type }: { type: EventType }) {
           <input {...register("whatsappNumber")} placeholder="+225 01 23 45 67 89" className="w-full px-4 py-3 border-2 border-gray-400 rounded-xl focus:ring-2 focus:ring-primary-500 dark:bg-gray-900 dark:border-gray-600 dark:text-white" />
         </div>
 
-        {/* ✅ Deux images en paysage (16:9) */}
+        {/* Deux images en paysage (16:9) */}
         <ImageUploadWithCrop
           label="Image héros (paysage)"
           aspect={16/9}
@@ -291,7 +305,8 @@ export default function EventTypeForm({ type }: { type: EventType }) {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full bg-primary-500 text-white px-6 py-3 rounded-xl font-medium hover:bg-primary-600 transition disabled:opacity-50"
+          className="w-full bg-primary-500 text-white px-6 py-3 rounded-xl font-medium hover:bg-primary-600 transition disabled:opacity-50 active:scale-[0.98] touch-manipulation"
+          style={{ touchAction: "manipulation" }}
         >
           {isSubmitting ? "Création..." : "Créer l'événement"}
         </button>
