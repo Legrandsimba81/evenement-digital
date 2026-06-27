@@ -7,8 +7,9 @@ import { uploadImage } from "@/actions/upload-actions";
 import { createEvent } from "@/actions/event-actions";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Gift, Heart, Trophy, Music, Sparkles } from "lucide-react";
+import { Gift, Heart, Trophy, Music } from "lucide-react";
 import ImageUploadWithCrop from "@/components/forms/ImageUploadWithCrop";
+import SuggestionChips from "@/components/ui/SuggestionChips";
 
 type EventType = "ANNIVERSAIRE" | "MARIAGE" | "SOUTENANCE" | "AUTRE";
 
@@ -29,27 +30,44 @@ const typeIcons = {
 // Suggestions par type
 const suggestions = {
   ANNIVERSAIRE: {
-    title: "Anniversaire de [Prénom]",
-    invitationText: "Nous avons le plaisir de vous inviter à célébrer l'anniversaire de [Prénom] qui aura lieu le [Date].",
-    locations: ["Hotel Believe", "Hotel Auberge", "Monde Juste"],
+    titles: ["Anniversaire de Sarah", "Anniversaire de Jean", "Fête d'anniversaire"],
+    invitationTexts: [
+      "Nous avons le plaisir de vous inviter à l'anniversaire de...",
+      "Venez célébrer avec nous l'anniversaire de...",
+      "Joignez-vous à nous pour fêter l'anniversaire de..."
+    ],
+    locations: ["Hotel Believe", "Hôtel Haubarge", "Monde Juste", "Espace K", "Salle des fêtes"],
   },
   MARIAGE: {
-    title: "Mariage de [Marié] et [Mariée]",
-    invitationText: "Nous avons le plaisir de vous inviter à notre mariage qui sera célébré le [Date].",
-    locations: ["Hotel Believe", "Hotel Auberge", "Monde Juste"],
+    titles: ["Mariage de Jean et Marie", "Union de Paul et Sophie", "Noce de Pierre et Claire"],
+    invitationTexts: [
+      "Nous avons le plaisir de vous inviter à notre mariage...",
+      "C'est avec joie que nous vous convions à notre union...",
+      "Nous serions ravis de partager avec vous notre bonheur..."
+    ],
+    locations: ["Hotel Believe", "Hôtel Haubarge", "Monde Juste", "Palais des Congrès", "Espace Mariage"],
   },
   SOUTENANCE: {
-    title: "Soutenance de thèse de [Nom]",
-    invitationText: "Nous avons le plaisir de vous inviter à la soutenance de thèse de [Nom] qui aura lieu le [Date].",
-    locations: ["Université", "Amphithéâtre", "Salle de conférence"],
+    titles: ["Soutenance de thèse de Marie", "Soutenance de mémoire de Jean", "Défense de projet"],
+    invitationTexts: [
+      "Nous vous invitons à assister à la soutenance de thèse de...",
+      "Venez assister à la défense de mémoire de...",
+      "Nous vous convions à la présentation de projet de..."
+    ],
+    locations: ["Université de Cocody", "Institut de Recherche", "Hôtel Haubarge", "Monde Juste"],
   },
   AUTRE: {
-    title: "Événement de [Nom]",
-    invitationText: "Nous avons le plaisir de vous inviter à notre événement qui aura lieu le [Date].",
-    locations: ["Hotel Believe", "Hotel Auberge", "Monde Juste"],
+    titles: ["Soirée de Gala", "Concert exceptionnel", "Exposition d'art", "Dîner de Gala"],
+    invitationTexts: [
+      "Nous vous invitons à notre événement...",
+      "Rejoignez-nous pour un moment unique...",
+      "Venez vivre une expérience inoubliable..."
+    ],
+    locations: ["Hotel Believe", "Hôtel Haubarge", "Monde Juste", "Salle des spectacles"],
   },
 };
 
+// Schéma de base
 const baseSchema = z.object({
   title: z.string().min(1, "Le titre est requis"),
   type: z.string().min(1, "Type requis"),
@@ -60,17 +78,13 @@ const baseSchema = z.object({
   date: z.string().min(1, "La date est requise"),
   time: z.string().regex(/^\d{2}:\d{2}$/, "Format HH:MM requis"),
   whatsappNumber: z.string().optional(),
-});
-
-const extendedSchema = z.object({
-  ...baseSchema.shape,
   brideName: z.string().optional(),
   groomName: z.string().optional(),
   age: z.string().optional(),
   thesisTitle: z.string().optional(),
 });
 
-type EventFormData = z.infer<typeof extendedSchema>;
+type EventFormData = z.infer<typeof baseSchema>;
 
 export default function EventTypeForm({ type }: { type: EventType }) {
   const router = useRouter();
@@ -78,15 +92,16 @@ export default function EventTypeForm({ type }: { type: EventType }) {
   const [heroImagePreview, setHeroImagePreview] = useState<string | null>(null);
   const [invitationImageFile, setInvitationImageFile] = useState<File | null>(null);
   const [invitationImagePreview, setInvitationImagePreview] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
     register,
     handleSubmit,
     setValue,
     watch,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<EventFormData>({
-    resolver: zodResolver(extendedSchema),
+    resolver: zodResolver(baseSchema),
     defaultValues: { type },
   });
 
@@ -100,46 +115,45 @@ export default function EventTypeForm({ type }: { type: EventType }) {
     setInvitationImagePreview(preview);
   };
 
-  const fillSuggestion = (field: keyof EventFormData, value: string) => {
-    setValue(field, value);
-  };
-
   const onSubmit = async (data: EventFormData) => {
+    setIsSubmitting(true);
     let heroImageUrl = "";
     let invitationImageUrl = "";
 
-    if (heroImageFile) {
-      const formData = new FormData();
-      formData.append("file", heroImageFile);
-      const uploaded = await uploadImage(formData);
-      heroImageUrl = uploaded.url;
-    }
-    if (invitationImageFile) {
-      const formData = new FormData();
-      formData.append("file", invitationImageFile);
-      const uploaded = await uploadImage(formData);
-      invitationImageUrl = uploaded.url;
-    }
-
-    const payload = {
-      ...data,
-      date: new Date(data.date),
-      imageUrl: heroImageUrl,
-      invitationImageUrl,
-    };
-
     try {
+      if (heroImageFile) {
+        const formData = new FormData();
+        formData.append("file", heroImageFile);
+        const uploaded = await uploadImage(formData);
+        heroImageUrl = uploaded.url;
+      }
+      if (invitationImageFile) {
+        const formData = new FormData();
+        formData.append("file", invitationImageFile);
+        const uploaded = await uploadImage(formData);
+        invitationImageUrl = uploaded.url;
+      }
+
+      const payload = {
+        ...data,
+        date: new Date(data.date),
+        imageUrl: heroImageUrl,
+        invitationImageUrl,
+      };
+
       await createEvent(payload);
       router.push("/dashboard");
     } catch (error) {
-      console.error(error);
-      alert("Erreur lors de la création");
+      console.error("Erreur:", error);
+      alert("Erreur lors de la création de l'événement. Veuillez réessayer.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const Icon = typeIcons[type];
   const colorClass = typeColors[type];
-  const sugg = suggestions[type];
+  const typeSuggestions = suggestions[type];
 
   return (
     <div className="max-w-2xl mx-auto p-6 md:p-8">
@@ -159,22 +173,19 @@ export default function EventTypeForm({ type }: { type: EventType }) {
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Titre de l'événement
           </label>
-          <div className="flex flex-wrap gap-2 mb-2">
-            <button
-              type="button"
-              onClick={() => fillSuggestion("title", sugg.title)}
-              className="text-xs bg-gray-200 dark:bg-gray-700 px-3 py-1 rounded-full hover:bg-gray-300"
-            >
-              {sugg.title}
-            </button>
-          </div>
           <input
             {...register("title")}
-            placeholder="Ex: Mariage de Jean et Marie"
+            placeholder={`Ex: ${typeSuggestions.titles[0]}`}
             className="w-full px-4 py-3 border-2 border-gray-400 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-900 dark:border-gray-600 dark:text-white"
             required
           />
           {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title.message}</p>}
+          <SuggestionChips
+            suggestions={typeSuggestions.titles}
+            onSelect={(value) => setValue("title", value)}
+            placeholder="Suggestions de titres :"
+            className="mt-1"
+          />
         </div>
 
         {/* Champs spécifiques selon le type */}
@@ -235,32 +246,17 @@ export default function EventTypeForm({ type }: { type: EventType }) {
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Texte d'invitation
           </label>
-          <div className="flex flex-wrap gap-2 mb-2">
-            <button
-              type="button"
-              onClick={() => fillSuggestion("invitationText", sugg.invitationText)}
-              className="text-xs bg-gray-200 dark:bg-gray-700 px-3 py-1 rounded-full hover:bg-gray-300"
-            >
-              Suggestion
-            </button>
-          </div>
           <textarea
             {...register("invitationText")}
-            placeholder={sugg.invitationText}
+            placeholder={`Ex: ${typeSuggestions.invitationTexts[0]}`}
             className="w-full px-4 py-3 border-2 border-gray-400 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-900 dark:border-gray-600 dark:text-white"
             rows={4}
           />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Programme
-          </label>
-          <textarea
-            {...register("program")}
-            placeholder="Ex: 08h-10h: Messe..."
-            className="w-full px-4 py-3 border-2 border-gray-400 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-900 dark:border-gray-600 dark:text-white"
-            rows={4}
+          <SuggestionChips
+            suggestions={typeSuggestions.invitationTexts}
+            onSelect={(value) => setValue("invitationText", value)}
+            placeholder="Suggestions de textes :"
+            className="mt-1"
           />
         </div>
 
@@ -269,27 +265,35 @@ export default function EventTypeForm({ type }: { type: EventType }) {
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Lieu
           </label>
-          <div className="flex flex-wrap gap-2 mb-2">
-            {sugg.locations.map((loc) => (
-              <button
-                key={loc}
-                type="button"
-                onClick={() => fillSuggestion("location", loc)}
-                className="text-xs bg-gray-200 dark:bg-gray-700 px-3 py-1 rounded-full hover:bg-gray-300"
-              >
-                {loc}
-              </button>
-            ))}
-          </div>
           <input
             {...register("location")}
-            placeholder="Adresse"
+            placeholder="Adresse du lieu"
             className="w-full px-4 py-3 border-2 border-gray-400 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-900 dark:border-gray-600 dark:text-white"
             required
           />
           {errors.location && <p className="text-red-500 text-sm mt-1">{errors.location.message}</p>}
+          <SuggestionChips
+            suggestions={typeSuggestions.locations}
+            onSelect={(value) => setValue("location", value)}
+            placeholder="Suggestions de lieux :"
+            className="mt-1"
+          />
         </div>
 
+        {/* Programme */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Programme
+          </label>
+          <textarea
+            {...register("program")}
+            placeholder="Ex: 08h-10h: Cérémonie..."
+            className="w-full px-4 py-3 border-2 border-gray-400 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-900 dark:border-gray-600 dark:text-white"
+            rows={4}
+          />
+        </div>
+
+        {/* Date et heure */}
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -317,9 +321,10 @@ export default function EventTypeForm({ type }: { type: EventType }) {
           </div>
         </div>
 
+        {/* WhatsApp */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            WhatsApp (contact)
+            Numéro WhatsApp (contact)
           </label>
           <input
             {...register("whatsappNumber")}
@@ -328,6 +333,7 @@ export default function EventTypeForm({ type }: { type: EventType }) {
           />
         </div>
 
+        {/* Images */}
         <ImageUploadWithCrop
           label="Photo héros (portrait)"
           aspect={3/4}
@@ -339,7 +345,7 @@ export default function EventTypeForm({ type }: { type: EventType }) {
           label="Image de l'invitation (paysage)"
           aspect={16/9}
           onImageChange={handleInvitationImageChange}
-          description="Image au format paysage (16:9) pour l'invitation téléchargeable"
+          description="Image au format paysage (16:9) pour l'invitation"
         />
 
         <button
