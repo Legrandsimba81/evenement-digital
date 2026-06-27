@@ -299,7 +299,7 @@ export default function EventForm({ initialData }: { initialData?: any }) {
         </label>
         <input
           {...register("whatsappNumber")}
-          placeholder="+225 01 23 45 67 89"
+          placeholder="Ex: 0827733286"
           className="w-full px-4 py-3 border-2 border-gray-400 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-900 dark:border-gray-600 dark:text-white dark:focus:border-primary-400"
         />
       </div>

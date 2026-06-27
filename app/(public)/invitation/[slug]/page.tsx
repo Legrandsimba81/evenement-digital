@@ -4,7 +4,8 @@ import InvitationCard from "@/components/invitation/InvitationCard";
 import MessageForm from "@/components/forms/MessageForm";
 import GuestVerificationForm from "@/components/invitation/GuestVerificationForm";
 import FloatingHearts from "@/components/invitation/FloatingHearts";
-import { Heart } from "lucide-react";
+import { Heart, Frown, CheckCircle, RefreshCw } from "lucide-react"; // Ajout des icônes
+import Link from "next/link"; // Pour le bouton réessayer
 
 export default async function InvitationPage({
   params,
@@ -43,7 +44,9 @@ export default async function InvitationPage({
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-950">
         <div className="max-w-md mx-auto p-8 bg-white dark:bg-gray-900 rounded-2xl shadow-xl text-center border border-gray-200 dark:border-gray-800">
-          <div className="text-6xl mb-4">😢</div>
+          <div className="flex justify-center mb-4">
+            <Frown size={64} className="text-red-500" /> {/* Remplacer 😢 */}
+          </div>
           <h1 className="text-2xl font-bold text-red-500">
             Vous n'êtes pas sur la liste des invités.
           </h1>
@@ -61,6 +64,14 @@ export default async function InvitationPage({
               Contacter l'organisateur
             </a>
           )}
+          {/* Bouton Réessayer */}
+          <Link
+            href={`/invitation/${slug}`}
+            className="inline-flex items-center gap-2 mt-4 text-primary-500 hover:text-primary-600 font-medium"
+          >
+            <RefreshCw size={16} />
+            Réessayer
+          </Link>
         </div>
       </div>
     );
@@ -83,7 +94,9 @@ export default async function InvitationPage({
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-950">
         <div className="max-w-md mx-auto p-8 bg-white dark:bg-gray-900 rounded-2xl shadow-xl text-center border border-gray-200 dark:border-gray-800">
-          <div className="text-6xl mb-4">🚪</div>
+          <div className="flex justify-center mb-4">
+            <CheckCircle size={64} className="text-green-500" /> {/* Remplacer 🚪 */}
+          </div>
           <h1 className="text-2xl font-bold text-green-600">
             {guest.title ? `${guest.title} ${guest.firstName} ${guest.lastName}` : `${guest.firstName} ${guest.lastName}`}
           </h1>
@@ -161,7 +174,7 @@ export default async function InvitationPage({
         <div className="mt-8">
           <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-800">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-              Laissez un message
+              Laissez un petit mot d'or
             </h2>
             <MessageForm eventId={event.id} guestName={guestName} />
           </div>

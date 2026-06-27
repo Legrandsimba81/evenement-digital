@@ -56,7 +56,7 @@ export default function GateClient({ event }: { event: Event }) {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-6 md:p-8">
       <div className="max-w-4xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-wrap items-center justify-between mb-6">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
             Contrôle d'accès
           </h1>

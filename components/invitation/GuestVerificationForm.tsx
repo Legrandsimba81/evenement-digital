@@ -10,9 +10,12 @@ export default function GuestVerificationForm({ slug }: { slug: string }) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (firstName.trim() && lastName.trim()) {
+    // Nettoyer les espaces avant et après
+    const cleanFirstName = firstName.trim();
+    const cleanLastName = lastName.trim();
+    if (cleanFirstName && cleanLastName) {
       router.push(
-        `/invitation/${slug}?firstName=${encodeURIComponent(firstName)}&lastName=${encodeURIComponent(lastName)}`
+        `/invitation/${slug}?firstName=${encodeURIComponent(cleanFirstName)}&lastName=${encodeURIComponent(cleanLastName)}`
       );
     }
   };
@@ -23,7 +26,7 @@ export default function GuestVerificationForm({ slug }: { slug: string }) {
         Bienvenue
       </h2>
       <p className="text-center text-gray-600 dark:text-gray-400 mb-6">
-        Veuillez entrer votre prénom et nom pour accéder à l'invitation.
+        Veuillez entrer votre prénom et nom pour accéder à l'invitation. <br/> Ex: Moise Kasereka
       </p>
       <form onSubmit={handleSubmit} className="space-y-4">
         <input
