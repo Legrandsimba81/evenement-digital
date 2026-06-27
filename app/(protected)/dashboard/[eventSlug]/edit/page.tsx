@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { notFound, redirect } from "next/navigation";
-import EventForm from "@/components/forms/EventForm";
+import EventForm from "@/components/events/EventForm";
 
 export default async function EditEventPage({
   params,
@@ -16,12 +16,21 @@ export default async function EditEventPage({
   const event = await prisma.event.findUnique({
     where: { slug: eventSlug },
   });
+
   if (!event || event.userId !== userId) return notFound();
 
+  // Transformer les dates pour le formulaire
+  const eventData = {
+    ...event,
+    date: event.date.toISOString().split('T')[0],
+  };
+
   return (
-    <div className="p-8 max-w-3xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">Modifier l'événement</h1>
-      <EventForm initialData={event} />
+    <div className="max-w-2xl mx-auto p-6 md:p-8">
+      <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
+        Modifier l'événement
+      </h1>
+      <EventForm initialData={eventData} />
     </div>
   );
 }

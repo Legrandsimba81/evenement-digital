@@ -1,4 +1,3 @@
-// actions/upload-actions.ts
 "use server";
 
 import { v2 as cloudinary } from "cloudinary";
@@ -12,6 +11,11 @@ cloudinary.config({
 export async function uploadImage(formData: FormData) {
   const file = formData.get("file") as File;
   if (!file) throw new Error("Aucun fichier sélectionné");
+
+  // ✅ Vérifier la taille (max 5 Mo côté serveur)
+  if (file.size > 5 * 1024 * 1024) {
+    throw new Error("L'image est trop volumineuse (max 5 Mo).");
+  }
 
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);
