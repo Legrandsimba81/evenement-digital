@@ -32,10 +32,38 @@ type Event = {
 type EventType = "MARIAGE" | "ANNIVERSAIRE" | "SOUTENANCE" | "AUTRE";
 
 const typeConfigs = {
-  MARIAGE: { icon: Heart, bg: "bg-rose-50 dark:bg-rose-950/20", border: "border-rose-200", accent: "text-rose-600", label: "Mariage" },
-  ANNIVERSAIRE: { icon: Gift, bg: "bg-pink-50 dark:bg-pink-950/20", border: "border-pink-200", accent: "text-pink-600", label: "Anniversaire" },
-  SOUTENANCE: { icon: Trophy, bg: "bg-purple-50 dark:bg-purple-950/20", border: "border-purple-200", accent: "text-purple-600", label: "Soutenance" },
-  AUTRE: { icon: Music, bg: "bg-blue-50 dark:bg-blue-950/20", border: "border-blue-200", accent: "text-blue-600", label: "Autre" },
+  MARIAGE: { 
+    icon: Heart, 
+    bg: "bg-rose-50 dark:bg-rose-950/20", 
+    border: "border-rose-200", 
+    accent: "text-rose-600", 
+    label: "Mariage",
+    invitationTitle: "Invitation de mariage"
+  },
+  ANNIVERSAIRE: { 
+    icon: Gift, 
+    bg: "bg-pink-50 dark:bg-pink-950/20", 
+    border: "border-pink-200", 
+    accent: "text-pink-600", 
+    label: "Anniversaire",
+    invitationTitle: "Invitation d'anniversaire"
+  },
+  SOUTENANCE: { 
+    icon: Trophy, 
+    bg: "bg-purple-50 dark:bg-purple-950/20", 
+    border: "border-purple-200", 
+    accent: "text-purple-600", 
+    label: "Soutenance",
+    invitationTitle: "Invitation à la soutenance"
+  },
+  AUTRE: { 
+    icon: Music, 
+    bg: "bg-blue-50 dark:bg-blue-950/20", 
+    border: "border-blue-200", 
+    accent: "text-blue-600", 
+    label: "Autre",
+    invitationTitle: "Invitation"
+  },
 } as const;
 
 export default function InvitationCard({
@@ -70,25 +98,25 @@ export default function InvitationCard({
     }
   }, [guestId]);
 
+  // Vérifier le chargement des images pour le téléchargement
   useEffect(() => {
-    const images = document.querySelectorAll("img");
-    let loaded = 0;
-    const total = images.length;
-    if (total === 0) {
-      setImagesLoaded(true);
-      return;
-    }
-    const onLoad = () => {
-      loaded++;
-      if (loaded === total) setImagesLoaded(true);
+    const checkImages = () => {
+      const images = document.querySelectorAll("img");
+      if (images.length === 0) {
+        setImagesLoaded(true);
+        return;
+      }
+      let loaded = 0;
+      images.forEach((img) => {
+        if (img.complete) loaded++;
+        else img.addEventListener("load", () => {
+          loaded++;
+          if (loaded === images.length) setImagesLoaded(true);
+        });
+      });
+      if (loaded === images.length) setImagesLoaded(true);
     };
-    images.forEach((img) => {
-      if (img.complete) onLoad();
-      else img.addEventListener("load", onLoad);
-    });
-    return () => {
-      images.forEach((img) => img.removeEventListener("load", onLoad));
-    };
+    checkImages();
   }, [event.imageUrl, event.invitationImageUrl]);
 
   const type = (event.type as EventType) || "AUTRE";
@@ -122,7 +150,10 @@ export default function InvitationCard({
   };
 
   const downloadInvitation = async () => {
-    if (!cardRef.current) return;
+    if (!cardRef.current) {
+      alert("Référence de la carte non trouvée.");
+      return;
+    }
     if (!imagesLoaded) {
       alert("Veuillez attendre le chargement des images.");
       return;
@@ -135,34 +166,14 @@ export default function InvitationCard({
         allowTaint: true,
         backgroundColor: "#ffffff",
         logging: false,
-        onclone: (clonedDoc) => {
-          // Remplacer les couleurs 'lab' par du RGB
-          const allElements = clonedDoc.querySelectorAll("*");
-          allElements.forEach((el) => {
-            const style = (el as HTMLElement).style;
-            if (style.color && style.color.includes("lab")) {
-              style.color = "#000000";
-            }
-            if (style.backgroundColor && style.backgroundColor.includes("lab")) {
-              style.backgroundColor = "#ffffff";
-            }
-            const computed = window.getComputedStyle(el);
-            if (computed.color && computed.color.includes("lab")) {
-              (el as HTMLElement).style.color = "#000000";
-            }
-            if (computed.backgroundColor && computed.backgroundColor.includes("lab")) {
-              (el as HTMLElement).style.backgroundColor = "#ffffff";
-            }
-          });
-        },
       });
       const link = document.createElement("a");
       link.download = `invitation-${event.slug}.png`;
       link.href = canvas.toDataURL("image/png");
       link.click();
     } catch (error) {
-      console.error("Erreur de téléchargement", error);
-      alert("Erreur lors du téléchargement. Réessayez.");
+      console.error("Erreur de téléchargement:", error);
+      alert("Erreur lors du téléchargement. Veuillez réessayer.");
     } finally {
       setIsDownloading(false);
     }
@@ -190,9 +201,13 @@ export default function InvitationCard({
     }
   };
 
+  // Déterminer le libellé pour 1 ou 2 personnes
+  const peopleLabel = event.invitationType === "couple" ? "2 personnes" : "1 personne";
+  const peopleIcon = event.invitationType === "couple" ? Users : User;
+
   return (
     <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl overflow-hidden border border-gray-200 dark:border-gray-800">
-      {/* Image héros - responsive sans déformation */}
+      {/* Image héros */}
       <div className="relative w-full aspect-video overflow-hidden bg-gray-100 dark:bg-gray-800">
         {event.imageUrl ? (
           <img
@@ -210,28 +225,36 @@ export default function InvitationCard({
         )}
       </div>
 
-      {/* Contenu - padding responsive */}
+      {/* Contenu */}
       <div ref={cardRef} className="p-4 sm:p-6 md:p-8">
-        <div className="flex items-center gap-2 mb-2">
-          <TypeIcon size={20} className={config.accent} />
-          <span className={`text-sm font-semibold ${config.accent}`}>{config.label}</span>
+        {/* En-tête avec titre d'invitation et badge */}
+        <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
+          <div className="flex items-center gap-2">
+            <TypeIcon size={20} className={config.accent} />
+            <span className={`text-sm font-semibold ${config.accent}`}>{config.invitationTitle}</span>
+          </div>
+          <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+            {peopleIcon === Users ? <Users size={14} /> : <User size={14} />}
+            {peopleLabel}
+          </span>
         </div>
 
-        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
-          Bonjour <span className="text-primary-500">{fullName}</span>
-        </h1>
+        {/* Bonjour {nom} en plus petit */}
+        <p className="text-base sm:text-lg text-gray-600 dark:text-gray-400 mb-1">
+          Bonjour <span className="font-semibold text-gray-900 dark:text-white">{fullName}</span>
+        </p>
 
         {event.invitationNumber && (
-          <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-xl flex flex-wrap items-center gap-2 sm:gap-3 text-sm">
+          <div className="mt-2 p-2 sm:p-3 bg-gray-50 dark:bg-gray-800 rounded-xl flex flex-wrap items-center gap-2 sm:gap-3 text-xs sm:text-sm">
             <span className="font-medium text-gray-700 dark:text-gray-300">
               <span className="text-primary-500 font-bold">#</span> {event.invitationNumber}
             </span>
             <span className="text-gray-400 hidden sm:inline">•</span>
             <span className="text-gray-700 dark:text-gray-300 flex items-center gap-1">
               {event.invitationType === "couple" ? (
-                <><Users size={16} className="text-purple-500" /> 2 personnes</>
+                <><Users size={14} className="text-purple-500" /> 2 personnes</>
               ) : (
-                <><User size={16} className="text-blue-500" /> 1 personne</>
+                <><User size={14} className="text-blue-500" /> 1 personne</>
               )}
             </span>
           </div>
@@ -279,7 +302,7 @@ export default function InvitationCard({
           </div>
         )}
 
-        {/* QR Code - centré responsive */}
+        {/* QR Code */}
         <div className="mt-6 flex flex-col items-center">
           <div ref={qrRef} className="bg-white p-3 sm:p-4 rounded-xl shadow-md flex flex-col items-center">
             <QRCode value={invitationLink} size={120} />
@@ -297,7 +320,7 @@ export default function InvitationCard({
           </button>
         </div>
 
-        {/* Boutons d'action - stacking sur mobile */}
+        {/* Boutons d'action */}
         <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-between items-stretch sm:items-center">
           <button
             onClick={downloadInvitation}
