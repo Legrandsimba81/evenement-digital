@@ -1,58 +1,62 @@
 "use client";
 
 import { addGuest } from "@/actions/guest-actions";
-import { useRef, useState } from "react";
+import { useState } from "react";
 
 export default function GuestForm({ eventId }: { eventId: string }) {
-  const formRef = useRef<HTMLFormElement>(null);
-  const [loading, setLoading] = useState(false);
+  const [title, setTitle] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [invitationType, setInvitationType] = useState("seul");
 
-  async function handleAction(formData: FormData) {
-    setLoading(true);
-    const firstName = formData.get("firstName") as string;
-    const lastName = formData.get("lastName") as string;
-    const title = formData.get("title") as string;
-    await addGuest(eventId, firstName, lastName, title);
-    formRef.current?.reset();
-    setLoading(false);
-  }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await addGuest(eventId, firstName, lastName, title, invitationType);
+    setTitle("");
+    setFirstName("");
+    setLastName("");
+    setInvitationType("seul");
+  };
 
   return (
-    <form ref={formRef} action={handleAction} className="space-y-4">
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <select
-          name="title"
-          className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-800 dark:border-gray-700 dark:text-white"
-        >
-          <option value="">Titre</option>
-          <option value="Mr">Mr</option>
-          <option value="Mme">Mme</option>
-          <option value="Dr">Dr</option>
-          <option value="Papa">Papa</option>
-          <option value="Maman">Maman</option>
-          <option value="Excellence">Excellence</option>
-          <option value="Professeur">Professeur</option>
-          <option value="Docteur">Docteur</option>
-        </select>
-        <input
-          name="firstName"
-          placeholder="Prénom"
-          className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-800 dark:border-gray-700 dark:text-white"
-          required
-        />
-        <input
-          name="lastName"
-          placeholder="Nom"
-          className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-800 dark:border-gray-700 dark:text-white"
-          required
-        />
-      </div>
-      <button
-        type="submit"
-        disabled={loading}
-        className="bg-primary-500 hover:bg-primary-600 text-white px-6 py-2 rounded-xl transition disabled:opacity-50"
+    <form onSubmit={handleSubmit} className="flex flex-wrap gap-2 mt-2">
+      <select
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        className="p-2 border rounded dark:bg-gray-800 dark:border-gray-700"
       >
-        {loading ? "Ajout en cours..." : "Ajouter l'invité"}
+        <option value="">Titre</option>
+        <option value="Mr">Mr</option>
+        <option value="Mme">Mme</option>
+        <option value="Dr">Dr</option>
+        <option value="Papa">Papa</option>
+        <option value="Maman">Maman</option>
+        <option value="Excellence">Excellence</option>
+      </select>
+      <input
+        value={firstName}
+        onChange={(e) => setFirstName(e.target.value)}
+        placeholder="Prénom"
+        className="p-2 border rounded dark:bg-gray-800 dark:border-gray-700"
+        required
+      />
+      <input
+        value={lastName}
+        onChange={(e) => setLastName(e.target.value)}
+        placeholder="Nom"
+        className="p-2 border rounded dark:bg-gray-800 dark:border-gray-700"
+        required
+      />
+      <select
+        value={invitationType}
+        onChange={(e) => setInvitationType(e.target.value)}
+        className="p-2 border rounded dark:bg-gray-800 dark:border-gray-700"
+      >
+        <option value="seul">1 personne</option>
+        <option value="couple">2 personnes (couple)</option>
+      </select>
+      <button type="submit" className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+        Ajouter
       </button>
     </form>
   );

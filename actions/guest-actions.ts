@@ -4,17 +4,28 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 
-export async function addGuest(eventId: string, firstName: string, lastName: string, title?: string) {
+async function generateInvitationNumber(eventId: string): Promise<string> {
+  const count = await prisma.guest.count({ where: { eventId } });
+  const num = String(count + 1).padStart(3, '0');
+  return `INV-${num}`;
+}
+
+export async function addGuest(eventId: string, firstName: string, lastName: string, title?: string, invitationType: string = "seul") {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Non authentifié");
   const event = await prisma.event.findUnique({ where: { id: eventId } });
   if (!event || event.userId !== session.user.id) throw new Error("Non autorisé");
+
+  const invitationNumber = await generateInvitationNumber(eventId);
 
   await prisma.guest.create({
     data: {
       firstName,
       lastName,
       title: title || null,
+      invitationType,
+      invitationNumber,
+      status: "en_attente",
       eventId,
     },
   });
@@ -31,7 +42,7 @@ export async function removeGuest(guestId: string) {
   revalidatePath(`/dashboard/${guest.event.slug}`);
 }
 
-export async function updateGuest(guestId: string, data: { title?: string; firstName?: string; lastName?: string }) {
+export async function updateGuest(guestId: string, data: { title?: string; firstName?: string; lastName?: string; invitationType?: string; status?: string }) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Non authentifié");
   const guest = await prisma.guest.findUnique({ where: { id: guestId }, include: { event: true } });
@@ -43,6 +54,8 @@ export async function updateGuest(guestId: string, data: { title?: string; first
       title: data.title || null,
       firstName: data.firstName,
       lastName: data.lastName,
+      invitationType: data.invitationType || guest.invitationType,
+      status: data.status || guest.status,
     },
   });
   revalidatePath(`/dashboard/${guest.event.slug}`);
@@ -67,14 +80,16 @@ export async function getGuests(eventId: string, search?: string) {
   const event = await prisma.event.findUnique({ where: { id: eventId } });
   if (!event || event.userId !== session.user.id) throw new Error("Non autorisé");
 
+  // Utiliser orderBy avec createdAt (doit exister)
   return prisma.guest.findMany({
     where: {
       eventId,
       OR: search ? [
         { firstName: { contains: search } },
         { lastName: { contains: search } },
+        { invitationNumber: { contains: search } },
       ] : undefined,
     },
-    orderBy: { firstName: "asc" },
+    orderBy: { createdAt: "asc" },
   });
 }

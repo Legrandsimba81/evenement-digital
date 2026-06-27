@@ -11,10 +11,10 @@ export default async function InvitationPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ firstName?: string; lastName?: string }>;
+  searchParams: Promise<{ firstName?: string; lastName?: string; token?: string }>;
 }) {
   const { slug } = await params;
-  const { firstName, lastName } = await searchParams;
+  const { firstName, lastName, token } = await searchParams;
 
   const event = await prisma.event.findUnique({
     where: { slug },
@@ -23,7 +23,7 @@ export default async function InvitationPage({
 
   if (!event) return notFound();
 
-  if (!firstName || !lastName) {
+  if (!firstName && !lastName && !token) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary-500/5 to-secondary-500/5 flex items-center justify-center p-4">
         <GuestVerificationForm slug={slug} />
@@ -31,11 +31,16 @@ export default async function InvitationPage({
     );
   }
 
-  const guest = event.guests.find(
-    (g) =>
-      g.firstName.toLowerCase() === firstName.toLowerCase() &&
-      g.lastName.toLowerCase() === lastName.toLowerCase()
-  );
+  let guest = null;
+  if (token) {
+    guest = event.guests.find((g) => g.invitationNumber === token);
+  } else if (firstName && lastName) {
+    guest = event.guests.find(
+      (g) =>
+        g.firstName.toLowerCase() === firstName.toLowerCase() &&
+        g.lastName.toLowerCase() === lastName.toLowerCase()
+    );
+  }
 
   if (!guest) {
     return (
@@ -71,17 +76,24 @@ export default async function InvitationPage({
     m.content.toLowerCase().includes("love")
   );
 
+  // ✅ Conversion de la date en string
   const eventForCard = {
     ...event,
     date: event.date.toISOString(),
-    imageUrl: event.imageUrl,
-    invitationImageUrl: event.invitationImageUrl,
   };
 
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-primary-500/5 to-secondary-500/5 py-12 px-4">
       <FloatingHearts />
       <div className="max-w-3xl mx-auto relative z-10">
+        <div className="mb-4 text-sm text-gray-600 dark:text-gray-400 text-center bg-white dark:bg-gray-900 p-3 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800">
+          <span className="font-medium">📋 Invitation {guest.invitationNumber}</span>
+          <span className="mx-2">•</span>
+          <span>
+            {guest.invitationType === "couple" ? "👫 Invitation pour 2 personnes" : "🧑 Invitation pour 1 personne"}
+          </span>
+        </div>
+
         <InvitationCard
           event={eventForCard}
           guestName={guestName}

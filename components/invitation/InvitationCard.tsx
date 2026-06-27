@@ -25,10 +25,13 @@ type Event = {
   invitationText: string | null;
   program: string | null;
   slug: string;
+  invitationNumber?: string | null;
+  invitationType?: string | null;
 };
 
-// Configuration des styles par type d'événement
-const typeConfigs: Record<string, { icon: any; bg: string; border: string; accent: string; label: string }> = {
+type EventType = "MARIAGE" | "ANNIVERSAIRE" | "SOUTENANCE" | "AUTRE";
+
+const typeConfigs: Record<EventType, { icon: any; bg: string; border: string; accent: string; label: string }> = {
   MARIAGE: { icon: Heart, bg: "bg-red-50 dark:bg-red-950/20", border: "border-red-200", accent: "text-red-600", label: "Mariage" },
   ANNIVERSAIRE: { icon: Gift, bg: "bg-pink-50 dark:bg-pink-950/20", border: "border-pink-200", accent: "text-pink-600", label: "Anniversaire" },
   SOUTENANCE: { icon: Trophy, bg: "bg-purple-50 dark:bg-purple-950/20", border: "border-purple-200", accent: "text-purple-600", label: "Soutenance" },
@@ -57,7 +60,6 @@ export default function InvitationCard({
     guestName.split(" ")[0]
   )}&lastName=${encodeURIComponent(guestName.split(" ").slice(1).join(" ") || "")}`;
 
-  // Récupération du statut depuis localStorage
   useEffect(() => {
     const savedStatus = localStorage.getItem(`status_${guestId}`);
     if (savedStatus) {
@@ -65,8 +67,9 @@ export default function InvitationCard({
     }
   }, [guestId]);
 
-  // Configuration selon le type
-  const config = typeConfigs[event.type] || typeConfigs["AUTRE"];
+  // ✅ Correction du typage : on caste event.type en EventType
+  const type = (event.type as EventType) || "AUTRE";
+  const config = typeConfigs[type] || typeConfigs["AUTRE"];
   const TypeIcon = config.icon;
 
   const handleAttendance = async (newStatus: string) => {
@@ -116,8 +119,8 @@ export default function InvitationCard({
   };
 
   return (
-    <div className={`bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-800`}>
-      {/* Hero Section avec photo en portrait (sans texte par-dessus) */}
+    <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-800">
+      {/* Hero Section */}
       <div className="relative w-full h-[60vh] md:h-[70vh] overflow-hidden">
         {event.imageUrl ? (
           <img
@@ -135,9 +138,9 @@ export default function InvitationCard({
         )}
       </div>
 
-      {/* Contenu de l'invitation (pour téléchargement) */}
+      {/* Contenu */}
       <div ref={cardRef} className="p-6 md:p-8">
-        {/* En-tête avec icône de type */}
+        {/* Type d'événement */}
         <div className="flex items-center gap-2 mb-2">
           <TypeIcon size={20} className={config.accent} />
           <span className={`text-sm font-semibold ${config.accent}`}>{config.label}</span>
@@ -147,6 +150,21 @@ export default function InvitationCard({
           Bonjour <span className="text-primary-500">{fullName}</span>
         </h1>
 
+        {/* Numéro d'invitation et type */}
+        {event.invitationNumber && (
+          <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-xl flex flex-wrap items-center gap-3">
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              📋 N° {event.invitationNumber}
+            </span>
+            <span className="text-sm text-gray-500 dark:text-gray-400">
+              •
+            </span>
+            <span className="text-sm text-gray-700 dark:text-gray-300">
+              {event.invitationType === "couple" ? "👫 Invitation pour 2 personnes" : "🧑 Invitation pour 1 personne"}
+            </span>
+          </div>
+        )}
+
         {event.invitationText && (
           <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border-l-4 border-primary-500">
             <p className="text-gray-800 dark:text-gray-200 italic text-lg">
@@ -155,7 +173,7 @@ export default function InvitationCard({
           </div>
         )}
 
-        {/* Image de l'invitation (paysage) */}
+        {/* Image de l'invitation */}
         {event.invitationImageUrl && (
           <div className="mt-4 rounded-xl overflow-hidden">
             <img
@@ -200,7 +218,7 @@ export default function InvitationCard({
           </div>
         </div>
 
-        {/* Boutons d'action */}
+        {/* Boutons */}
         <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-between items-center">
           <button
             onClick={downloadInvitation}

@@ -105,3 +105,19 @@ select,
 textarea {
   font-size: 16px !important;
 }
+/* Couleurs pour les suggestions */
+.bg-accent-100 {
+  background-color: #e0f2fe;
+}
+.text-accent-700 {
+  color: #0369a1;
+}
+.hover\:bg-accent-200:hover {
+  background-color: #bae6fd;
+}
+.dark .dark\:bg-accent-900\/30 {
+  background-color: rgba(8, 47, 73, 0.3);
+}
+.dark .dark\:text-accent-300 {
+  color: #7dd3fc;
+}

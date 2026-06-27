@@ -8,9 +8,10 @@ export default function EditGuestButton({ guest }: { guest: any }) {
   const [title, setTitle] = useState(guest.title || "");
   const [firstName, setFirstName] = useState(guest.firstName);
   const [lastName, setLastName] = useState(guest.lastName);
+  const [invitationType, setInvitationType] = useState(guest.invitationType || "seul");
 
   const handleSave = async () => {
-    await updateGuest(guest.id, { title, firstName, lastName });
+    await updateGuest(guest.id, { title, firstName, lastName, invitationType });
     setIsEditing(false);
   };
 
@@ -50,6 +51,14 @@ export default function EditGuestButton({ guest }: { guest: any }) {
         onChange={(e) => setLastName(e.target.value)}
         className="p-1 border rounded text-sm dark:bg-gray-800 dark:border-gray-700"
       />
+      <select
+        value={invitationType}
+        onChange={(e) => setInvitationType(e.target.value)}
+        className="p-1 border rounded text-sm dark:bg-gray-800 dark:border-gray-700"
+      >
+        <option value="seul">1 personne</option>
+        <option value="couple">2 personnes</option>
+      </select>
       <button
         onClick={handleSave}
         className="bg-green-500 text-white px-2 py-1 rounded text-sm"

@@ -1,14 +1,28 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { removeGuest } from "@/actions/guest-actions";
+import { removeGuest, updateGuestStatus } from "@/actions/guest-actions";
 import EditGuestButton from "@/components/guests/EditGuestButton";
-import { Search } from "lucide-react";
+import { Search, Copy, Check, X, User, Users } from "lucide-react";
 
-export default function GuestList({ guests, eventId }: { guests: any[]; eventId: string }) {
+// Typage explicite des objets
+const statusColors: Record<string, string> = {
+  en_attente: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300",
+  annule: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
+  entre: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
+};
+
+const statusLabels: Record<string, string> = {
+  en_attente: "En attente",
+  annule: "Annulé",
+  entre: "Entré",
+};
+
+export default function GuestList({ guests, eventId, eventSlug }: { guests: any[]; eventId: string; eventSlug: string }) {
   const [isPending, startTransition] = useTransition();
   const [search, setSearch] = useState("");
   const [filteredGuests, setFilteredGuests] = useState(guests);
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value.toLowerCase();
@@ -20,7 +34,8 @@ export default function GuestList({ guests, eventId }: { guests: any[]; eventId:
         guests.filter(
           (g) =>
             g.firstName.toLowerCase().includes(query) ||
-            g.lastName.toLowerCase().includes(query)
+            g.lastName.toLowerCase().includes(query) ||
+            g.invitationNumber?.toLowerCase().includes(query)
         )
       );
     }
@@ -32,13 +47,25 @@ export default function GuestList({ guests, eventId }: { guests: any[]; eventId:
     });
   };
 
+  const handleStatusChange = (guestId: string, status: string) => {
+    startTransition(async () => {
+      await updateGuestStatus(guestId, status);
+    });
+  };
+
+  const copyInvitationLink = (invitationNumber: string) => {
+    const link = `${baseUrl}/invitation/${eventSlug}?token=${invitationNumber}`;
+    navigator.clipboard.writeText(link);
+    alert("Lien copié !");
+  };
+
   return (
     <div className="mt-4">
       <div className="relative mb-4">
         <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
         <input
           type="text"
-          placeholder="Filtrer par nom..."
+          placeholder="Filtrer par nom ou numéro d'invitation..."
           value={search}
           onChange={handleSearch}
           className="w-full pl-10 pr-4 py-2 border rounded-xl dark:bg-gray-800 dark:border-gray-700"
@@ -48,30 +75,74 @@ export default function GuestList({ guests, eventId }: { guests: any[]; eventId:
       {filteredGuests.length === 0 ? (
         <p className="text-gray-500 text-center py-4">Aucun invité trouvé.</p>
       ) : (
-        <ul className="space-y-2">
-          {filteredGuests.map((guest) => (
-            <li
-              key={guest.id}
-              className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-200 dark:border-gray-700 py-3"
-            >
-              <div className="flex items-center gap-2">
-                <span className="font-medium">
-                  {guest.title ? `${guest.title} ${guest.firstName} ${guest.lastName}` : `${guest.firstName} ${guest.lastName}`}
-                </span>
-              </div>
-              <div className="flex items-center gap-3 mt-2 sm:mt-0">
-                <EditGuestButton guest={guest} />
-                <button
-                  onClick={() => handleRemove(guest.id)}
-                  disabled={isPending}
-                  className="text-red-500 hover:underline text-sm disabled:opacity-50"
-                >
-                  Supprimer
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50 dark:bg-gray-800">
+              <tr>
+                <th className="px-3 py-2 text-left">N°</th>
+                <th className="px-3 py-2 text-left">Nom</th>
+                <th className="px-3 py-2 text-left">Type</th>
+                <th className="px-3 py-2 text-left">Statut</th>
+                <th className="px-3 py-2 text-left">Lien</th>
+                <th className="px-3 py-2 text-left">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredGuests.map((guest) => {
+                const statusKey = guest.status || "en_attente";
+                const colorClass = statusColors[statusKey] || statusColors.en_attente;
+                return (
+                  <tr key={guest.id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                    <td className="px-3 py-2 font-mono font-semibold">{guest.invitationNumber}</td>
+                    <td className="px-3 py-2">
+                      {guest.title ? `${guest.title} ${guest.firstName} ${guest.lastName}` : `${guest.firstName} ${guest.lastName}`}
+                    </td>
+                    <td className="px-3 py-2">
+                      {guest.invitationType === "couple" ? (
+                        <span className="flex items-center gap-1 text-purple-600"><Users size={14} /> Couple</span>
+                      ) : (
+                        <span className="flex items-center gap-1 text-blue-600"><User size={14} /> Seul</span>
+                      )}
+                    </td>
+                    <td className="px-3 py-2">
+                      <select
+                        value={guest.status || "en_attente"}
+                        onChange={(e) => handleStatusChange(guest.id, e.target.value)}
+                        className={`px-2 py-1 rounded-full text-xs font-medium border-0 ${colorClass}`}
+                        disabled={isPending}
+                      >
+                        <option value="en_attente">En attente</option>
+                        <option value="annule">Annulé</option>
+                        <option value="entre">Entré</option>
+                      </select>
+                    </td>
+                    <td className="px-3 py-2">
+                      <button
+                        onClick={() => copyInvitationLink(guest.invitationNumber)}
+                        className="text-primary-500 hover:text-primary-700"
+                        title="Copier le lien d'invitation"
+                      >
+                        <Copy size={16} />
+                      </button>
+                    </td>
+                    <td className="px-3 py-2">
+                      <div className="flex items-center gap-2">
+                        <EditGuestButton guest={guest} />
+                        <button
+                          onClick={() => handleRemove(guest.id)}
+                          disabled={isPending}
+                          className="text-red-500 hover:text-red-700 text-sm"
+                        >
+                          Supprimer
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );
