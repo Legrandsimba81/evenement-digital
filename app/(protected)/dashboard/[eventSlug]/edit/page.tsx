@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { notFound, redirect } from "next/navigation";
-import EventForm from "@/components/events/EventForm";
+import EventForm from "@/components/forms/EventForm";
 
 export default async function EditEventPage({
   params,
@@ -19,16 +19,16 @@ export default async function EditEventPage({
 
   if (!event || event.userId !== userId) return notFound();
 
-  // Transformer les dates pour le formulaire
+  // ✅ Passer les données au formulaire, en convertissant la date en string
   const eventData = {
     ...event,
-    date: event.date.toISOString().split('T')[0],
+    date: event.date.toISOString().split("T")[0], // format YYYY-MM-DD pour le champ date
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6 md:p-8">
+    <div className="max-w-4xl mx-auto p-6 md:p-8">
       <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
-        Modifier l'événement
+        Modifier l'événement : {event.title}
       </h1>
       <EventForm initialData={eventData} />
     </div>
