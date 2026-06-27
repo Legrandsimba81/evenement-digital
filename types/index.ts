@@ -1,10 +1,19 @@
 // types/index.ts
+import type { Event, Guest, User, Message } from '@prisma/client'
+
 export type Role = "USER" | "ADMIN"
 export type EventType = "ANNIVERSAIRE" | "MARIAGE" | "SOUTENANCE" | "AUTRE"
 
-// Pour les composants, on utilise any pour éviter les imports de Prisma
-export type EventWithRelations = any
-export type UserWithEvents = any
-export type User = any
-export type Guest = any
-export type Message = any
+export type EventWithRelations = Event & {
+  user: User
+  guests: Guest[]
+  messages: Message[]
+}
+
+export type EventWithGuests = Event & {
+  guests: Guest[]
+}
+
+export type UserWithEvents = User & {
+  events: Event[]
+}

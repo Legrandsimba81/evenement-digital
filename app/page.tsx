@@ -14,15 +14,38 @@ import {
   Heart,
   Music,
   Trophy,
+  Clock,
+  MapPin,
 } from "lucide-react";
+import type { EventWithGuests } from "@/types";
+
+const typeIcons: Record<string, any> = {
+  ANNIVERSAIRE: Gift,
+  MARIAGE: Heart,
+  SOUTENANCE: Trophy,
+  AUTRE: Music,
+};
 
 export default function HomePage() {
   const { data: session } = useSession();
   const [isClient, setIsClient] = useState(false);
+  const [events, setEvents] = useState<EventWithGuests[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setIsClient(true);
-  }, []);
+    if (session?.user?.id) {
+      fetch(`/api/user/events?userId=${session.user.id}`)
+        .then((res) => res.json())
+        .then((data) => {
+          setEvents(data || []);
+          setLoading(false);
+        })
+        .catch(() => setLoading(false));
+    } else {
+      setLoading(false);
+    }
+  }, [session]);
 
   const features = [
     {
@@ -105,13 +128,90 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Features Section */}
+      {/* Mes événements */}
+      {session && (
+        <section className="py-16 bg-gray-50 dark:bg-gray-950">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Mes événements</h2>
+              <Link href="/dashboard" className="text-primary-500 hover:text-primary-600 text-sm font-medium flex items-center gap-1">
+                Voir tout <ArrowRight size={16} />
+              </Link>
+            </div>
+            {loading ? (
+              <div className="text-center py-12">Chargement...</div>
+            ) : events.length === 0 ? (
+              <div className="text-center py-12 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800">
+                <p className="text-gray-600 dark:text-gray-400">
+                  Vous n'avez pas encore d'événements.{" "}
+                  <Link href="/dashboard/event/new" className="text-primary-500 hover:underline">
+                    Créez votre premier événement
+                  </Link>
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {events.slice(0, 6).map((event) => {
+                  const Icon = typeIcons[event.type] || Calendar;
+                  return (
+                    <Link
+                      key={event.id}
+                      href={`/dashboard/${event.slug}`}
+                      className="group bg-white dark:bg-gray-900 rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-gray-200 dark:border-gray-800"
+                    >
+                      {event.imageUrl && (
+                        <div className="relative w-full aspect-video overflow-hidden">
+                          <img
+                            src={event.imageUrl}
+                            alt={event.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        </div>
+                      )}
+                      <div className="p-5">
+                        <div className="flex items-center gap-2 text-primary-500">
+                          <Icon size={18} />
+                          <span className="text-sm font-medium">{event.type}</span>
+                        </div>
+                        <h3 className="text-xl font-semibold text-gray-900 dark:text-white group-hover:text-primary-500 transition-colors mt-1">
+                          {event.title}
+                        </h3>
+                        <div className="mt-3 space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                          <div className="flex items-center gap-2">
+                            <Calendar size={16} />
+                            <span>{new Date(event.date).toLocaleDateString('fr-FR')}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Clock size={16} />
+                            <span>{event.time}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <MapPin size={16} />
+                            <span>{event.location}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Users size={16} />
+                            <span>{event.guests.length} invités</span>
+                          </div>
+                        </div>
+                        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 text-primary-500 font-medium text-sm">
+                          Gérer l'événement →
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* Features */}
       <section className="py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
-              Pourquoi choisir Simba Event ?
-            </h2>
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Pourquoi choisir Simba Event ?</h2>
             <p className="mt-4 text-lg text-gray-600 dark:text-gray-300">
               Tout ce dont vous avez besoin pour une gestion d'événements sans stress.
             </p>
@@ -140,13 +240,11 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Event Types Section */}
+      {/* Event Types */}
       <section className="bg-gray-50 py-20 dark:bg-gray-900/50">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
-              Pour tous vos événements
-            </h2>
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Pour tous vos événements</h2>
             <p className="mt-4 text-lg text-gray-600 dark:text-gray-300">
               Des invitations adaptées à chaque occasion.
             </p>
@@ -172,13 +270,11 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20">
-        <div className="mx-auto max-w-4xl rounded-3xl bg-primary-600 px-6 py-16 text-center text-white sm:px-12">
-          <h2 className="text-3xl font-bold">
-            Prêt à créer votre prochain événement ?
-          </h2>
-          <p className="mt-4 text-lg text-primary-100">
+      {/* CTA Section - pleine largeur */}
+      <section className="w-full bg-gradient-to-r from-primary-600 to-secondary-600 py-16 px-4 text-center text-white">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-3xl font-bold">Prêt à créer votre prochain événement ?</h2>
+          <p className="mt-4 text-lg text-white/90">
             Rejoignez des milliers d'utilisateurs qui simplifient la gestion de leurs événements.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
@@ -192,13 +288,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
-      {/* Footer */}
-      <footer className="border-t border-gray-200 bg-white py-8 dark:border-gray-800 dark:bg-gray-950">
-        <div className="mx-auto max-w-7xl px-4 text-center text-sm text-gray-600 dark:text-gray-400">
-          <p>© {new Date().getFullYear()} Simba Event. Tous droits réservés.</p>
-        </div>
-      </footer>
     </main>
   );
-} 
+}
