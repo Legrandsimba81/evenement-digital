@@ -77,7 +77,7 @@ export default function Navbar() {
             <Sparkles size={18} />
           </div>
           <span className="text-lg font-semibold tracking-tight text-gray-900 dark:text-white">
-            Simba<span className="text-primary">Event</span>
+            Octavia<span className="text-primary">Event</span>
           </span>
         </Link>
 

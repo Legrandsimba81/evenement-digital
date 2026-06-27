@@ -9,7 +9,7 @@ import BackButtonWrapper from "@/components/ui/BackButtonWrapper";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Simba Event",
+  title: "Octavia Event",
   description: "Générez et gérez vos invitations d'événements facilement",
 };
 

@@ -89,7 +89,7 @@ export default function HomePage() {
               <span>Gérez vos événements comme un pro</span>
             </div>
             <h1 className="mt-6 text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
-              Simba Event
+              Octavia Event
               <span className="block text-secondary-200">L'invitation numérique nouvelle génération</span>
             </h1>
             <p className="mt-6 max-w-2xl text-lg text-white/80">
@@ -211,7 +211,7 @@ export default function HomePage() {
       <section className="py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Pourquoi choisir Simba Event ?</h2>
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Pourquoi choisir Octavia Event ?</h2>
             <p className="mt-4 text-lg text-gray-600 dark:text-gray-300">
               Tout ce dont vous avez besoin pour une gestion d'événements sans stress.
             </p>

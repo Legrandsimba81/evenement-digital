@@ -22,7 +22,7 @@ export default function Footer() {
           {/* Colonne 1 - Brand */}
           <div>
             <Link href="/" className="flex items-center gap-2 text-xl font-bold text-gray-900 dark:text-white">
-              <span className="text-primary-500">Simba</span>Event
+              <span className="text-primary-500">Octavia</span>Event
             </Link>
             <p className="mt-4 text-sm text-gray-600 dark:text-gray-400">
               Créez et gérez vos invitations en quelques clics. Simple, rapide et élégant.
@@ -72,7 +72,7 @@ export default function Footer() {
               <li className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                 <FaEnvelope size={16} />
                 <a href="mailto:contact@simba-event.com" className="hover:text-primary-500 transition">
-                  contact@simba-event.com
+                  legrasimba81@gmail.com
                 </a>
               </li>
               <li className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
@@ -119,7 +119,7 @@ export default function Footer() {
         {/* Copyright */}
         <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-800 text-center text-sm text-gray-500 dark:text-gray-400">
           <p>
-            &copy; {currentYear} Simba Event. Tous droits réservés. pour vos événements numériques en RDCongo.
+            &copy; {currentYear} Octavia Event. Tous droits réservés. pour vos événements numériques en RDCongo.
           </p>
         </div>
       </div>
