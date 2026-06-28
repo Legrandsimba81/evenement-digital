@@ -62,7 +62,6 @@ export default function GateClient({ event }: { event: Event }) {
         const lastName = url.searchParams.get("lastName");
 
         if (firstName && lastName) {
-          // Chercher l'invité par prénom/nom
           const guest = event.guests.find(
             (g) =>
               g.firstName.toLowerCase() === firstName.toLowerCase() &&
@@ -164,7 +163,7 @@ export default function GateClient({ event }: { event: Event }) {
               <QrReader
                 onResult={handleScan}
                 onError={handleError}
-                constraints={{ facingMode: "environment" }}
+                constraints={{ facingMode: "environment" } as any} // ✅ Correction TypeScript
                 className="w-full h-full"
               />
             </div>
@@ -176,7 +175,6 @@ export default function GateClient({ event }: { event: Event }) {
           )}
         </div>
 
-        {/* Liste des invités avec recherche */}
         <div className="relative mb-6">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
           <input
