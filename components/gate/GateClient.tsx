@@ -55,7 +55,6 @@ export default function GateClient({ event }: { event: Event }) {
       setScanResult(data);
       try {
         const url = new URL(data);
-        const pathname = url.pathname;
 
         // Cas 1 : QR d'invitation classique (contient firstName et lastName)
         const firstName = url.searchParams.get("firstName");
@@ -163,7 +162,8 @@ export default function GateClient({ event }: { event: Event }) {
               <QrReader
                 onResult={handleScan}
                 onError={handleError}
-                constraints={{ facingMode: "environment" } as any} // ✅ Correction TypeScript
+                // ✅ Correction des contraintes pour getUserMedia
+                constraints={{ video: { facingMode: "environment" } } as any}
                 className="w-full h-full"
               />
             </div>
