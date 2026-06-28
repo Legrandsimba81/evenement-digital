@@ -6,18 +6,21 @@ import { useRouter } from "next/navigation";
 export default function GuestVerificationForm({ slug }: { slug: string }) {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [error, setError] = useState("");
   const router = useRouter();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Nettoyer les espaces avant et après
-    const cleanFirstName = firstName.trim();
-    const cleanLastName = lastName.trim();
-    if (cleanFirstName && cleanLastName) {
-      router.push(
-        `/invitation/${slug}?firstName=${encodeURIComponent(cleanFirstName)}&lastName=${encodeURIComponent(cleanLastName)}`
-      );
+    const trimmedFirstName = firstName.trim();
+    const trimmedLastName = lastName.trim();
+    if (!trimmedFirstName || !trimmedLastName) {
+      setError("Veuillez remplir les deux champs.");
+      return;
     }
+    setError("");
+    router.push(
+      `/invitation/${slug}?firstName=${encodeURIComponent(trimmedFirstName)}&lastName=${encodeURIComponent(trimmedLastName)}`
+    );
   };
 
   return (
@@ -45,11 +48,19 @@ export default function GuestVerificationForm({ slug }: { slug: string }) {
           className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-800 dark:border-gray-700 dark:text-white"
           required
         />
+        {error && <p className="text-red-500 text-sm text-center">{error}</p>}
         <button
           type="submit"
           className="w-full bg-primary-500 hover:bg-primary-600 text-white font-medium px-4 py-3 rounded-xl transition"
         >
           Voir l'invitation
+        </button>
+        <button
+          type="button"
+          onClick={() => { setFirstName(""); setLastName(""); setError(""); }}
+          className="w-full text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition"
+        >
+          Réessayer
         </button>
       </form>
     </div>

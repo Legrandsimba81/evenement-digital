@@ -6,7 +6,6 @@ import { Search, CheckCircle, Users, User, Camera } from "lucide-react";
 import { updateGuestStatus } from "@/actions/guest-actions";
 import dynamic from "next/dynamic";
 
-// Chargement dynamique avec gestion de l'export par défaut
 const QrReader = dynamic(() => import("react-qr-scanner").then(mod => mod.default), {
   ssr: false,
 });
@@ -26,6 +25,7 @@ type Event = {
   title: string;
   slug: string;
   guests: Guest[];
+  gateSecret?: string | null;
 };
 
 export default function GateClient({ event }: { event: Event }) {
@@ -53,12 +53,16 @@ export default function GateClient({ event }: { event: Event }) {
     if (result?.text) {
       const data = result.text;
       setScanResult(data);
-      // Extraire les paramètres de l'URL
       try {
         const url = new URL(data);
+        const pathname = url.pathname;
+
+        // Cas 1 : QR d'invitation classique (contient firstName et lastName)
         const firstName = url.searchParams.get("firstName");
         const lastName = url.searchParams.get("lastName");
+
         if (firstName && lastName) {
+          // Chercher l'invité par prénom/nom
           const guest = event.guests.find(
             (g) =>
               g.firstName.toLowerCase() === firstName.toLowerCase() &&
@@ -75,15 +79,40 @@ export default function GateClient({ event }: { event: Event }) {
               }
             }
           } else {
+            alert("❌ Invité non trouvé. Vérifiez le nom dans le QR.");
+          }
+          setScanning(false);
+          return;
+        }
+
+        // Cas 2 : QR de contrôle (gate-scan) avec g et s
+        const guestId = url.searchParams.get("g");
+        const secret = url.searchParams.get("s");
+        if (guestId && secret && event.gateSecret === secret) {
+          const guest = event.guests.find((g) => g.id === guestId);
+          if (guest) {
+            if (guest.status === "entre") {
+              alert(`✅ ${guest.firstName} ${guest.lastName} est déjà entré.`);
+            } else if (guest.status === "annule") {
+              alert(`❌ ${guest.firstName} ${guest.lastName} a annulé sa présence.`);
+            } else {
+              if (confirm(`Valider l'entrée de ${guest.firstName} ${guest.lastName} ?`)) {
+                handleValidateEntry(guest.id);
+              }
+            }
+          } else {
             alert("❌ Invité non trouvé.");
           }
-        } else {
-          alert("QR code invalide : paramètres manquants.");
+          setScanning(false);
+          return;
         }
+
+        alert("QR code invalide : paramètres manquants.");
+        setScanning(false);
       } catch (error) {
         alert("QR code invalide.");
+        setScanning(false);
       }
-      setScanning(false);
     }
   };
 
@@ -114,12 +143,9 @@ export default function GateClient({ event }: { event: Event }) {
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
             Contrôle d'accès
           </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {event.title}
-          </p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{event.title}</p>
         </div>
 
-        {/* Scanner QR */}
         <div className="mb-6 p-4 bg-white dark:bg-gray-900 rounded-2xl shadow-md border border-gray-200 dark:border-gray-800">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -150,6 +176,7 @@ export default function GateClient({ event }: { event: Event }) {
           )}
         </div>
 
+        {/* Liste des invités avec recherche */}
         <div className="relative mb-6">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
           <input
@@ -244,22 +271,10 @@ export default function GateClient({ event }: { event: Event }) {
         </div>
 
         <div className="mt-6 flex gap-4 text-sm text-gray-500 dark:text-gray-400">
-          <div className="flex items-center gap-2">
-            <span className="inline-block w-3 h-3 rounded-full bg-yellow-400"></span>
-            En attente
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="inline-block w-3 h-3 rounded-full bg-blue-500"></span>
-            Entré
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="inline-block w-3 h-3 rounded-full bg-red-500"></span>
-            Annulé
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="inline-block w-3 h-3 rounded-full bg-green-500"></span>
-            Confirmé
-          </div>
+          <span className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-full bg-yellow-400"></span> En attente</span>
+          <span className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-full bg-blue-500"></span> Entré</span>
+          <span className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-full bg-red-500"></span> Annulé</span>
+          <span className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-full bg-green-500"></span> Confirmé</span>
         </div>
       </div>
     </div>
