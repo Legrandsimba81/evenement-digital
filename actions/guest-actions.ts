@@ -3,7 +3,9 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
+import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 
+// Générer un numéro d'invitation
 async function generateInvitationNumber(eventId: string): Promise<string> {
   const count = await prisma.guest.count({ where: { eventId } });
   const num = String(count + 1).padStart(3, '0');
@@ -80,7 +82,6 @@ export async function getGuests(eventId: string, search?: string) {
   const event = await prisma.event.findUnique({ where: { id: eventId } });
   if (!event || event.userId !== session.user.id) throw new Error("Non autorisé");
 
-  // Utiliser orderBy avec createdAt (doit exister)
   return prisma.guest.findMany({
     where: {
       eventId,
@@ -92,4 +93,109 @@ export async function getGuests(eventId: string, search?: string) {
     },
     orderBy: { createdAt: "asc" },
   });
+}
+
+export async function exportGuestList(eventId: string, format: "csv" | "pdf" = "csv") {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("Non authentifié");
+
+  const event = await prisma.event.findUnique({
+    where: { id: eventId },
+    include: { guests: { orderBy: { createdAt: "asc" } } },
+  });
+
+  if (!event || event.userId !== session.user.id) {
+    throw new Error("Non autorisé");
+  }
+
+  const guests = event.guests;
+
+  if (format === "csv") {
+    const headers = ["N°", "Titre", "Prénom", "Nom", "Type", "Statut", "Numéro d'invitation"];
+    const rows = guests.map((g, index) => [
+      index + 1,
+      g.title || "",
+      g.firstName,
+      g.lastName,
+      g.invitationType === "couple" ? "Couple" : "Seul",
+      g.status || "En attente",
+      g.invitationNumber || "",
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map((row) => row.join(",")),
+    ].join("\n");
+
+    return { success: true, csvContent };
+  }
+
+  if (format === "pdf") {
+    const pdfDoc = await PDFDocument.create();
+    const page = pdfDoc.addPage([600, 800]);
+    const { width, height } = page.getSize();
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const fontSize = 10;
+    const lineHeight = 15;
+
+    let y = height - 50;
+    const margin = 50;
+
+    // Titre
+    page.drawText(`Liste des invités - ${event.title}`, {
+      x: margin,
+      y: y,
+      size: 16,
+      font,
+      color: rgb(0, 0, 0),
+    });
+    y -= 30;
+
+    // En-têtes
+    const headers = ["N°", "Titre", "Prénom", "Nom", "Type", "Statut", "N° Invitation"];
+    const headerX = [50, 90, 140, 200, 260, 310, 370];
+    headers.forEach((h, i) => {
+      page.drawText(h, {
+        x: headerX[i],
+        y: y,
+        size: fontSize,
+        font,
+        color: rgb(0, 0, 0),
+      });
+    });
+    y -= lineHeight;
+
+    // Lignes
+    guests.forEach((g, index) => {
+      const row = [
+        String(index + 1),
+        g.title || "",
+        g.firstName,
+        g.lastName,
+        g.invitationType === "couple" ? "Couple" : "Seul",
+        g.status || "En attente",
+        g.invitationNumber || "",
+      ];
+      row.forEach((text, i) => {
+        page.drawText(text, {
+          x: headerX[i],
+          y: y,
+          size: fontSize,
+          font,
+          color: rgb(0, 0, 0),
+        });
+      });
+      y -= lineHeight;
+      if (y < 50) {
+        const newPage = pdfDoc.addPage([600, 800]);
+        y = height - 50;
+      }
+    });
+
+    const pdfBytes = await pdfDoc.save();
+    const base64 = Buffer.from(pdfBytes).toString('base64');
+    return { success: true, pdfBase64: base64 };
+  }
+
+  return { success: false, message: "Format non supporté" };
 }

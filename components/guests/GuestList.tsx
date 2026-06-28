@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { removeGuest, updateGuestStatus } from "@/actions/guest-actions";
 import EditGuestButton from "@/components/guests/EditGuestButton";
+import GateQRButton from "@/components/guests/GateQRButton";
 import { Search, Copy, Users, User } from "lucide-react";
 
 const statusColors: Record<string, string> = {
@@ -19,7 +20,12 @@ const statusLabels: Record<string, string> = {
   entre: "Entré",
 };
 
-export default function GuestList({ guests, eventId, eventSlug }: { guests: any[]; eventId: string; eventSlug: string }) {
+export default function GuestList({ guests, eventId, eventSlug, event }: { 
+  guests: any[]; 
+  eventId: string; 
+  eventSlug: string;
+  event: any;
+}) {
   const [isPending, startTransition] = useTransition();
   const [search, setSearch] = useState("");
   const [filteredGuests, setFilteredGuests] = useState(guests);
@@ -83,6 +89,7 @@ export default function GuestList({ guests, eventId, eventSlug }: { guests: any[
                 <th className="px-3 py-2 text-left">Type</th>
                 <th className="px-3 py-2 text-left">Statut</th>
                 <th className="px-3 py-2 text-left">Lien</th>
+                <th className="px-3 py-2 text-left">Contrôle</th>
                 <th className="px-3 py-2 text-left">Actions</th>
               </tr>
             </thead>
@@ -125,6 +132,9 @@ export default function GuestList({ guests, eventId, eventSlug }: { guests: any[
                       >
                         <Copy size={16} />
                       </button>
+                    </td>
+                    <td className="px-3 py-2">
+                      <GateQRButton guest={guest} event={event} />
                     </td>
                     <td className="px-3 py-2">
                       <div className="flex items-center gap-2">

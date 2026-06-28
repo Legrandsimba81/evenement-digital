@@ -103,6 +103,7 @@ model Message {
   id            String    @id @default(cuid())
   content       String
   guestName     String
+  guestId       String?   // lien vers l'invité (nullable pour les anciens messages)
   eventId       String
   event         Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
   createdAt     DateTime  @default(now())

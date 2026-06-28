@@ -6,6 +6,7 @@ import GuestVerificationForm from "@/components/invitation/GuestVerificationForm
 import FloatingHearts from "@/components/invitation/FloatingHearts";
 import { Heart, UserX, CircleCheckBig, Phone } from "lucide-react";
 import MessageSuggestions from "@/components/invitation/MessageSuggestions";
+import MessageItem from "@/components/invitation/MessageItem";
 
 // Suggestions de messages selon le type
 const messageSuggestions: Record<string, string[]> = {
@@ -168,7 +169,7 @@ export default async function InvitationPage({
           </div>
         )}
 
-        {/* Messages des invités */}
+        {/* Messages des invités avec suppression */}
         <div className="mt-6">
           <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-4">
             Messages des invités
@@ -180,20 +181,15 @@ export default async function InvitationPage({
           ) : (
             <div className="space-y-4">
               {event.messages.map((msg) => (
-                <div
+                <MessageItem
                   key={msg.id}
-                  className="bg-white dark:bg-gray-900 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800"
-                >
-                  <div className="flex items-center justify-between flex-wrap gap-1">
-                    <p className="font-semibold text-gray-900 dark:text-white">
-                      {msg.guestName}
-                    </p>
-                    <span className="text-sm text-gray-500">
-                      {new Date(msg.createdAt).toLocaleDateString('fr-FR')}
-                    </span>
-                  </div>
-                  <p className="text-gray-700 dark:text-gray-300 mt-1">{msg.content}</p>
-                </div>
+                  message={{
+                    ...msg,
+                    createdAt: msg.createdAt.toISOString(),
+                  }}
+                  currentGuestId={guest.id}
+                  eventId={event.id}
+                />
               ))}
             </div>
           )}
@@ -209,7 +205,7 @@ export default async function InvitationPage({
               Partagez vos vœux avec les organisateurs.
             </p>
             <MessageSuggestions suggestions={suggestions} />
-            <MessageForm eventId={event.id} guestName={guestName} />
+            <MessageForm eventId={event.id} guestName={guestName} guestId={guest.id} />
           </div>
         </div>
       </div>

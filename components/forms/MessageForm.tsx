@@ -3,13 +3,13 @@
 import { addMessage } from "@/actions/message-actions";
 import { useRef } from "react";
 
-export default function MessageForm({ eventId, guestName }: { eventId: string; guestName: string }) {
+export default function MessageForm({ eventId, guestName, guestId }: { eventId: string; guestName: string; guestId?: string }) {
   const formRef = useRef<HTMLFormElement>(null);
 
   const handleAction = async (formData: FormData) => {
     const content = formData.get("content") as string;
     if (content.trim()) {
-      await addMessage(eventId, guestName, content.trim());
+      await addMessage(eventId, guestName, content.trim(), guestId);
       formRef.current?.reset();
     }
   };
