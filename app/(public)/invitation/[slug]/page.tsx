@@ -77,15 +77,6 @@ export default function InvitationCard({
   guestTitle?: string;
   guestId: string;
 }) {
-  // ✅ Protection : si event est undefined, on affiche un message d'erreur
-  if (!event || !event.slug) {
-    return (
-      <div className="bg-red-50 border border-red-200 text-red-800 p-4 rounded-xl text-center">
-        Erreur : invitation introuvable. Veuillez contacter l'organisateur.
-      </div>
-    );
-  }
-
   const [status, setStatus] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -242,6 +233,7 @@ export default function InvitationCard({
               {config.invitationTitle}
             </span>
           </div>
+          {/* 🔥 Badge modifié pour afficher le numéro d'invitation en couleur */}
           <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
             {event.invitationNumber && (
               <>
