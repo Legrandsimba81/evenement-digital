@@ -34,6 +34,7 @@ export default function GateClient({ event }: { event: Event }) {
   const router = useRouter();
   const [scanning, setScanning] = useState(false);
   const [scanResult, setScanResult] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const filteredGuests = event.guests.filter(
     (g) =>
@@ -49,75 +50,107 @@ export default function GateClient({ event }: { event: Event }) {
     });
   };
 
-  const handleScan = (result: { text: string } | null) => {
-    if (result?.text) {
-      const data = result.text;
-      setScanResult(data);
-      try {
-        const url = new URL(data);
+  // Fonction de validation automatique
+  const processScan = (data: string) => {
+    if (isProcessing) return;
+    setIsProcessing(true);
 
-        // Cas 1 : QR d'invitation classique (contient firstName et lastName)
-        const firstName = url.searchParams.get("firstName");
-        const lastName = url.searchParams.get("lastName");
+    try {
+      const url = new URL(data);
+      const firstName = url.searchParams.get("firstName");
+      const lastName = url.searchParams.get("lastName");
 
-        if (firstName && lastName) {
-          const guest = event.guests.find(
-            (g) =>
-              g.firstName.toLowerCase() === firstName.toLowerCase() &&
-              g.lastName.toLowerCase() === lastName.toLowerCase()
-          );
-          if (guest) {
-            if (guest.status === "entre") {
-              alert(`✅ ${guest.firstName} ${guest.lastName} est déjà entré.`);
-            } else if (guest.status === "annule") {
-              alert(`❌ ${guest.firstName} ${guest.lastName} a annulé sa présence.`);
-            } else {
-              if (confirm(`Valider l'entrée de ${guest.firstName} ${guest.lastName} ?`)) {
-                handleValidateEntry(guest.id);
-              }
-            }
+      if (firstName && lastName) {
+        const guest = event.guests.find(
+          (g) =>
+            g.firstName.toLowerCase() === firstName.toLowerCase() &&
+            g.lastName.toLowerCase() === lastName.toLowerCase()
+        );
+        if (guest) {
+          if (guest.status === "entre") {
+            alert(`✅ ${guest.firstName} ${guest.lastName} est déjà entré.`);
+            setScanning(false);
+            setIsProcessing(false);
+            return;
+          } else if (guest.status === "annule") {
+            alert(`❌ ${guest.firstName} ${guest.lastName} a annulé sa présence.`);
+            setScanning(false);
+            setIsProcessing(false);
+            return;
           } else {
-            alert("❌ Invité non trouvé. Vérifiez le nom dans le QR.");
+            // Validation automatique avec confirmation
+            if (confirm(`Valider l'entrée de ${guest.firstName} ${guest.lastName} ?`)) {
+              handleValidateEntry(guest.id);
+              setScanResult(`✅ ${guest.firstName} ${guest.lastName} entré avec succès`);
+            } else {
+              setScanResult(`⏳ Validation annulée pour ${guest.firstName} ${guest.lastName}`);
+            }
+            setScanning(false);
+            setIsProcessing(false);
+            return;
           }
+        } else {
+          alert(`❌ Invité "${firstName} ${lastName}" non trouvé.`);
           setScanning(false);
+          setIsProcessing(false);
           return;
         }
-
-        // Cas 2 : QR de contrôle (gate-scan) avec g et s
-        const guestId = url.searchParams.get("g");
-        const secret = url.searchParams.get("s");
-        if (guestId && secret && event.gateSecret === secret) {
-          const guest = event.guests.find((g) => g.id === guestId);
-          if (guest) {
-            if (guest.status === "entre") {
-              alert(`✅ ${guest.firstName} ${guest.lastName} est déjà entré.`);
-            } else if (guest.status === "annule") {
-              alert(`❌ ${guest.firstName} ${guest.lastName} a annulé sa présence.`);
-            } else {
-              if (confirm(`Valider l'entrée de ${guest.firstName} ${guest.lastName} ?`)) {
-                handleValidateEntry(guest.id);
-              }
-            }
-          } else {
-            alert("❌ Invité non trouvé.");
-          }
-          setScanning(false);
-          return;
-        }
-
-        alert("QR code invalide : paramètres manquants.");
-        setScanning(false);
-      } catch (error) {
-        alert("QR code invalide.");
-        setScanning(false);
       }
+
+      // QR de contrôle avec secret
+      const guestId = url.searchParams.get("g");
+      const secret = url.searchParams.get("s");
+      if (guestId && secret && event.gateSecret === secret) {
+        const guest = event.guests.find((g) => g.id === guestId);
+        if (guest) {
+          if (guest.status === "entre") {
+            alert(`✅ ${guest.firstName} ${guest.lastName} est déjà entré.`);
+            setScanning(false);
+            setIsProcessing(false);
+            return;
+          } else if (guest.status === "annule") {
+            alert(`❌ ${guest.firstName} ${guest.lastName} a annulé sa présence.`);
+            setScanning(false);
+            setIsProcessing(false);
+            return;
+          } else {
+            if (confirm(`Valider l'entrée de ${guest.firstName} ${guest.lastName} ?`)) {
+              handleValidateEntry(guest.id);
+              setScanResult(`✅ ${guest.firstName} ${guest.lastName} entré avec succès`);
+            } else {
+              setScanResult(`⏳ Validation annulée pour ${guest.firstName} ${guest.lastName}`);
+            }
+            setScanning(false);
+            setIsProcessing(false);
+            return;
+          }
+        } else {
+          alert("❌ Invité non trouvé.");
+          setScanning(false);
+          setIsProcessing(false);
+          return;
+        }
+      }
+
+      alert("QR code invalide : paramètres manquants.");
+    } catch (error) {
+      alert("QR code invalide.");
+    }
+    setScanning(false);
+    setIsProcessing(false);
+  };
+
+  const handleScan = (result: { text: string } | null) => {
+    if (result?.text && scanning) {
+      setScanResult(result.text);
+      processScan(result.text);
     }
   };
 
   const handleError = (err: any) => {
     console.error(err);
-    alert("Erreur du scanner. Réessayez.");
-    setScanning(false);
+    // Ne pas alerter pour chaque erreur, car le scanner peut émettre des erreurs intermittentes
+    // alert("Erreur du scanner. Réessayez.");
   };
 
   const statusColors: Record<string, string> = {
@@ -150,7 +183,14 @@ export default function GateClient({ event }: { event: Event }) {
               Scanner un QR d'invitation
             </h2>
             <button
-              onClick={() => setScanning(!scanning)}
+              onClick={() => {
+                if (scanning) {
+                  setScanning(false);
+                } else {
+                  setScanResult(null);
+                  setScanning(true);
+                }
+              }}
               className="inline-flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-xl transition"
             >
               <Camera size={18} />
@@ -158,23 +198,27 @@ export default function GateClient({ event }: { event: Event }) {
             </button>
           </div>
           {scanning && (
-            <div className="relative aspect-square max-w-sm mx-auto overflow-hidden rounded-xl border border-gray-300 dark:border-gray-700">
+            <div className="relative aspect-square max-w-sm mx-auto overflow-hidden rounded-xl border border-gray-300 dark:border-gray-700 bg-black">
               <QrReader
                 onResult={handleScan}
                 onError={handleError}
-                // ✅ Correction des contraintes pour getUserMedia
                 constraints={{ video: { facingMode: "environment" } } as any}
                 className="w-full h-full"
+                // delay={300} // peut être ajouté si supporté
               />
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="w-3/4 h-3/4 border-2 border-primary-500 rounded-lg opacity-50"></div>
+              </div>
             </div>
           )}
-          {scanResult && (
+          {scanResult && !scanning && (
             <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
               Dernier scan : {scanResult}
             </div>
           )}
         </div>
 
+        {/* Liste des invités */}
         <div className="relative mb-6">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
           <input
