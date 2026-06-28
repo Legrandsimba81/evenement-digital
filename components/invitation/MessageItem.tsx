@@ -12,16 +12,27 @@ type MessageItemProps = {
     guestId?: string | null;
     createdAt: string;
   };
-  currentGuestId?: string; // pour l'invité
-  isOrganizer?: boolean;   // pour l'organisateur (quand connecté)
+  currentGuestId?: string;
+  currentGuestName?: string; // ✅ fallback pour les anciens messages sans guestId
+  isOrganizer?: boolean;
   eventId: string;
 };
 
-export default function MessageItem({ message, currentGuestId, isOrganizer = false, eventId }: MessageItemProps) {
+export default function MessageItem({
+  message,
+  currentGuestId,
+  currentGuestName,
+  isOrganizer = false,
+  eventId,
+}: MessageItemProps) {
   const [isPending, startTransition] = useTransition();
 
+  // ✅ Vérification : soit par guestId, soit par nom (fallback)
   const canDelete =
-    (isOrganizer && true) || (currentGuestId && message.guestId === currentGuestId);
+    (isOrganizer && true) ||
+    (currentGuestId &&
+      (message.guestId === currentGuestId ||
+        (!message.guestId && currentGuestName && message.guestName === currentGuestName)));
 
   const handleDelete = () => {
     if (confirm("Supprimer ce message ?")) {

@@ -188,6 +188,7 @@ export default async function InvitationPage({
                     createdAt: msg.createdAt.toISOString(),
                   }}
                   currentGuestId={guest.id}
+                  currentGuestName={guestName}  // ajout
                   eventId={event.id}
                 />
               ))}

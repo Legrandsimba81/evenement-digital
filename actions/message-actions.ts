@@ -5,7 +5,7 @@ import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 
 export async function addMessage(eventId: string, guestName: string, content: string, guestId?: string) {
-  await prisma.message.create({
+  const message = await prisma.message.create({
     data: {
       content,
       guestName,
@@ -15,6 +15,7 @@ export async function addMessage(eventId: string, guestName: string, content: st
   });
   const event = await prisma.event.findUnique({ where: { id: eventId } });
   if (event) revalidatePath(`/invitation/${event.slug}`);
+  return message;
 }
 
 export async function deleteMessage(messageId: string, guestId?: string, isOrganizer = false) {
@@ -37,7 +38,7 @@ export async function deleteMessage(messageId: string, guestId?: string, isOrgan
 
   await prisma.message.delete({ where: { id: messageId } });
 
-  // Revalider le chemin
+  // Revalider les chemins
   revalidatePath(`/invitation/${message.event.slug}`);
   if (session?.user) revalidatePath(`/dashboard/${message.event.slug}`);
 }
