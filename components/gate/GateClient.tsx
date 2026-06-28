@@ -57,15 +57,20 @@ export default function GateClient({ event }: { event: Event }) {
     try {
       const url = new URL(result);
 
+      // 1. Cas : QR d'invitation classique (contient firstName et lastName)
       const firstName = url.searchParams.get("firstName");
       const lastName = url.searchParams.get("lastName");
 
       if (firstName && lastName) {
+        const firstNameClean = firstName.trim();
+        const lastNameClean = lastName.trim();
+
         const guest = event.guests.find(
           (g) =>
-            g.firstName.toLowerCase() === firstName.toLowerCase() &&
-            g.lastName.toLowerCase() === lastName.toLowerCase()
+            g.firstName.trim().toLowerCase() === firstNameClean.toLowerCase() &&
+            g.lastName.trim().toLowerCase() === lastNameClean.toLowerCase()
         );
+
         if (guest) {
           if (guest.status === "entre") {
             alert(`✅ ${guest.firstName} ${guest.lastName} est déjà entré.`);
@@ -77,13 +82,20 @@ export default function GateClient({ event }: { event: Event }) {
             }
           }
         } else {
-          alert("❌ Invité non trouvé. Vérifiez le nom dans le QR.");
+          // Affichage détaillé pour aider à identifier le problème
+          alert(
+            `❌ Invité non trouvé.\n\n` +
+            `Prénom scanné : "${firstNameClean}"\n` +
+            `Nom scanné : "${lastNameClean}"\n\n` +
+            `Vérifiez que le QR contient bien ces informations.`
+          );
         }
         setScanning(false);
         setIsProcessing(false);
         return;
       }
 
+      // 2. Cas : QR de contrôle (gate-scan) avec g et s
       const guestId = url.searchParams.get("g");
       const secret = url.searchParams.get("s");
       if (guestId && secret && event.gateSecret === secret) {
@@ -106,11 +118,11 @@ export default function GateClient({ event }: { event: Event }) {
         return;
       }
 
-      alert("QR code invalide : paramètres manquants.");
+      alert("QR code invalide : ni paramètres d'invitation, ni paramètres de contrôle.");
       setScanning(false);
       setIsProcessing(false);
     } catch (error) {
-      alert("QR code invalide.");
+      alert("QR code invalide. Assurez-vous de scanner un QR d'invitation valide.");
       setScanning(false);
       setIsProcessing(false);
     }
