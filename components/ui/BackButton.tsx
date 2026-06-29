@@ -3,27 +3,15 @@
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
-interface BackButtonProps {
-  className?: string;
-  showText?: boolean;
-  label?: string;
-}
-
-export default function BackButton({ 
-  className = "", 
-  showText = false, 
-  label = "Retour" 
-}: BackButtonProps) {
+export default function BackButton() {
   const router = useRouter();
-
   return (
     <button
       onClick={() => router.back()}
-      className={`inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors ${className}`}
+      className="inline-flex items-center justify-center p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
       aria-label="Retour"
     >
       <ArrowLeft size={18} />
-      {showText && <span>{label}</span>}
     </button>
   );
 }

@@ -130,55 +130,55 @@ export default function EventDetailsClient({ event }: { event: Event }) {
     return (
         <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
             {/* En-tête */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-4 border-b border-gray-200 dark:border-gray-800 pb-3">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                    <h1 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white">
                         {event.title}
                     </h1>
-                    <p className="text-gray-600 dark:text-gray-400">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
                         {event.type} - {event.location}
                     </p>
                 </div>
-                <div className="flex flex-wrap gap-3 mt-4 md:mt-0">
+                <div className="flex flex-wrap gap-1.5">
+                    {/* Boutons simplifiés */}
                     <Link
                         href={`/dashboard/${event.slug}/edit`}
-                        className="inline-flex items-center gap-2 bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-xl transition"
+                        className="inline-flex items-center gap-1 bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition"
                     >
-                        <Edit size={18} />
-                       <span className="hedden md:inline">Modifier</span>
+                        <Edit size={14} />
+                        Modifier
                     </Link>
                     <Link
                         href={`/invitation/${event.slug}`}
                         target="_blank"
-                        className="inline-flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-xl transition"
+                        className="inline-flex items-center gap-1 bg-primary-500 hover:bg-primary-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition"
                     >
-                        <Eye size={18} />
-                        Voir l'invitation
+                        <Eye size={14} />
+                        Invitation
                     </Link>
                     <Link
                         href={`/gate/${event.slug}`}
-                        className="inline-flex items-center gap-2 bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-xl transition"
+                        className="inline-flex items-center gap-1 bg-purple-500 hover:bg-purple-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition"
                     >
-                        <Users size={18} />
-                        Contrôle d'accès
+                        <Users size={14} />
+                        Contrôle
                     </Link>
                     <Link
                         href={`/dashboard/${event.slug}/collaborators`}
-                        className="inline-flex items-center gap-2 bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-xl transition"
+                        className="inline-flex items-center gap-1 bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition"
                     >
-                        <Users size={18} />
-                        Collaborateurs
+                        <Users size={14} />
+                        Collab.
                     </Link>
                     <Link
                         href={`/dashboard/${event.slug}/logs`}
-                        className="inline-flex items-center gap-2 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-xl transition"
+                        className="inline-flex items-center gap-1 bg-gray-500 hover:bg-gray-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition"
                     >
-                        <Clock size={18} />
-                       <span className="hedden md:inline">Historique</span>
+                        <Clock size={14} />
+                        Historique
                     </Link>
                 </div>
             </div>
-
             {/* Onglets */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="grid grid-cols-3 w-full max-w-md mb-8">

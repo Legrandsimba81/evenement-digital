@@ -5,6 +5,7 @@ import { SessionProvider } from "next-auth/react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BackButtonWrapper from "@/components/ui/BackButtonWrapper";
+import BackButton from "@/components/ui/BackButton";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -24,7 +25,7 @@ export default function RootLayout({
         <SessionProvider>
           <div className="min-h-screen flex flex-col">
             <Navbar />
-            <BackButtonWrapper />
+            <BackButton />
             <main className="flex-1">{children}</main>
             <Footer />
           </div>
