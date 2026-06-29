@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { notFound, redirect } from "next/navigation";
 import EventDetailsClient from "@/components/EventDetailsClient";
+import { canManageEvent } from "@/lib/permissions";
 
 export default async function EventPage({
   params,
@@ -18,7 +19,10 @@ export default async function EventPage({
     include: { guests: true, messages: true },
   });
 
-  if (!event || event.userId !== userId) return notFound();
+  if (!event) return notFound();
+
+  const hasAccess = await canManageEvent(event.id, userId);
+  if (!hasAccess) return notFound();
 
   const eventData = {
     ...event,

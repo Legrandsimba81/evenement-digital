@@ -1,7 +1,8 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { redirect } from "next/navigation";
+import { redirect, notFound } from "next/navigation";
 import GateClient from "@/components/gate/GateClient";
+import { canManageEvent } from "@/lib/permissions";
 
 export default async function GatePage({
   params,
@@ -12,7 +13,6 @@ export default async function GatePage({
   if (!session?.user) redirect("/login");
 
   const { eventSlug } = await params;
-
   const event = await prisma.event.findUnique({
     where: { slug: eventSlug },
     include: {
@@ -23,7 +23,9 @@ export default async function GatePage({
   });
 
   if (!event) redirect("/dashboard");
-  if (event.userId !== session.user.id) redirect("/dashboard");
+
+  const hasAccess = await canManageEvent(event.id, session.user.id);
+  if (!hasAccess) redirect("/dashboard");
 
   return <GateClient event={event} />;
 }

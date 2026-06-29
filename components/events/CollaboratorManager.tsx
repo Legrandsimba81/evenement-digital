@@ -26,7 +26,7 @@ export default function CollaboratorManager({
   isOwner: boolean;
 }) {
   const [email, setEmail] = useState("");
-  const [collaborators, setCollaborators] = useState<Collaborator[]>([]); // ✅ type corrigé
+  const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);

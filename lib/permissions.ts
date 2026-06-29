@@ -1,7 +1,8 @@
-// lib/permissions.ts
 import { prisma } from "@/lib/prisma";
 
-export async function canManageEvent(eventId: string, userId: string): Promise<boolean> {
+export async function canManageEvent(eventId: string, userId?: string): Promise<boolean> {
+  if (!userId) return false;
+
   const event = await prisma.event.findUnique({
     where: { id: eventId },
     select: { userId: true },
