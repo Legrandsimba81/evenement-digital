@@ -75,6 +75,7 @@ model Event {
   user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   guests            Guest[]
   messages          Message[]
+  theme         Json?     // stocke les préférences de thème
   collaborators     EventCollaborator[]
   logs              EventLog[] // ✅ relation inverse
   slug              String    @unique

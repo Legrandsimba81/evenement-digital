@@ -5,10 +5,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { uploadImage } from "@/actions/upload-actions";
 import { createEvent, updateEvent } from "@/actions/event-actions";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { Gift, Heart, Trophy, Music } from "lucide-react";
 import ImageUploadWithCrop from "@/components/forms/ImageUploadWithCrop";
+import { getThemeById, themes, Theme } from "@/lib/themes";
 
 type EventType = "ANNIVERSAIRE" | "MARIAGE" | "SOUTENANCE" | "AUTRE";
 
@@ -64,6 +65,7 @@ const eventSchema = z.object({
   groomName: z.string().optional(),
   age: z.string().optional(),
   thesisTitle: z.string().optional(),
+  themeId: z.string().optional(), // ✅ champ pour stocker l'ID du thème
 });
 
 type EventFormData = z.infer<typeof eventSchema>;
@@ -76,6 +78,9 @@ const VALID_EVENT_FIELDS = [
 
 export default function EventTypeForm({ type, initialData }: { type?: EventType; initialData?: any }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const themeIdFromUrl = searchParams.get("theme");
+  
   const isEdit = !!initialData;
 
   // États pour les images
@@ -100,6 +105,7 @@ export default function EventTypeForm({ type, initialData }: { type?: EventType;
     groomName: initialData?.groomName || "",
     age: initialData?.age || "",
     thesisTitle: initialData?.thesisTitle || "",
+    themeId: initialData?.themeId || themeIdFromUrl || undefined,
   };
 
   const { register, handleSubmit, setValue, formState: { errors, isSubmitting } } = useForm<EventFormData>({
@@ -179,11 +185,21 @@ export default function EventTypeForm({ type, initialData }: { type?: EventType;
         }
       }
 
+      // ✅ Récupérer le thème complet et le stocker en JSON
+      let themeData = null;
+      if (data.themeId) {
+        const theme = getThemeById(data.themeId);
+        if (theme) {
+          themeData = theme;
+        }
+      }
+
       const payload = {
         ...cleanData,
         date: dateObj,
         imageUrl: heroImageUrl,
         invitationImageUrl,
+        theme: themeData ? JSON.stringify(themeData) : null, // Stocker le thème en JSON
       };
 
       console.log("📦 Payload:", payload);
@@ -229,6 +245,7 @@ export default function EventTypeForm({ type, initialData }: { type?: EventType;
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <input type="hidden" {...register("type")} value={currentType} />
+        <input type="hidden" {...register("themeId")} />
 
         {/* Titre */}
         <div>

@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { Calendar, MapPin, Clock, Download, Check, X, Heart, Gift, Trophy, Music, User, Users, QrCode } from "lucide-react";
 import QRCode from "react-qr-code";
 import { captureElement } from "@/lib/captureImage";
+import { Theme, getThemeById } from "@/lib/themes";
 
 type Guest = {
   id: string;
@@ -27,11 +28,12 @@ type Event = {
   slug: string;
   invitationNumber?: string | null;
   invitationType?: string | null;
+  theme?: string | null; // ✅ thème stocké en JSON
 };
 
 type EventType = "MARIAGE" | "ANNIVERSAIRE" | "SOUTENANCE" | "AUTRE";
 
-const typeConfigs = {
+const defaultTypeConfigs = {
   MARIAGE: {
     icon: Heart,
     bg: "bg-rose-50 dark:bg-rose-950/20",
@@ -66,6 +68,23 @@ const typeConfigs = {
   },
 } as const;
 
+// Fonction pour appliquer le thème
+function getThemeClasses(theme: Theme | null | undefined) {
+  if (!theme) return null;
+  const { colors, className, backgroundStyle } = theme;
+  return {
+    // Classes pour le conteneur principal
+    container: `bg-${colors.background} ${className || ''}`,
+    primaryText: `text-${colors.primary}`,
+    secondaryText: `text-${colors.secondary}`,
+    accentText: `text-${colors.accent}`,
+    border: `border-${colors.primary}`,
+    bgPrimary: `bg-${colors.primary}`,
+    bgSecondary: `bg-${colors.secondary}`,
+    // On peut ajouter d'autres classes si nécessaire
+  };
+}
+
 export default function InvitationCard({
   event,
   guestName,
@@ -90,6 +109,49 @@ export default function InvitationCard({
   const invitationLink = `${baseUrl}/invitation/${event.slug}?firstName=${encodeURIComponent(
     guestName.split(" ")[0]
   )}&lastName=${encodeURIComponent(guestName.split(" ").slice(1).join(" ") || "")}`;
+
+  // ✅ Récupérer le thème
+  let theme: Theme | null = null;
+  try {
+    if (event.theme) {
+      theme = JSON.parse(event.theme);
+    }
+  } catch (e) {
+    console.warn("Erreur de parsing du thème", e);
+  }
+
+  // Si pas de thème, on utilise un thème par défaut basé sur le type
+  if (!theme) {
+    const defaultThemeId = event.type === "MARIAGE" ? "wedding-romantic" : 
+                           event.type === "ANNIVERSAIRE" ? "birthday-colorful" :
+                           event.type === "SOUTENANCE" ? "defense-academic" : "other-festive";
+    const defaultTheme = getThemeById(defaultThemeId);
+    if (defaultTheme) theme = defaultTheme;
+  }
+
+  // Si toujours pas de thème, on crée un thème minimal
+  if (!theme) {
+    theme = {
+      id: "fallback",
+      name: "Standard",
+      description: "",
+      category: "AUTRE",
+      colors: {
+        primary: "blue-600",
+        secondary: "blue-400",
+        background: "white",
+        accent: "blue-800",
+        text: "gray-900",
+      },
+      icons: { main: Music },
+      animation: "none",
+      backgroundStyle: "solid",
+      className: "bg-white",
+    };
+  }
+
+  const themeClasses = getThemeClasses(theme);
+  const Icon = theme?.icons?.main || defaultTypeConfigs[event.type as EventType]?.icon || Music;
 
   useEffect(() => {
     const savedStatus = localStorage.getItem(`status_${guestId}`);
@@ -119,8 +181,7 @@ export default function InvitationCard({
   }, [event.imageUrl, event.invitationImageUrl]);
 
   const type = (event.type as EventType) || "AUTRE";
-  const config = typeConfigs[type] || typeConfigs["AUTRE"];
-  const TypeIcon = config.icon;
+  const config = defaultTypeConfigs[type] || defaultTypeConfigs["AUTRE"];
 
   const handleAttendance = async (newStatus: string) => {
     setIsLoading(true);
@@ -192,8 +253,11 @@ export default function InvitationCard({
   const peopleLabel = event.invitationType === "couple" ? "2 personnes" : "1 personne";
   const peopleIcon = event.invitationType === "couple" ? Users : User;
 
+  // Déterminer le titre de l'invitation à partir du thème ou du type par défaut
+  const invitationTitle = theme?.invitationTitle || config.invitationTitle;
+
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl overflow-hidden border border-gray-200 dark:border-gray-800">
+    <div className={`rounded-2xl shadow-xl overflow-hidden border ${theme?.colors ? `border-${theme.colors.primary}` : 'border-gray-200'} ${theme?.className || 'bg-white dark:bg-gray-900'}`}>
       {/* Image héros */}
       <div className="relative w-full aspect-video overflow-hidden bg-gray-100 dark:bg-gray-800">
         {event.imageUrl ? (
@@ -205,7 +269,7 @@ export default function InvitationCard({
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center">
             <div className="flex flex-col items-center text-white">
-              <TypeIcon size={64} className="mb-4" />
+              <Icon size={64} className="mb-4" />
               <span className="text-4xl font-bold">{config.label}</span>
             </div>
           </div>
@@ -217,9 +281,9 @@ export default function InvitationCard({
         {/* En-tête : titre d'invitation + badge personnes */}
         <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
           <div className="flex items-center gap-2">
-            <TypeIcon size={20} className={config.accent} />
-            <span className={`text-sm font-semibold ${config.accent}`}>
-              {config.invitationTitle}
+            <Icon size={20} className={`${theme?.colors ? `text-${theme.colors.primary}` : 'text-primary-500'}`} />
+            <span className={`text-sm font-semibold ${theme?.colors ? `text-${theme.colors.primary}` : 'text-primary-500'}`}>
+              {invitationTitle}
             </span>
           </div>
           <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
@@ -249,7 +313,7 @@ export default function InvitationCard({
         )}
 
         {event.invitationText && (
-          <div className="mt-4 p-4 bg-primary-50/50 dark:bg-primary-900/10 rounded-xl border-l-4 border-primary-500">
+          <div className={`mt-4 p-4 rounded-xl border-l-4 ${theme?.colors ? `border-${theme.colors.primary} bg-${theme.colors.primary}/10` : 'border-primary-500 bg-primary-50/50 dark:bg-primary-900/10'}`}>
             <p className="text-gray-800 dark:text-gray-200 italic text-base sm:text-lg">
               {event.invitationText}
             </p>
@@ -267,25 +331,25 @@ export default function InvitationCard({
         )}
 
         <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
-          <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
-            <Calendar size={18} className="text-primary-500 flex-shrink-0" />
-            <span className="text-sm sm:text-base">
+          <div className={`flex items-center gap-2 ${theme?.colors ? `text-${theme.colors.primary}` : 'text-primary-500'}`}>
+            <Calendar size={18} className="flex-shrink-0" />
+            <span className="text-sm sm:text-base text-gray-700 dark:text-gray-300">
               {new Date(event.date).toLocaleDateString('fr-FR')}
             </span>
           </div>
-          <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
-            <Clock size={18} className="text-primary-500 flex-shrink-0" />
-            <span className="text-sm sm:text-base">{event.time}</span>
+          <div className={`flex items-center gap-2 ${theme?.colors ? `text-${theme.colors.primary}` : 'text-primary-500'}`}>
+            <Clock size={18} className="flex-shrink-0" />
+            <span className="text-sm sm:text-base text-gray-700 dark:text-gray-300">{event.time}</span>
           </div>
-          <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
-            <MapPin size={18} className="text-primary-500 flex-shrink-0" />
-            <span className="text-sm sm:text-base">{event.location}</span>
+          <div className={`flex items-center gap-2 ${theme?.colors ? `text-${theme.colors.primary}` : 'text-primary-500'}`}>
+            <MapPin size={18} className="flex-shrink-0" />
+            <span className="text-sm sm:text-base text-gray-700 dark:text-gray-300">{event.location}</span>
           </div>
         </div>
 
         {event.program && (
           <div className="mt-6 p-4 bg-gray-100 dark:bg-gray-800 rounded-xl">
-            <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Programme</h3>
+            <h3 className={`font-semibold mb-2 ${theme?.colors ? `text-${theme.colors.primary}` : 'text-gray-900 dark:text-white'}`}>Programme</h3>
             <div className="text-gray-700 dark:text-gray-300 whitespace-pre-line text-sm sm:text-base">
               {event.program}
             </div>
@@ -315,7 +379,7 @@ export default function InvitationCard({
           <button
             onClick={downloadInvitation}
             disabled={isDownloading || !imagesLoaded}
-            className="flex items-center justify-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-4 py-3 rounded-xl transition disabled:opacity-50 text-sm sm:text-base"
+            className={`flex items-center justify-center gap-2 ${theme?.colors ? `bg-${theme.colors.primary} hover:bg-${theme.colors.primary}/90` : 'bg-primary-500 hover:bg-primary-600'} text-white px-4 py-3 rounded-xl transition disabled:opacity-50 text-sm sm:text-base`}
           >
             <Download size={18} />
             {isDownloading ? "Téléchargement..." : "Télécharger l'invitation"}
