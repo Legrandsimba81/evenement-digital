@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { notFound, redirect } from "next/navigation";
 import EventDetailsClient from "@/components/EventDetailsClient";
 import { Calendar } from "lucide-react";
+import { canManageEvent } from "@/lib/permissions";
 
 export default async function EventPage({
   params,
@@ -19,7 +20,11 @@ export default async function EventPage({
     include: { guests: true, messages: true },
   });
 
-  if (!event || event.userId !== userId) return notFound();
+  if (!event) return notFound();
+
+  // Vérifier si l'utilisateur est le propriétaire OU un collaborateur
+  const hasAccess = await canManageEvent(event.id, userId);
+  if (!hasAccess) return notFound();
 
   const isPast = new Date(event.date) < new Date();
 
