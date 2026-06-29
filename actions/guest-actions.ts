@@ -4,8 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import { canManageEvent } from "@/lib/permissions";
 
-// Générer un numéro d'invitation
 async function generateInvitationNumber(eventId: string): Promise<string> {
   const count = await prisma.guest.count({ where: { eventId } });
   const num = String(count + 1).padStart(3, '0');
@@ -15,8 +15,12 @@ async function generateInvitationNumber(eventId: string): Promise<string> {
 export async function addGuest(eventId: string, firstName: string, lastName: string, title?: string, invitationType: string = "seul") {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Non authentifié");
+
   const event = await prisma.event.findUnique({ where: { id: eventId } });
-  if (!event || event.userId !== session.user.id) throw new Error("Non autorisé");
+  if (!event) throw new Error("Événement non trouvé");
+
+  const hasAccess = await canManageEvent(eventId, session.user.id);
+  if (!hasAccess) throw new Error("Non autorisé");
 
   const invitationNumber = await generateInvitationNumber(eventId);
 
@@ -37,8 +41,15 @@ export async function addGuest(eventId: string, firstName: string, lastName: str
 export async function removeGuest(guestId: string) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Non authentifié");
-  const guest = await prisma.guest.findUnique({ where: { id: guestId }, include: { event: true } });
-  if (!guest || guest.event.userId !== session.user.id) throw new Error("Non autorisé");
+
+  const guest = await prisma.guest.findUnique({
+    where: { id: guestId },
+    include: { event: true },
+  });
+  if (!guest) throw new Error("Invité non trouvé");
+
+  const hasAccess = await canManageEvent(guest.eventId, session.user.id);
+  if (!hasAccess) throw new Error("Non autorisé");
 
   await prisma.guest.delete({ where: { id: guestId } });
   revalidatePath(`/dashboard/${guest.event.slug}`);
@@ -47,8 +58,15 @@ export async function removeGuest(guestId: string) {
 export async function updateGuest(guestId: string, data: { title?: string; firstName?: string; lastName?: string; invitationType?: string; status?: string }) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Non authentifié");
-  const guest = await prisma.guest.findUnique({ where: { id: guestId }, include: { event: true } });
-  if (!guest || guest.event.userId !== session.user.id) throw new Error("Non autorisé");
+
+  const guest = await prisma.guest.findUnique({
+    where: { id: guestId },
+    include: { event: true },
+  });
+  if (!guest) throw new Error("Invité non trouvé");
+
+  const hasAccess = await canManageEvent(guest.eventId, session.user.id);
+  if (!hasAccess) throw new Error("Non autorisé");
 
   await prisma.guest.update({
     where: { id: guestId },
@@ -66,8 +84,15 @@ export async function updateGuest(guestId: string, data: { title?: string; first
 export async function updateGuestStatus(guestId: string, status: string) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Non authentifié");
-  const guest = await prisma.guest.findUnique({ where: { id: guestId }, include: { event: true } });
-  if (!guest || guest.event.userId !== session.user.id) throw new Error("Non autorisé");
+
+  const guest = await prisma.guest.findUnique({
+    where: { id: guestId },
+    include: { event: true },
+  });
+  if (!guest) throw new Error("Invité non trouvé");
+
+  const hasAccess = await canManageEvent(guest.eventId, session.user.id);
+  if (!hasAccess) throw new Error("Non autorisé");
 
   await prisma.guest.update({
     where: { id: guestId },
@@ -79,8 +104,9 @@ export async function updateGuestStatus(guestId: string, status: string) {
 export async function getGuests(eventId: string, search?: string) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Non authentifié");
-  const event = await prisma.event.findUnique({ where: { id: eventId } });
-  if (!event || event.userId !== session.user.id) throw new Error("Non autorisé");
+
+  const hasAccess = await canManageEvent(eventId, session.user.id);
+  if (!hasAccess) throw new Error("Non autorisé");
 
   return prisma.guest.findMany({
     where: {
@@ -99,14 +125,14 @@ export async function exportGuestList(eventId: string, format: "csv" | "pdf" = "
   const session = await auth();
   if (!session?.user?.id) throw new Error("Non authentifié");
 
+  const hasAccess = await canManageEvent(eventId, session.user.id);
+  if (!hasAccess) throw new Error("Non autorisé");
+
   const event = await prisma.event.findUnique({
     where: { id: eventId },
     include: { guests: { orderBy: { createdAt: "asc" } } },
   });
-
-  if (!event || event.userId !== session.user.id) {
-    throw new Error("Non autorisé");
-  }
+  if (!event) throw new Error("Événement non trouvé");
 
   const guests = event.guests;
 
@@ -122,11 +148,7 @@ export async function exportGuestList(eventId: string, format: "csv" | "pdf" = "
       g.invitationNumber || "",
     ]);
 
-    const csvContent = [
-      headers.join(","),
-      ...rows.map((row) => row.join(",")),
-    ].join("\n");
-
+    const csvContent = [headers.join(","), ...rows.map((row) => row.join(","))].join("\n");
     return { success: true, csvContent };
   }
 
@@ -141,7 +163,6 @@ export async function exportGuestList(eventId: string, format: "csv" | "pdf" = "
     let y = height - 50;
     const margin = 50;
 
-    // Titre
     page.drawText(`Liste des invités - ${event.title}`, {
       x: margin,
       y: y,
@@ -151,7 +172,6 @@ export async function exportGuestList(eventId: string, format: "csv" | "pdf" = "
     });
     y -= 30;
 
-    // En-têtes
     const headers = ["N°", "Titre", "Prénom", "Nom", "Type", "Statut", "N° Invitation"];
     const headerX = [50, 90, 140, 200, 260, 310, 370];
     headers.forEach((h, i) => {
@@ -165,7 +185,6 @@ export async function exportGuestList(eventId: string, format: "csv" | "pdf" = "
     });
     y -= lineHeight;
 
-    // Lignes
     guests.forEach((g, index) => {
       const row = [
         String(index + 1),

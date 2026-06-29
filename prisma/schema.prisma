@@ -18,6 +18,7 @@ model User {
   events        Event[]
   accounts      Account[]
   sessions      Session[]
+  collaborators EventCollaborator[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
@@ -73,13 +74,28 @@ model Event {
   user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   guests            Guest[]
   messages          Message[]
-  gateSecret   String?   // secret pour le contrôle d’accès
+  collaborators     EventCollaborator[]
   slug              String    @unique
   whatsappNumber    String?
   invitationNumber  String?
   invitationType    String?
+  gateSecret        String?
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
+}
+
+model EventCollaborator {
+  id        String   @id @default(cuid())
+  eventId   String
+  userId    String
+  role      String   @default("EDITOR") // ADMIN ou EDITOR
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
 }
 
 model Guest {
@@ -87,11 +103,10 @@ model Guest {
   title             String?
   firstName         String
   lastName          String
-  status            String?  @default("en_attente")
+  status            String?  @default("en_attente") // en_attente, attending, annule, entre
   invitationType    String?
   invitationNumber  String?
   eventId           String
-  gateToken    String?   // token unique (optionnel, mais plus sûr)
   event             Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
@@ -103,7 +118,7 @@ model Message {
   id            String    @id @default(cuid())
   content       String
   guestName     String
-  guestId       String?   // lien vers l'invité (nullable pour les anciens messages)
+  guestId       String?
   eventId       String
   event         Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
   createdAt     DateTime  @default(now())
