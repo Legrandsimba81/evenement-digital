@@ -4,7 +4,7 @@ import InvitationCard from "@/components/invitation/InvitationCard";
 import MessageForm from "@/components/forms/MessageForm";
 import GuestVerificationForm from "@/components/invitation/GuestVerificationForm";
 import FloatingHearts from "@/components/invitation/FloatingHearts";
-import { Heart, UserX, CircleCheckBig, Phone } from "lucide-react";
+import { Heart, UserX, CircleCheckBig, Phone, ArrowLeft, Link } from "lucide-react";
 import MessageSuggestions from "@/components/invitation/MessageSuggestions";
 import MessageItem from "@/components/invitation/MessageItem";
 
@@ -72,30 +72,36 @@ export default async function InvitationPage({
   // Si invité non trouvé
   if (!guest) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-950">
-        <div className="max-w-md mx-auto p-6 sm:p-8 bg-white dark:bg-gray-900 rounded-2xl shadow-xl text-center border border-gray-200 dark:border-gray-800">
-          <div className="flex justify-center mb-4">
-            <UserX size={64} className="text-red-500" />
-          </div>
-          <h1 className="text-2xl font-bold text-red-500">
-            Vous n'êtes pas sur la liste des invités.
-          </h1>
-          <p className="mt-4 text-gray-600 dark:text-gray-400 text-sm sm:text-base">
-            Si c'est une erreur, contactez-nous sur WhatsApp.
-          </p>
-          {event.whatsappNumber && (
-            <a
-              href={`https://wa.me/${event.whatsappNumber}?text=Je%20n%27ai%20pas%20reçu%20d%27invitation%20pour%20${encodeURIComponent(
-                event.title
-              )}`}
-              target="_blank"
-              className="inline-flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-5 py-2.5 rounded-xl mt-4 transition text-sm"
-            >
-              <Phone size={18} />
-              Contacter l'organisateur
-            </a>
-          )}
+      <div className="max-w-md mx-auto p-6 sm:p-8 bg-white dark:bg-gray-900 rounded-2xl shadow-xl text-center border border-gray-200 dark:border-gray-800">
+        <div className="flex justify-center mb-4">
+          <UserX size={64} className="text-red-500" />
         </div>
+        <h1 className="text-2xl font-bold text-red-500">
+          Vous n'êtes pas sur la liste des invités.
+        </h1>
+        <p className="mt-4 text-gray-600 dark:text-gray-400 text-sm sm:text-base">
+          Si c'est une erreur, contactez-nous sur WhatsApp.
+        </p>
+        {event.whatsappNumber && (
+          <a
+            href={`https://wa.me/${event.whatsappNumber}?text=Je%20n%27ai%20pas%20reçu%20d%27invitation%20pour%20${encodeURIComponent(
+              event.title
+            )}`}
+            target="_blank"
+            className="inline-flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-5 py-2.5 rounded-xl mt-4 transition text-sm"
+          >
+            <Phone size={18} />
+            Contacter l'organisateur
+          </a>
+        )}
+        {/* ✅ Bouton Réessayer */}
+        <Link
+          href={`/invitation/${slug}`}
+          className="inline-flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-5 py-2.5 rounded-xl mt-3 transition text-sm"
+        >
+          <ArrowLeft size={18} />
+          Réessayer
+        </Link>
       </div>
     );
   }
