@@ -26,7 +26,7 @@ export default function CollaboratorManager({
   isOwner: boolean;
 }) {
   const [email, setEmail] = useState("");
-  const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
+  const [collaborators, setCollaborators] = useState<Collaborator[]>([]); // ✅ type corrigé
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -40,7 +40,7 @@ export default function CollaboratorManager({
     setLoading(true);
     try {
       const data = await getCollaborators(eventId);
-      setCollaborators(data);
+      setCollaborators(data || []);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -57,7 +57,7 @@ export default function CollaboratorManager({
     startTransition(async () => {
       try {
         await addCollaborator(eventId, email.trim());
-        setSuccess(`Invitation envoyée à ${email}`);
+        setSuccess(`Collaborateur ajouté : ${email}`);
         setEmail("");
         await loadCollaborators();
       } catch (err: any) {

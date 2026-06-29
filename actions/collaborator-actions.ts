@@ -35,6 +35,7 @@ export async function addCollaborator(eventId: string, email: string) {
 
   revalidatePath(`/dashboard/${event.slug}`);
   revalidatePath(`/dashboard/${event.slug}/collaborators`);
+  return { success: true };
 }
 
 export async function removeCollaborator(eventId: string, userId: string) {
@@ -55,6 +56,7 @@ export async function removeCollaborator(eventId: string, userId: string) {
 
   revalidatePath(`/dashboard/${event.slug}`);
   revalidatePath(`/dashboard/${event.slug}/collaborators`);
+  return { success: true };
 }
 
 export async function getCollaborators(eventId: string) {
@@ -79,5 +81,5 @@ export async function getCollaborators(eventId: string) {
     orderBy: { createdAt: "asc" },
   });
 
-  return collaborators;
+  return collaborators || [];
 }
