@@ -6,6 +6,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BackButtonWrapper from "@/components/ui/BackButtonWrapper";
 import BackButton from "@/components/ui/BackButton";
+import BackButtonFloating from "@/components/ui/BackButtonFloating";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -25,8 +26,8 @@ export default function RootLayout({
         <SessionProvider>
           <div className="min-h-screen flex flex-col">
             <Navbar />
-            <BackButton />
             <main className="flex-1">{children}</main>
+            <BackButtonFloating />
             <Footer />
           </div>
         </SessionProvider>

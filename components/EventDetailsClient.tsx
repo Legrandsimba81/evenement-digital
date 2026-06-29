@@ -130,7 +130,7 @@ export default function EventDetailsClient({ event }: { event: Event }) {
     return (
         <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
             {/* En-tête */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-4 border-b border-gray-200 dark:border-gray-800 pb-3">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-4 border-b border-gray-400 dark:border-gray-800 pb-3">
                 <div>
                     <h1 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white">
                         {event.title}
