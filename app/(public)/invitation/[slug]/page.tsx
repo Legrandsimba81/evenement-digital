@@ -1,10 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import InvitationCard from "@/components/invitation/InvitationCard";
 import MessageForm from "@/components/forms/MessageForm";
 import GuestVerificationForm from "@/components/invitation/GuestVerificationForm";
 import FloatingHearts from "@/components/invitation/FloatingHearts";
-import { Heart, UserX, CircleCheckBig, Phone, ArrowLeft, Link } from "lucide-react";
+import { Heart, UserX, Phone, ArrowLeft, Check } from "lucide-react";
 import MessageSuggestions from "@/components/invitation/MessageSuggestions";
 import MessageItem from "@/components/invitation/MessageItem";
 
@@ -72,37 +73,40 @@ export default async function InvitationPage({
   // Si invité non trouvé
   if (!guest) {
     return (
-      <div className="max-w-md mx-auto p-6 sm:p-8 bg-white dark:bg-gray-900 rounded-2xl shadow-xl text-center border border-gray-200 dark:border-gray-800">
-        <div className="flex justify-center mb-4">
-          <UserX size={64} className="text-red-500" />
-        </div>
-        <h1 className="text-2xl font-bold text-red-500">
-          Vous n'êtes pas sur la liste des invités.
-        </h1>
-        <p className="mt-4 text-gray-600 dark:text-gray-400 text-sm sm:text-base">
-          Si c'est une erreur, contactez-nous sur WhatsApp.
-        </p>
-        <div className="flex flex-col">
-        {event.whatsappNumber && (
-          <a
-            href={`https://wa.me/${event.whatsappNumber}?text=Je%20n%27ai%20pas%20reçu%20d%27invitation%20pour%20${encodeURIComponent(
-              event.title
-            )}`}
-            target="_blank"
-            className="inline-flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-5 py-2.5 rounded-xl mt-4 transition text-sm"
-          >
-            <Phone size={18} />
-            Contacter l'organisateur
-          </a>
-        )}
-        {/* Bouton Réessayer */}
-        <Link
-          href={`/invitation/${slug}`}
-          className="inline-flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-5 py-2.5 rounded-xl mt-3 transition text-sm"
-        >
-          <ArrowLeft size={18} />
-          Réessayer
-        </Link>
+      <div className="min-h-screen bg-gradient-to-br from-red-50/30 to-primary-50/30 dark:from-red-950/10 dark:to-primary-950/10 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white dark:bg-gray-900 rounded-3xl shadow-2xl p-8 text-center border border-red-200 dark:border-red-800">
+          <div className="flex justify-center mb-6">
+            <div className="h-24 w-24 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+              <UserX size={48} className="text-red-500 dark:text-red-400" />
+            </div>
+          </div>
+          <h1 className="text-2xl font-bold text-red-600 dark:text-red-400">
+            Vous n'êtes pas sur la liste des invités.
+          </h1>
+          <p className="mt-3 text-gray-600 dark:text-gray-400 text-sm">
+            Si c'est une erreur, contactez l'organisateur via WhatsApp.
+          </p>
+          <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
+            {event.whatsappNumber && (
+              <a
+                href={`https://wa.me/${event.whatsappNumber}?text=Je%20n%27ai%20pas%20reçu%20d%27invitation%20pour%20${encodeURIComponent(
+                  event.title
+                )}`}
+                target="_blank"
+                className="inline-flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white px-5 py-2.5 rounded-xl transition text-sm font-medium"
+              >
+                <Phone size={18} />
+                Contacter
+              </a>
+            )}
+            <Link
+              href={`/invitation/${slug}`}
+              className="inline-flex items-center justify-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-5 py-2.5 rounded-xl transition text-sm font-medium"
+            >
+              <ArrowLeft size={18} />
+              Réessayer
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -111,19 +115,21 @@ export default async function InvitationPage({
   // Si invité déjà entré
   if (guest.status === "entre") {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-950">
-        <div className="max-w-md mx-auto p-6 sm:p-8 bg-white dark:bg-gray-900 rounded-2xl shadow-xl text-center border border-gray-200 dark:border-gray-800">
-          <div className="flex justify-center mb-4">
-            <CircleCheckBig size={64} className="text-green-500" />
+      <div className="min-h-screen bg-gradient-to-br from-green-50/30 to-primary-50/30 dark:from-green-950/10 dark:to-primary-950/10 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white dark:bg-gray-900 rounded-3xl shadow-2xl p-8 text-center border border-green-200 dark:border-green-800">
+          <div className="flex justify-center mb-6">
+            <div className="h-24 w-24 rounded-full bg-green-500 flex items-center justify-center shadow-lg shadow-green-500/30">
+              <Check size={48} className="text-white" strokeWidth={3} />
+            </div>
           </div>
-          <h1 className="text-2xl font-bold text-green-600">
+          <h1 className="text-2xl font-bold text-green-600 dark:text-green-400">
             {guest.title ? `${guest.title} ${guest.firstName} ${guest.lastName}` : `${guest.firstName} ${guest.lastName}`}
           </h1>
-          <p className="mt-4 text-gray-600 dark:text-gray-400">
-            est déjà dans la salle de fête.
+          <p className="mt-3 text-gray-600 dark:text-gray-400">
+            est déjà entré dans la salle.
           </p>
-          <p className="mt-2 text-sm text-gray-500">
-            Bienvenue et profitez de l'événement !
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-500">
+            Profitez bien de l'événement !
           </p>
         </div>
       </div>
@@ -196,7 +202,7 @@ export default async function InvitationPage({
                     createdAt: msg.createdAt.toISOString(),
                   }}
                   currentGuestId={guest.id}
-                  currentGuestName={guestName}  // ajout
+                  currentGuestName={guestName}
                   eventId={event.id}
                 />
               ))}
