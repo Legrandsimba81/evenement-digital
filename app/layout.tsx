@@ -26,8 +26,8 @@ export default function RootLayout({
         <SessionProvider>
           <div className="min-h-screen flex flex-col">
             <Navbar />
-            <main className="flex-1">{children}</main>
             <BackButtonFloating />
+            <main className="flex-1">{children}</main>
             <Footer />
           </div>
         </SessionProvider>
