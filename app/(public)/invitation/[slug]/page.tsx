@@ -82,6 +82,7 @@ export default async function InvitationPage({
         <p className="mt-4 text-gray-600 dark:text-gray-400 text-sm sm:text-base">
           Si c'est une erreur, contactez-nous sur WhatsApp.
         </p>
+        <div className="flex flex-col">
         {event.whatsappNumber && (
           <a
             href={`https://wa.me/${event.whatsappNumber}?text=Je%20n%27ai%20pas%20reçu%20d%27invitation%20pour%20${encodeURIComponent(
@@ -94,7 +95,7 @@ export default async function InvitationPage({
             Contacter l'organisateur
           </a>
         )}
-        {/* ✅ Bouton Réessayer */}
+        {/* Bouton Réessayer */}
         <Link
           href={`/invitation/${slug}`}
           className="inline-flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-5 py-2.5 rounded-xl mt-3 transition text-sm"
@@ -102,6 +103,7 @@ export default async function InvitationPage({
           <ArrowLeft size={18} />
           Réessayer
         </Link>
+        </div>
       </div>
     );
   }

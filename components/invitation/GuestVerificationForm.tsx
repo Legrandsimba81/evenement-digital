@@ -55,13 +55,6 @@ export default function GuestVerificationForm({ slug }: { slug: string }) {
         >
           Voir l'invitation
         </button>
-        <button
-          type="button"
-          onClick={() => { setFirstName(""); setLastName(""); setError(""); }}
-          className="w-full text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition"
-        >
-          Réessayer
-        </button>
       </form>
     </div>
   );
