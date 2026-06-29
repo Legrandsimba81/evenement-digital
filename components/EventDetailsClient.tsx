@@ -204,16 +204,12 @@ export default function EventDetailsClient({ event }: { event: Event }) {
                                 value={invitationLink}
                                 className="flex-1 px-4 py-3 border border-gray-300 rounded-xl dark:bg-gray-800 dark:border-gray-700 dark:text-white"
                             />
-                            <div className="flex flex-col md:flex-wrap">
                                 <button
                                     onClick={copyLink}
                                     className="bg-blue-500 hover:bg-primary-500 text-white px-4 py-3 rounded-xl transition flex items-center justify-center gap-2"
                                 >
                                     <Link2 size={18} /> Copier l'invitation
                                 </button>
-                                <div>
-                                    <p className="text-gray-700">ou</p>
-                                </div>
                                 <button
                                     onClick={shareWhatsApp}
                                     className="bg-[#25D366] hover:bg-[#128C7E] text-white px-4 py-3 rounded-xl transition flex items-center justify-center gap-2"
@@ -221,7 +217,6 @@ export default function EventDetailsClient({ event }: { event: Event }) {
                                     <SiWhatsapp size={20} />
                                     Partager sur WhatsApp
                                 </button>
-                            </div>
                         </div>
                     </div>
 
