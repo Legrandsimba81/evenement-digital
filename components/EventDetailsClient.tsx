@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import GuestForm from "@/components/forms/GuestForm";
 import GuestList from "@/components/guests/GuestList";
@@ -39,9 +40,11 @@ type Event = {
   slug: string;
   guests: Guest[];
   messages: Message[];
+  userId: string;
 };
 
 export default function EventDetailsClient({ event }: { event: Event }) {
+  const { data: session } = useSession();
   const [activeTab, setActiveTab] = useState("invitation");
   const [isExporting, setIsExporting] = useState(false);
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
@@ -126,6 +129,7 @@ export default function EventDetailsClient({ event }: { event: Event }) {
 
   return (
     <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
+      {/* En-tête */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
@@ -168,6 +172,7 @@ export default function EventDetailsClient({ event }: { event: Event }) {
         </div>
       </div>
 
+      {/* Onglets */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid grid-cols-3 w-full max-w-md mb-8">
           <TabsTrigger value="invitation" className="flex items-center gap-2">
