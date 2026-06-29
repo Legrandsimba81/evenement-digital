@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 import { randomUUID, randomBytes } from "crypto";
 import { canManageEvent } from "@/lib/permissions";
+import { createLog } from "@/actions/log-actions";
 
 export async function createEvent(data: any) {
   try {
@@ -99,6 +100,7 @@ export async function updateEvent(slug: string, data: any) {
       data: cleanData,
     });
 
+    await createLog(event.id, session.user.id, "UPDATED_EVENT", `Modification de l'événement "${event.title}"`);
     revalidatePath(`/dashboard/${slug}`);
     return { success: true, event: updated };
   } catch (error: any) {

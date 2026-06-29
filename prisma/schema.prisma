@@ -19,6 +19,7 @@ model User {
   accounts      Account[]
   sessions      Session[]
   collaborators EventCollaborator[]
+  logs          EventLog[] // ✅ relation inverse
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
@@ -75,6 +76,7 @@ model Event {
   guests            Guest[]
   messages          Message[]
   collaborators     EventCollaborator[]
+  logs              EventLog[] // ✅ relation inverse
   slug              String    @unique
   whatsappNumber    String?
   invitationNumber  String?
@@ -88,7 +90,7 @@ model EventCollaborator {
   id        String   @id @default(cuid())
   eventId   String
   userId    String
-  role      String   @default("EDITOR") // ADMIN ou EDITOR
+  role      String   @default("EDITOR")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -98,12 +100,26 @@ model EventCollaborator {
   @@unique([eventId, userId])
 }
 
+model EventLog {
+  id        String    @id @default(cuid())
+  eventId   String
+  event     Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action    String
+  details   String?
+  createdAt DateTime  @default(now())
+
+  @@index([eventId])
+  @@index([userId])
+}
+
 model Guest {
   id                String   @id @default(cuid())
   title             String?
   firstName         String
   lastName          String
-  status            String?  @default("en_attente") // en_attente, attending, annule, entre
+  status            String?  @default("en_attente")
   invitationType    String?
   invitationNumber  String?
   eventId           String
