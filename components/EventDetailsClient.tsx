@@ -145,7 +145,7 @@ export default function EventDetailsClient({ event }: { event: Event }) {
                         className="inline-flex items-center gap-2 bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-xl transition"
                     >
                         <Edit size={18} />
-                        Modifier
+                       <span className="hedden md:inline">Modifier</span>
                     </Link>
                     <Link
                         href={`/invitation/${event.slug}`}
@@ -174,7 +174,7 @@ export default function EventDetailsClient({ event }: { event: Event }) {
                         className="inline-flex items-center gap-2 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-xl transition"
                     >
                         <Clock size={18} />
-                        Historique
+                       <span className="hedden md:inline">Historique</span>
                     </Link>
                 </div>
             </div>
