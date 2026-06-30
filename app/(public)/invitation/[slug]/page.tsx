@@ -9,42 +9,6 @@ import { Heart, UserX, Phone, ArrowLeft, Check } from "lucide-react";
 import MessageSuggestions from "@/components/invitation/MessageSuggestions";
 import MessageItem from "@/components/invitation/MessageItem";
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
-  const event = await prisma.event.findUnique({
-    where: { slug },
-    select: { title: true, imageUrl: true, invitationText: true, date: true, location: true },
-  });
-  if (!event) return { title: "Invitation" };
-
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://evenement-digital.vercel.app";
-  const imageUrl = event.imageUrl || "/og-image.png";
-
-  return {
-    title: `Invitation - ${event.title}`,
-    description: event.invitationText || `Venez célébrer avec nous !`,
-    openGraph: {
-      title: `Invitation - ${event.title}`,
-      description: event.invitationText || `Venez célébrer avec nous !`,
-      url: `${baseUrl}/invitation/${slug}`,
-      images: [
-        {
-          url: imageUrl,
-          width: 1200,
-          height: 630,
-          alt: event.title,
-        },
-      ],
-      type: "website",
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: `Invitation - ${event.title}`,
-      description: event.invitationText || `Venez célébrer avec nous !`,
-      images: [imageUrl],
-    },
-  };
-}
 
 // Suggestions de messages selon le type
 const messageSuggestions: Record<string, string[]> = {
