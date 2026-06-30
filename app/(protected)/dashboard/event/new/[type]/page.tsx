@@ -1,3 +1,4 @@
+// app/(protected)/dashboard/event/new/[type]/page.tsx
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import ThemeSelector from "@/components/events/ThemeSelector";
@@ -19,7 +20,7 @@ export default async function EventNewTypePage({
   if (!validTypes.includes(type)) redirect("/dashboard/event/new");
 
   // Si aucun thème n'est sélectionné, afficher le sélecteur de thème
-  if (!theme) {
+  if (!theme || theme === "choose") {
     return <ThemeSelector type={type as any} />;
   }
 

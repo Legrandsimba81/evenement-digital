@@ -9,6 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, MapPin, Clock, Users, MessageSquare, Link2, Edit, Eye, Download } from "lucide-react";
 import MessageItem from "@/components/invitation/MessageItem";
 import { SiWhatsapp } from "react-icons/si";
+import { Sparkles } from "lucide-react";
+
 
 
 type Guest = {
@@ -43,6 +45,7 @@ type Event = {
     guests: Guest[];
     messages: Message[];
     userId: string;
+    theme?: string | null;
 };
 
 export default function EventDetailsClient({ event }: { event: Event }) {
@@ -158,6 +161,15 @@ export default function EventDetailsClient({ event }: { event: Event }) {
                         <Eye size={14} />
                         Invitation
                     </Link>
+                    {event.userId === session?.user?.id && !event.theme && (
+                        <Link
+                            href={`/dashboard/event/new/${event.type}?theme=choose`}
+                            className="inline-flex items-center gap-1 bg-pink-500 hover:bg-pink-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition"
+                        >
+                            <Sparkles size={14} />
+                            Choisir un thème
+                        </Link>
+                    )}
                     <Link
                         href={`/gate/${event.slug}`}
                         className="inline-flex items-center gap-1 bg-purple-500 hover:bg-purple-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition"
@@ -204,19 +216,19 @@ export default function EventDetailsClient({ event }: { event: Event }) {
                                 value={invitationLink}
                                 className="flex-1 px-4 py-3 border border-gray-300 rounded-xl dark:bg-gray-800 dark:border-gray-700 dark:text-white"
                             />
-                                <button
-                                    onClick={copyLink}
-                                    className="bg-blue-500 hover:bg-primary-500 text-white px-4 py-3 rounded-xl transition flex items-center justify-center gap-2"
-                                >
-                                    <Link2 size={18} /> Copier l'invitation
-                                </button>
-                                <button
-                                    onClick={shareWhatsApp}
-                                    className="bg-[#25D366] hover:bg-[#128C7E] text-white px-4 py-3 rounded-xl transition flex items-center justify-center gap-2"
-                                >
-                                    <SiWhatsapp size={20} />
-                                    Partager sur WhatsApp
-                                </button>
+                            <button
+                                onClick={copyLink}
+                                className="bg-blue-500 hover:bg-primary-500 text-white px-4 py-3 rounded-xl transition flex items-center justify-center gap-2"
+                            >
+                                <Link2 size={18} /> Copier l'invitation
+                            </button>
+                            <button
+                                onClick={shareWhatsApp}
+                                className="bg-[#25D366] hover:bg-[#128C7E] text-white px-4 py-3 rounded-xl transition flex items-center justify-center gap-2"
+                            >
+                                <SiWhatsapp size={20} />
+                                Partager sur WhatsApp
+                            </button>
                         </div>
                     </div>
 

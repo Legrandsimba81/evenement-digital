@@ -22,16 +22,28 @@ export default async function EventPage({
 
   if (!event) return notFound();
 
-  // Vérifier si l'utilisateur est le propriétaire OU un collaborateur
+  // ✅ Vérifier si l'utilisateur est propriétaire OU collaborateur
   const hasAccess = await canManageEvent(event.id, userId);
   if (!hasAccess) return notFound();
 
   const isPast = new Date(event.date) < new Date();
 
+  // ✅ Convertir le thème en chaîne JSON
+  let themeString = null;
+  if (event.theme) {
+    try {
+      // Si c'est déjà un objet, le stringifier
+      themeString = typeof event.theme === 'string' ? event.theme : JSON.stringify(event.theme);
+    } catch {
+      themeString = null;
+    }
+  }
+
   // Convertir les dates pour le client
   const eventData = {
     ...event,
     date: event.date.toISOString(),
+    theme: themeString,
     invitationText: event.invitationText || null,
     program: event.program || null,
     messages: event.messages.map((msg: any) => ({

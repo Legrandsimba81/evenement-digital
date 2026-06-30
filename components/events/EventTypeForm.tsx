@@ -76,7 +76,7 @@ const VALID_EVENT_FIELDS = [
   "imageUrl", "invitationImageUrl", "invitationType",
 ];
 
-export default function EventTypeForm({ type, initialData }: { type?: EventType; initialData?: any }) {
+export default function EventTypeForm({ type, initialData, themeId }: { type?: EventType; initialData?: any; themeId?: string; }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const themeIdFromUrl = searchParams.get("theme");
@@ -175,6 +175,7 @@ export default function EventTypeForm({ type, initialData }: { type?: EventType;
           return;
         }
       }
+      
 
       // Nettoyer les données
       const cleanData: any = {};
