@@ -1,10 +1,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { notFound, redirect } from "next/navigation";
-import EventTypeForm from "@/components/events/EventTypeForm";
-import { canManageEvent } from "@/lib/permissions";
-
-export const dynamic = "force-dynamic";
+import EventForm from "@/components/events/EventForm";
 
 export default async function EditEventPage({
   params,
@@ -22,13 +19,15 @@ export default async function EditEventPage({
 
   if (!event) return notFound();
 
-  // Vérifier les permissions (propriétaire ou collaborateur)
-  const hasAccess = await canManageEvent(event.id, userId);
-  if (!hasAccess) return notFound();
+  // Vérifier que l'utilisateur a le droit de modifier (propriétaire ou collaborateur)
+  const canManage = await import("@/lib/permissions").then((m) =>
+    m.canManageEvent(event.id, userId)
+  );
+  if (!canManage) return notFound();
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <EventTypeForm initialData={event} />
+    <div className="max-w-4xl mx-auto py-8">
+      <EventForm initialData={event} />
     </div>
   );
 }

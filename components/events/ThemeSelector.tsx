@@ -2,17 +2,17 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { themes, getThemesByCategory, getDefaultTheme, Theme } from "@/lib/themes";
+import { themes, getThemesByCategory, getDefaultTheme } from "@/lib/themes";
 import { Check, Sparkles } from "lucide-react";
 import ThemePreview from "./ThemePreview";
 
 type EventType = "ANNIVERSAIRE" | "MARIAGE" | "SOUTENANCE" | "AUTRE";
 
-export default function ThemeSelector({ 
-  type, 
-  returnTo 
-}: { 
-  type: EventType; 
+export default function ThemeSelector({
+  type,
+  returnTo,
+}: {
+  type: EventType;
   returnTo?: string;
 }) {
   const router = useRouter();
@@ -25,7 +25,6 @@ export default function ThemeSelector({
 
   const handleContinue = () => {
     if (returnTo) {
-      // Rediriger vers returnTo avec le thème en paramètre
       const url = new URL(returnTo, window.location.origin);
       url.searchParams.set("theme", selectedTheme);
       window.location.href = url.toString();

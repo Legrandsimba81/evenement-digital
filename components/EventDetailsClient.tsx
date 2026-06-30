@@ -161,15 +161,6 @@ export default function EventDetailsClient({ event }: { event: Event }) {
                         <Eye size={14} />
                         Invitation
                     </Link>
-                    {event.userId === session?.user?.id && !event.theme && (
-                        <Link
-                            href={`/dashboard/event/new/${event.type}?theme=choose`}
-                            className="inline-flex items-center gap-1 bg-pink-500 hover:bg-pink-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition"
-                        >
-                            <Sparkles size={14} />
-                            Choisir un thème
-                        </Link>
-                    )}
                     <Link
                         href={`/gate/${event.slug}`}
                         className="inline-flex items-center gap-1 bg-purple-500 hover:bg-purple-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition"
