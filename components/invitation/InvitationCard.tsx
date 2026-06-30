@@ -133,7 +133,7 @@ export default function InvitationCard({
     if (defaultTheme) theme = defaultTheme;
   }
 
-  // ✅ Thème de dernier recours
+  // ✅ Thème de dernier recours (uniquement pour les couleurs)
   if (!theme) {
     theme = {
       id: "fallback",
@@ -159,11 +159,13 @@ export default function InvitationCard({
     };
   }
 
-  // ✅ Déterminer l'icône (avec fallback)
-  const Icon = theme?.icons?.main || defaultTypeConfigs[event.type as EventType]?.icon || Music;
+  // ✅ Utiliser l'icône basée sur le type d'événement (plus fiable)
+  const type = (event.type as EventType) || "AUTRE";
+  const config = defaultTypeConfigs[type] || defaultTypeConfigs["AUTRE"];
+  const Icon = config.icon;
 
   // ✅ Extraire les couleurs avec fallback
-  const defaultColors = defaultTypeConfigs[event.type as EventType]?.defaultColors || defaultTypeConfigs["AUTRE"].defaultColors;
+  const defaultColors = defaultTypeConfigs[type]?.defaultColors || defaultTypeConfigs["AUTRE"].defaultColors;
   const colors = {
     hexPrimary: theme?.colors?.hexPrimary || defaultColors.hexPrimary,
     hexSecondary: theme?.colors?.hexSecondary || defaultColors.hexSecondary,
@@ -198,9 +200,6 @@ export default function InvitationCard({
     };
     checkImages();
   }, [event.imageUrl, event.invitationImageUrl]);
-
-  const type = (event.type as EventType) || "AUTRE";
-  const config = defaultTypeConfigs[type] || defaultTypeConfigs["AUTRE"];
 
   const handleAttendance = async (newStatus: string) => {
     setIsLoading(true);
@@ -296,7 +295,6 @@ export default function InvitationCard({
 
       {/* Contenu */}
       <div ref={cardRef} className="p-4 sm:p-6 md:p-8">
-        {/* En-tête */}
         <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
           <div className="flex items-center gap-2">
             <Icon size={20} style={{ color: colors.hexPrimary }} />
@@ -322,7 +320,6 @@ export default function InvitationCard({
           </div>
         )}
 
-        {/* Sujet de thèse */}
         {event.type === "SOUTENANCE" && event.thesisTitle && (
           <div className="mt-4 p-4 bg-purple-50 dark:bg-purple-950/20 rounded-xl border-l-4 border-purple-500">
             <p className="text-sm text-gray-700 dark:text-gray-300">
@@ -380,7 +377,6 @@ export default function InvitationCard({
           </div>
         )}
 
-        {/* QR Code */}
         <div className="mt-6 flex flex-col items-center">
           <div ref={qrRef} className="bg-white p-3 sm:p-4 rounded-xl shadow-md flex flex-col items-center">
             <QRCode value={invitationLink} size={120} />
@@ -398,7 +394,6 @@ export default function InvitationCard({
           </button>
         </div>
 
-        {/* Boutons d'action */}
         <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-between items-stretch sm:items-center">
           <button
             onClick={downloadInvitation}
