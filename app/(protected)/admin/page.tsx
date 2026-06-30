@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Calendar, Users, MessageSquare, User, Mail, Eye, Trash2, Lock, Unlock } from "lucide-react";
 import DeleteEventButton from "@/components/admin/DeleteEventButton";
+import ToggleUserStatusButton from "./ToggleUserStatusButton";
 
 export const dynamic = "force-dynamic";
 
@@ -75,50 +76,33 @@ export default async function AdminPage() {
             {users.length === 0 ? (
               <p className="text-gray-500 dark:text-gray-400 text-center py-6">Aucun utilisateur</p>
             ) : (
-              <ul className="divide-y divide-gray-100 dark:divide-gray-800">
-                {users.slice(0, 10).map((user) => (
-                  <li key={user.id} className="py-3 flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-gray-900 dark:text-white">
-                        {user.name || "Anonyme"}
-                      </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                        <Mail size={14} />
-                        {user.email}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
-                        {user.role}
-                      </span>
-                      {/* ✅ Toggle du statut canCreateEvents */}
-                      <form action={`/api/admin/toggle-user-status`} method="POST">
-                        <input type="hidden" name="userId" value={user.id} />
-                        <input type="hidden" name="canCreateEvents" value={user.canCreateEvents ? "false" : "true"} />
-                        <button
-                          type="submit"
-                          className={`px-2 py-1 rounded-full text-xs font-medium transition ${
-                            user.canCreateEvents
-                              ? "bg-green-100 text-green-800 hover:bg-green-200"
-                              : "bg-red-100 text-red-800 hover:bg-red-200"
-                          }`}
-                          title={user.canCreateEvents ? "Désactiver" : "Réactiver"}
-                        >
-                          {user.canCreateEvents ? (
-                            <span className="flex items-center gap-1"><Unlock size={12} /> Actif</span>
-                          ) : (
-                            <span className="flex items-center gap-1"><Lock size={12} /> Désactivé</span>
-                          )}
-                        </button>
-                      </form>
-                    </div>
-                  </li>
-                ))}
-              </ul>
+              <div className="overflow-x-auto"> {/* ✅ responsive */}
+                <ul className="divide-y divide-gray-100 dark:divide-gray-800 min-w-[600px]"> {/* ✅ min-width pour éviter l'écrasement */}
+                  {users.slice(0, 10).map((user) => (
+                    <li key={user.id} className="py-3 flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-gray-900 dark:text-white">
+                          {user.name || "Anonyme"}
+                        </p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                          <Mail size={14} />
+                          {user.email}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <span className="text-xs px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
+                          {user.role}
+                        </span>
+                        <ToggleUserStatusButton userId={user.id} currentStatus={user.canCreateEvents} userName={user.name || user.email} />
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             )}
           </div>
 
-          {/* Événements - inchangé */}
+          {/* Événements */}
           <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-md border border-gray-200 dark:border-gray-800 p-6">
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
               <Calendar size={20} className="text-green-500" />
@@ -127,34 +111,36 @@ export default async function AdminPage() {
             {events.length === 0 ? (
               <p className="text-gray-500 dark:text-gray-400 text-center py-6">Aucun événement</p>
             ) : (
-              <ul className="divide-y divide-gray-100 dark:divide-gray-800">
-                {events.slice(0, 10).map((event) => (
-                  <li key={event.id} className="py-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <p className="font-semibold text-gray-900 dark:text-white">{event.title}</p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {event.type} • {event.location}
-                        </p>
-                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                          Organisé par {event.user.name || event.user.email} • {event.guests.length} invités • {event.messages.length} messages
-                        </p>
+              <div className="overflow-x-auto"> {/* ✅ responsive */}
+                <ul className="divide-y divide-gray-100 dark:divide-gray-800 min-w-[600px]">
+                  {events.slice(0, 10).map((event) => (
+                    <li key={event.id} className="py-4">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <p className="font-semibold text-gray-900 dark:text-white">{event.title}</p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                            {event.type} • {event.location}
+                          </p>
+                          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                            Organisé par {event.user.name || event.user.email} • {event.guests.length} invités • {event.messages.length} messages
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2 ml-4 flex-shrink-0">
+                          <Link
+                            href={`/invitation/${event.slug}`}
+                            target="_blank"
+                            className="text-blue-500 hover:text-blue-700 p-1"
+                            title="Voir l'invitation"
+                          >
+                            <Eye size={16} />
+                          </Link>
+                          <DeleteEventButton slug={event.slug} title={event.title} />
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2 ml-4">
-                        <Link
-                          href={`/invitation/${event.slug}`}
-                          target="_blank"
-                          className="text-blue-500 hover:text-blue-700 p-1"
-                          title="Voir l'invitation"
-                        >
-                          <Eye size={16} />
-                        </Link>
-                        <DeleteEventButton slug={event.slug} title={event.title} />
-                      </div>
-                    </div>
-                  </li>
-                ))}
-              </ul>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             )}
           </div>
         </div>

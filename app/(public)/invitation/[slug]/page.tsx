@@ -9,6 +9,26 @@ import { Heart, UserX, Phone, ArrowLeft, Check } from "lucide-react";
 import MessageSuggestions from "@/components/invitation/MessageSuggestions";
 import MessageItem from "@/components/invitation/MessageItem";
 
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const event = await prisma.event.findUnique({
+    where: { slug },
+    select: { title: true, imageUrl: true, location: true },
+  });
+  if (!event) return {};
+
+  return {
+    title: `${event.title} - Octavia`,
+    description: `Invitation pour ${event.title} à ${event.location}`,
+    openGraph: {
+      title: event.title,
+      description: `Invitation pour ${event.title}`,
+      images: event.imageUrl ? [event.imageUrl] : ["/og-image.png"],
+      type: "article",
+    },
+  };
+}
+
 // Suggestions de messages selon le type
 const messageSuggestions: Record<string, string[]> = {
   MARIAGE: [

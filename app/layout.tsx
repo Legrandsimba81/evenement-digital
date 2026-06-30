@@ -11,8 +11,29 @@ import BackButtonFloating from "@/components/ui/BackButtonFloating";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Octavia Event",
-  description: "Générez et gérez vos invitations d'événements facilement",
+  title: "Octavia - Gestion d'événements",
+  description: "Créez, gérez et partagez vos invitations en ligne. Simple, rapide et élégant.",
+  // ... autres métadonnées
+  openGraph: {
+    title: "Octavia - Gestion d'événements",
+    description: "Créez, gérez et partagez vos invitations en ligne.",
+    images: [
+      {
+        url: "/og-image.png", // placez une image dans public/
+        width: 1200,
+        height: 630,
+        alt: "Octavia",
+      },
+    ],
+    type: "website",
+    url: "https://evenement-digital.vercel.app",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Octavia - Gestion d'événements",
+    description: "Créez, gérez et partagez vos invitations en ligne.",
+    images: ["/og-image.png"],
+  },
 };
 
 export default function RootLayout({
