@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { removeGuest, updateGuestStatus } from "@/actions/guest-actions";
 import EditGuestButton from "@/components/guests/EditGuestButton";
 import GateQRButton from "@/components/guests/GateQRButton";
-import { Search, Copy, Users, User } from "lucide-react";
+import { Search, Copy, Users, User, CheckCircle } from "lucide-react";
 
 const statusColors: Record<string, string> = {
   en_attente: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300",
@@ -20,15 +20,21 @@ const statusLabels: Record<string, string> = {
   entre: "Entré",
 };
 
-export default function GuestList({ guests, eventId, eventSlug, event }: { 
-  guests: any[]; 
-  eventId: string; 
+export default function GuestList({
+  guests,
+  eventId,
+  eventSlug,
+  event,
+}: {
+  guests: any[];
+  eventId: string;
   eventSlug: string;
   event: any;
 }) {
   const [isPending, startTransition] = useTransition();
   const [search, setSearch] = useState("");
   const [filteredGuests, setFilteredGuests] = useState(guests);
+  const [copiedLinks, setCopiedLinks] = useState<Set<string>>(new Set());
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -58,9 +64,12 @@ export default function GuestList({ guests, eventId, eventSlug, event }: {
     });
   };
 
-  const copyInvitationLink = (firstName: string, lastName: string) => {
-    const link = `${baseUrl}/invitation/${eventSlug}?firstName=${encodeURIComponent(firstName)}&lastName=${encodeURIComponent(lastName)}`;
+  const copyInvitationLink = (guestId: string, firstName: string, lastName: string) => {
+    const link = `${baseUrl}/invitation/${eventSlug}?firstName=${encodeURIComponent(
+      firstName
+    )}&lastName=${encodeURIComponent(lastName)}`;
     navigator.clipboard.writeText(link);
+    setCopiedLinks((prev) => new Set(prev).add(guestId));
     alert("Lien copié !");
   };
 
@@ -98,17 +107,29 @@ export default function GuestList({ guests, eventId, eventSlug, event }: {
                 const statusKey = guest.status || "en_attente";
                 const colorClass = statusColors[statusKey] || statusColors.en_attente;
                 const label = statusLabels[statusKey] || "En attente";
+                const isCopied = copiedLinks.has(guest.id);
                 return (
-                  <tr key={guest.id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                    <td className="px-3 py-2 font-mono font-semibold">{guest.invitationNumber}</td>
+                  <tr
+                    key={guest.id}
+                    className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                  >
+                    <td className="px-3 py-2 font-mono font-semibold">
+                      {guest.invitationNumber}
+                    </td>
                     <td className="px-3 py-2">
-                      {guest.title ? `${guest.title} ${guest.firstName} ${guest.lastName}` : `${guest.firstName} ${guest.lastName}`}
+                      {guest.title
+                        ? `${guest.title} ${guest.firstName} ${guest.lastName}`
+                        : `${guest.firstName} ${guest.lastName}`}
                     </td>
                     <td className="px-3 py-2">
                       {guest.invitationType === "couple" ? (
-                        <span className="flex items-center gap-1 text-purple-600"><Users size={14} /> Couple</span>
+                        <span className="flex items-center gap-1 text-purple-600">
+                          <Users size={14} /> Couple
+                        </span>
                       ) : (
-                        <span className="flex items-center gap-1 text-blue-600"><User size={14} /> Seul</span>
+                        <span className="flex items-center gap-1 text-blue-600">
+                          <User size={14} /> Seul
+                        </span>
                       )}
                     </td>
                     <td className="px-3 py-2">
@@ -125,13 +146,16 @@ export default function GuestList({ guests, eventId, eventSlug, event }: {
                       </select>
                     </td>
                     <td className="px-3 py-2">
-                      <button
-                        onClick={() => copyInvitationLink(guest.firstName, guest.lastName)}
-                        className="text-primary-500 hover:text-primary-700"
-                        title="Copier le lien d'invitation"
-                      >
-                        <Copy size={16} />
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => copyInvitationLink(guest.id, guest.firstName, guest.lastName)}
+                          className="text-primary-500 hover:text-primary-700 transition"
+                          title="Copier le lien d'invitation"
+                        >
+                          <Copy size={16} />
+                        </button>
+                        {isCopied && <CheckCircle size={16} className="text-green-500" />}
+                      </div>
                     </td>
                     <td className="px-3 py-2">
                       <GateQRButton guest={guest} event={event} />

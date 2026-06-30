@@ -89,7 +89,7 @@ export default function InvitationCard({
   const qrRef = useRef<HTMLDivElement>(null);
   const [imagesLoaded, setImagesLoaded] = useState(false);
 
-  // ✅ Déterminer le label et l'icône en fonction du type d'invitation de l'invité
+  // ✅ Le badge affiche le nombre de personnes défini par l'organisateur pour cet invité
   const peopleLabel = guestInvitationType === "couple" ? "2 personnes" : "1 personne";
   const peopleIcon = guestInvitationType === "couple" ? Users : User;
 
@@ -269,7 +269,7 @@ export default function InvitationCard({
 
       {/* Contenu */}
       <div ref={cardRef} className="p-4 sm:p-6 md:p-8">
-        {/* En-tête : titre d'invitation + badge personnes (1 seule fois) */}
+        {/* ✅ En-tête : titre d'invitation + badge personnes (issu de guestInvitationType) */}
         <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
           <div className="flex items-center gap-2">
             <Icon size={20} style={{ color: colors.hexPrimary }} />
@@ -292,18 +292,11 @@ export default function InvitationCard({
             <span className="font-medium text-gray-700 dark:text-gray-300">
               <span style={{ color: colors.hexPrimary }} className="font-bold">#</span> {event.invitationNumber}
             </span>
-            <span className="text-gray-400 hidden sm:inline">•</span>
-            <span className="text-gray-700 dark:text-gray-300 flex items-center gap-1">
-              {guestInvitationType === "couple" ? (
-                <><Users size={14} className="text-purple-500" /> 2 personnes</>
-              ) : (
-                <><User size={14} className="text-blue-500" /> 1 personne</>
-              )}
-            </span>
+            {/* Plus de répétition du type d'invitation ici */}
           </div>
         )}
 
-        {/* ✅ Sujet de thèse pour les soutenances */}
+        {/* Sujet de thèse pour les soutenances */}
         {event.type === "SOUTENANCE" && event.thesisTitle && (
           <div className="mt-4 p-4 bg-purple-50 dark:bg-purple-950/20 rounded-xl border-l-4 border-purple-500">
             <p className="text-sm text-gray-700 dark:text-gray-300">
