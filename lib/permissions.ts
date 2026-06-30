@@ -1,9 +1,5 @@
 import { prisma } from "@/lib/prisma";
 
-/**
- * Vérifie si un utilisateur peut gérer un événement (propriétaire ou collaborateur)
- * Vérifie également que l'utilisateur est actif (canCreateEvents = true)
- */
 export async function canManageEvent(eventId: string, userId: string): Promise<boolean> {
   if (!userId) return false;
 
