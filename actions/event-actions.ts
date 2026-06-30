@@ -24,7 +24,8 @@ export async function createEvent(data: any) {
       "whatsappNumber",
       "imageUrl",
       "invitationImageUrl",
-      "invitationType",
+      "thesisTitle",
+      "theme", // ✅ Ajout du thème
     ];
 
     const cleanData: any = {};
@@ -41,11 +42,22 @@ export async function createEvent(data: any) {
     const slug = randomUUID();
     const gateSecret = randomBytes(32).toString("hex");
 
+    // ✅ Gérer le thème : s'assurer que c'est une chaîne JSON
+    let themeValue = null;
+    if (data.theme) {
+      try {
+        themeValue = typeof data.theme === 'string' ? data.theme : JSON.stringify(data.theme);
+      } catch {
+        themeValue = null;
+      }
+    }
+
     const eventData = {
       ...cleanData,
       userId: session.user.id,
       slug,
       gateSecret,
+      theme: themeValue,
     };
 
     const event = await prisma.event.create({ data: eventData });
@@ -80,7 +92,8 @@ export async function updateEvent(slug: string, data: any) {
       "whatsappNumber",
       "imageUrl",
       "invitationImageUrl",
-      "invitationType",
+      "thesisTitle",
+      "theme", // ✅ Ajout du thème
     ];
 
     const cleanData: any = {};
@@ -94,6 +107,17 @@ export async function updateEvent(slug: string, data: any) {
       cleanData.date = new Date(cleanData.date);
       if (isNaN(cleanData.date.getTime())) throw new Error("Date invalide");
     }
+
+    // ✅ Gérer le thème : s'assurer que c'est une chaîne JSON
+    let themeValue = null;
+    if (data.theme) {
+      try {
+        themeValue = typeof data.theme === 'string' ? data.theme : JSON.stringify(data.theme);
+      } catch {
+        themeValue = null;
+      }
+    }
+    cleanData.theme = themeValue;
 
     const updated = await prisma.event.update({
       where: { slug },
