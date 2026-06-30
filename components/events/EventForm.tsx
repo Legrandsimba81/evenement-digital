@@ -130,7 +130,7 @@ export default function EventForm({
       const themeObj =
         typeof initialData.theme === "string" ? JSON.parse(initialData.theme) : initialData.theme;
       existingThemeId = themeObj.id;
-    } catch {}
+    } catch { }
   }
 
   const [themeId, setThemeId] = useState<string | null>(
@@ -508,16 +508,17 @@ export default function EventForm({
                 <Sparkles size={16} />
                 Choisir un thème
               </button>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 Sélectionnez un thème pour personnaliser l'apparence de votre invitation.
               </p>
             </div>
           )}
 
           {themeId && (
-            <div className="p-3 bg-primary-50 dark:bg-primary-900/20 rounded-xl border border-primary-200 dark:border-primary-800">
+            <div className="p-3 bg-primary-50 dark:bg-primary-900/20 rounded-xl border border-primary-200 dark:border-primary-800 flex items-center gap-2">
+              <Sparkles size={18} className="text-primary-500 dark:text-primary-400" />
               <p className="text-sm text-primary-700 dark:text-primary-300">
-                ✨ Thème sélectionné : {getThemeById(themeId)?.name || "Thème personnalisé"}
+                Thème sélectionné : {getThemeById(themeId)?.name || "Thème personnalisé"}
               </p>
             </div>
           )}
@@ -530,8 +531,8 @@ export default function EventForm({
             {isSubmitting
               ? "Enregistrement..."
               : initialData
-              ? "Modifier l'événement"
-              : "Créer l'événement"}
+                ? "Modifier l'événement"
+                : "Créer l'événement"}
           </button>
         </form>
       </div>

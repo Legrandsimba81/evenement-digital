@@ -9,43 +9,6 @@ import { Heart, UserX, Phone, ArrowLeft, Check } from "lucide-react";
 import MessageSuggestions from "@/components/invitation/MessageSuggestions";
 import MessageItem from "@/components/invitation/MessageItem";
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
-  const event = await prisma.event.findUnique({
-    where: { slug },
-    select: { title: true, imageUrl: true, invitationText: true, date: true, location: true },
-  });
-  if (!event) return { title: "Invitation" };
-
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://evenement-digital.vercel.app";
-  const imageUrl = event.imageUrl || "/og-image.png";
-
-  return {
-    title: `Invitation - ${event.title}`,
-    description: event.invitationText || `Venez célébrer avec nous !`,
-    openGraph: {
-      title: `Invitation - ${event.title}`,
-      description: event.invitationText || `Venez célébrer avec nous !`,
-      url: `${baseUrl}/invitation/${slug}`,
-      images: [
-        {
-          url: imageUrl,
-          width: 1200,
-          height: 630,
-          alt: event.title,
-        },
-      ],
-      type: "website",
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: `Invitation - ${event.title}`,
-      description: event.invitationText || `Venez célébrer avec nous !`,
-      images: [imageUrl],
-    },
-  };
-}
-
 // Suggestions de messages selon le type
 const messageSuggestions: Record<string, string[]> = {
   MARIAGE: [
@@ -91,7 +54,6 @@ export default async function InvitationPage({
 
   if (!event) return notFound();
 
-  // Formulaire de vérification si pas de noms
   if (!firstName || !lastName) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary-500/5 to-secondary-500/5 flex items-center justify-center p-4">
@@ -100,20 +62,18 @@ export default async function InvitationPage({
     );
   }
 
-  // Recherche de l'invité
   const guest = event.guests.find(
     (g) =>
       g.firstName.toLowerCase() === firstName.toLowerCase() &&
       g.lastName.toLowerCase() === lastName.toLowerCase()
   );
 
-  // Si invité non trouvé
   if (!guest) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50/30 to-primary-50/30 dark:from-red-950/10 dark:to-primary-950/10 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white dark:bg-gray-900 rounded-3xl shadow-2xl p-8 text-center border border-red-200 dark:border-red-800">
+      <div className="min-h-screen bg-gradient-to-br from-red-50/30 to-primary-50/30 dark:from-red-950/20 dark:to-primary-950/20 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-3xl shadow-2xl p-8 text-center">
           <div className="flex justify-center mb-6">
-            <div className="h-24 w-24 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+            <div className="h-24 w-24 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center">
               <UserX size={48} className="text-red-500 dark:text-red-400" />
             </div>
           </div>
@@ -149,11 +109,10 @@ export default async function InvitationPage({
     );
   }
 
-  // Si invité déjà entré
   if (guest.status === "entre") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50/30 to-primary-50/30 dark:from-green-950/10 dark:to-primary-950/10 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white dark:bg-gray-900 rounded-3xl shadow-2xl p-8 text-center border border-green-200 dark:border-green-800">
+      <div className="min-h-screen bg-gradient-to-br from-green-50/30 to-primary-50/30 dark:from-green-950/20 dark:to-primary-950/20 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-3xl shadow-2xl p-8 text-center">
           <div className="flex justify-center mb-6">
             <div className="h-24 w-24 rounded-full bg-green-500 flex items-center justify-center shadow-lg shadow-green-500/30">
               <Check size={48} className="text-white" strokeWidth={3} />
@@ -173,7 +132,6 @@ export default async function InvitationPage({
     );
   }
 
-  // Sinon, afficher l'invitation
   const guestName = `${guest.firstName} ${guest.lastName}`;
   const eventType = event.type as keyof typeof messageSuggestions;
   const suggestions = messageSuggestions[eventType] || messageSuggestions["AUTRE"];
@@ -184,7 +142,6 @@ export default async function InvitationPage({
     m.content.toLowerCase().includes("love")
   );
 
-  // ✅ Conversion du thème en chaîne JSON
   let themeValue = null;
   if (event.theme) {
     try {
@@ -201,9 +158,9 @@ export default async function InvitationPage({
   };
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-br from-primary-500/5 to-secondary-500/5 py-8 px-4 sm:py-12 sm:px-6">
+    <div className="relative min-h-screen bg-gradient-to-br from-primary-500/5 to-secondary-500/5 dark:from-primary-950/20 dark:to-secondary-950/20 py-8 px-4 sm:py-12 sm:px-6">
       <FloatingHearts />
-      <div className="max-w-3xl mx-auto relative z-10">
+      <div className="max-w-3xl mx-auto relative z-10 space-y-6">
         <InvitationCard
           event={eventForCard}
           guestName={guestName}
@@ -214,14 +171,14 @@ export default async function InvitationPage({
 
         {/* Messages d'amour pour les mariages */}
         {event.type === "MARIAGE" && messagesLove.length > 0 && (
-          <div className="mt-6 p-5 bg-rose-50 dark:bg-rose-950/20 rounded-2xl border border-rose-200 dark:border-rose-800">
+          <div className="bg-rose-50/70 dark:bg-rose-950/30 rounded-2xl p-5 shadow-sm">
             <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-2 text-rose-600 dark:text-rose-400">
               <Heart size={24} className="fill-rose-500" />
               Messages d'amour
             </h2>
             <div className="mt-4 space-y-4">
               {messagesLove.map((msg) => (
-                <div key={msg.id} className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow">
+                <div key={msg.id} className="bg-white/70 dark:bg-gray-800/70 p-4 rounded-xl shadow-sm">
                   <p className="font-semibold text-gray-900 dark:text-white">
                     {msg.guestName}
                   </p>
@@ -232,13 +189,13 @@ export default async function InvitationPage({
           </div>
         )}
 
-        {/* Messages des invités avec suppression */}
-        <div className="mt-6">
+        {/* Messages des invités */}
+        <div className="bg-gray-50/70 dark:bg-gray-800/30 rounded-2xl p-5 shadow-sm">
           <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-4">
             Messages des invités
           </h2>
           {event.messages.length === 0 ? (
-            <p className="text-gray-500 dark:text-gray-400 text-center py-8 bg-white dark:bg-gray-900 rounded-xl">
+            <p className="text-gray-500 dark:text-gray-400 text-center py-6 bg-white/50 dark:bg-gray-900/30 rounded-xl">
               Aucun message pour le moment.
             </p>
           ) : (
@@ -259,18 +216,16 @@ export default async function InvitationPage({
           )}
         </div>
 
-        {/* Formulaire de message avec suggestions */}
-        <div className="mt-6">
-          <div className="bg-white dark:bg-gray-900 p-5 sm:p-6 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-800">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-4">
-              Laissez un message
-            </h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-              Partagez vos vœux avec les organisateurs.
-            </p>
-            <MessageSuggestions suggestions={suggestions} />
-            <MessageForm eventId={event.id} guestName={guestName} guestId={guest.id} />
-          </div>
+        {/* Formulaire de message */}
+        <div className="bg-white/70 dark:bg-gray-900/50 rounded-2xl p-5 sm:p-6 shadow-sm backdrop-blur-sm">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            Laissez un message
+          </h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            Partagez vos vœux avec les organisateurs.
+          </p>
+          <MessageSuggestions suggestions={suggestions} />
+          <MessageForm eventId={event.id} guestName={guestName} guestId={guest.id} />
         </div>
       </div>
     </div>
