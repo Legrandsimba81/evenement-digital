@@ -7,7 +7,7 @@ export default function GuestForm({ eventId }: { eventId: string }) {
   const [title, setTitle] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [invitationType, setInvitationType] = useState("seul");
+  const [invitationType, setInvitationType] = useState("single");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -15,11 +15,11 @@ export default function GuestForm({ eventId }: { eventId: string }) {
     setTitle("");
     setFirstName("");
     setLastName("");
-    setInvitationType("seul");
+    setInvitationType("single");
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-wrap gap-2 mt-2">
+    <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row flex-wrap gap-2 mt-2">
       <select
         value={title}
         onChange={(e) => setTitle(e.target.value)}
@@ -55,7 +55,7 @@ export default function GuestForm({ eventId }: { eventId: string }) {
         onChange={(e) => setInvitationType(e.target.value)}
         className="p-2 border rounded dark:bg-gray-800 dark:border-gray-700"
       >
-        <option value="seul">1 personne</option>
+        <option value="single">1 personne</option>
         <option value="couple">2 personnes (couple)</option>
       </select>
       <button type="submit" className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">

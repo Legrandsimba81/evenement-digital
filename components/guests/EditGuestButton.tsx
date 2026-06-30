@@ -8,7 +8,7 @@ export default function EditGuestButton({ guest }: { guest: any }) {
   const [title, setTitle] = useState(guest.title || "");
   const [firstName, setFirstName] = useState(guest.firstName);
   const [lastName, setLastName] = useState(guest.lastName);
-  const [invitationType, setInvitationType] = useState(guest.invitationType || "seul");
+  const [invitationType, setInvitationType] = useState(guest.invitationType || "single");
 
   const handleSave = async () => {
     await updateGuest(guest.id, { title, firstName, lastName, invitationType });
@@ -17,10 +17,7 @@ export default function EditGuestButton({ guest }: { guest: any }) {
 
   if (!isEditing) {
     return (
-      <button
-        onClick={() => setIsEditing(true)}
-        className="text-blue-500 text-sm hover:underline"
-      >
+      <button onClick={() => setIsEditing(true)} className="text-blue-500 text-sm hover:underline">
         Modifier
       </button>
     );
@@ -59,19 +56,13 @@ export default function EditGuestButton({ guest }: { guest: any }) {
         onChange={(e) => setInvitationType(e.target.value)}
         className="p-1 border rounded text-sm dark:bg-gray-800 dark:border-gray-700"
       >
-        <option value="seul">1 personne</option>
+        <option value="single">1 personne</option>
         <option value="couple">2 personnes</option>
       </select>
-      <button
-        onClick={handleSave}
-        className="bg-green-500 text-white px-2 py-1 rounded text-sm"
-      >
+      <button onClick={handleSave} className="bg-green-500 text-white px-2 py-1 rounded text-sm">
         OK
       </button>
-      <button
-        onClick={() => setIsEditing(false)}
-        className="text-gray-500 text-sm"
-      >
+      <button onClick={() => setIsEditing(false)} className="text-gray-500 text-sm">
         Annuler
       </button>
     </div>

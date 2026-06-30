@@ -72,7 +72,6 @@ const eventSchema = z.object({
   date: z.string().min(1, "La date est requise"),
   time: z.string().regex(/^\d{2}:\d{2}$/, "Format HH:MM requis"),
   whatsappNumber: z.string().optional(),
-  invitationType: z.enum(["single", "couple"]).default("single"),
   brideName: z.string().optional(),
   groomName: z.string().optional(),
   age: z.string().optional(),
@@ -93,7 +92,7 @@ const VALID_EVENT_FIELDS = [
   "whatsappNumber",
   "imageUrl",
   "invitationImageUrl",
-  "invitationType",
+  "thesisTitle",
 ];
 
 export default function EventForm({
@@ -140,7 +139,6 @@ export default function EventForm({
 
   const defaultValues: EventFormData = {
     type: type,
-    invitationType: initialData?.invitationType || "single",
     title: initialData?.title || "",
     location: initialData?.location || "",
     date: initialData?.date || "",
@@ -297,7 +295,7 @@ export default function EventForm({
             <input
               {...register("title")}
               placeholder="Ex: Anniversaire de Sarah"
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-white"
+              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary-500 dark:bg-gray-800 dark:text-white"
               required
             />
             {errors.title && (
@@ -464,20 +462,6 @@ export default function EventForm({
                 <p className="text-red-500 text-sm mt-1">{errors.time.message}</p>
               )}
             </div>
-          </div>
-
-          {/* Type d'invitation */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Type d'invitation
-            </label>
-            <select
-              {...register("invitationType")}
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary-500 dark:bg-gray-800 dark:text-white"
-            >
-              <option value="single">1 personne</option>
-              <option value="couple">2 personnes (couple/famille)</option>
-            </select>
           </div>
 
           {/* WhatsApp */}

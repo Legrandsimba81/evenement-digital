@@ -27,8 +27,8 @@ type Event = {
   program: string | null;
   slug: string;
   invitationNumber?: string | null;
-  invitationType?: string | null;
   theme?: string | null;
+  thesisTitle?: string | null;
 };
 
 type EventType = "MARIAGE" | "ANNIVERSAIRE" | "SOUTENANCE" | "AUTRE";
@@ -73,11 +73,13 @@ export default function InvitationCard({
   guestName,
   guestTitle,
   guestId,
+  guestInvitationType,
 }: {
   event: Event;
   guestName: string;
   guestTitle?: string;
   guestId: string;
+  guestInvitationType?: string | null;
 }) {
   const [status, setStatus] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -86,6 +88,10 @@ export default function InvitationCard({
   const cardRef = useRef<HTMLDivElement>(null);
   const qrRef = useRef<HTMLDivElement>(null);
   const [imagesLoaded, setImagesLoaded] = useState(false);
+
+  // ✅ Déterminer le label et l'icône en fonction du type d'invitation de l'invité
+  const peopleLabel = guestInvitationType === "couple" ? "2 personnes" : "1 personne";
+  const peopleIcon = guestInvitationType === "couple" ? Users : User;
 
   const fullName = guestTitle ? `${guestTitle} ${guestName}` : guestName;
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
@@ -104,9 +110,9 @@ export default function InvitationCard({
   }
 
   if (!theme) {
-    const defaultThemeId = event.type === "MARIAGE" ? "wedding-romantic" : 
-                           event.type === "ANNIVERSAIRE" ? "birthday-colorful" :
-                           event.type === "SOUTENANCE" ? "defense-academic" : "other-festive";
+    const defaultThemeId = event.type === "MARIAGE" ? "wedding-romantic" :
+      event.type === "ANNIVERSAIRE" ? "birthday-colorful" :
+        event.type === "SOUTENANCE" ? "defense-academic" : "other-festive";
     const defaultTheme = getThemeById(defaultThemeId);
     if (defaultTheme) theme = defaultTheme;
   }
@@ -236,13 +242,10 @@ export default function InvitationCard({
     }
   };
 
-  const peopleLabel = event.invitationType === "couple" ? "2 personnes" : "1 personne";
-  const peopleIcon = event.invitationType === "couple" ? Users : User;
-
   const invitationTitle = theme?.invitationTitle || config.invitationTitle;
 
   return (
-    <div 
+    <div
       className={`rounded-2xl shadow-xl overflow-hidden border ${theme.className || 'bg-white dark:bg-gray-900'}`}
       style={{ borderColor: colors.hexPrimary || '#2563eb' }}
     >
@@ -266,7 +269,7 @@ export default function InvitationCard({
 
       {/* Contenu */}
       <div ref={cardRef} className="p-4 sm:p-6 md:p-8">
-        {/* En-tête : titre d'invitation + badge personnes */}
+        {/* En-tête : titre d'invitation + badge personnes (1 seule fois) */}
         <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
           <div className="flex items-center gap-2">
             <Icon size={20} style={{ color: colors.hexPrimary }} />
@@ -291,7 +294,7 @@ export default function InvitationCard({
             </span>
             <span className="text-gray-400 hidden sm:inline">•</span>
             <span className="text-gray-700 dark:text-gray-300 flex items-center gap-1">
-              {event.invitationType === "couple" ? (
+              {guestInvitationType === "couple" ? (
                 <><Users size={14} className="text-purple-500" /> 2 personnes</>
               ) : (
                 <><User size={14} className="text-blue-500" /> 1 personne</>
@@ -300,8 +303,17 @@ export default function InvitationCard({
           </div>
         )}
 
+        {/* ✅ Sujet de thèse pour les soutenances */}
+        {event.type === "SOUTENANCE" && event.thesisTitle && (
+          <div className="mt-4 p-4 bg-purple-50 dark:bg-purple-950/20 rounded-xl border-l-4 border-purple-500">
+            <p className="text-sm text-gray-700 dark:text-gray-300">
+              <span className="font-semibold">Sujet de thèse :</span> {event.thesisTitle}
+            </p>
+          </div>
+        )}
+
         {event.invitationText && (
-          <div 
+          <div
             className="mt-4 p-4 rounded-xl border-l-4"
             style={{ borderLeftColor: colors.hexPrimary, backgroundColor: colors.hexBackground || '#f8fafc' }}
           >
@@ -385,11 +397,10 @@ export default function InvitationCard({
             <button
               onClick={() => handleAttendance("attending")}
               disabled={isLoading}
-              className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl border transition text-sm sm:text-base ${
-                status === "attending"
+              className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl border transition text-sm sm:text-base ${status === "attending"
                   ? "bg-green-500 text-white border-green-500"
                   : "border-gray-300 hover:bg-green-50 dark:border-gray-600 dark:hover:bg-green-900/20"
-              }`}
+                }`}
             >
               <Check size={18} />
               {status === "attending" ? "Confirmé" : "Je serai présent(e)"}
@@ -397,11 +408,10 @@ export default function InvitationCard({
             <button
               onClick={() => handleAttendance("annule")}
               disabled={isLoading}
-              className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl border transition text-sm sm:text-base ${
-                status === "annule"
+              className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl border transition text-sm sm:text-base ${status === "annule"
                   ? "bg-red-500 text-white border-red-500"
                   : "border-gray-300 hover:bg-red-50 dark:border-gray-600 dark:hover:bg-red-900/20"
-              }`}
+                }`}
             >
               <X size={18} />
               {status === "annule" ? "Indisponible" : "Indisponible"}
@@ -413,8 +423,8 @@ export default function InvitationCard({
             {status === "attending"
               ? "Présence confirmée – Merci !"
               : status === "annule"
-              ? "Indisponible – Nous avons bien noté votre réponse."
-              : "En attente de confirmation."}
+                ? "Indisponible – Nous avons bien noté votre réponse."
+                : "En attente de confirmation."}
           </p>
         )}
       </div>
