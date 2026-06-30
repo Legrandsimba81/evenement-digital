@@ -62,6 +62,7 @@ const suggestions = {
   },
 };
 
+// ✅ Schéma mis à jour : plus de brideName, groomName, age
 const eventSchema = z.object({
   title: z.string().min(1, "Le titre est requis"),
   type: z.string().min(1, "Type requis"),
@@ -72,10 +73,7 @@ const eventSchema = z.object({
   date: z.string().min(1, "La date est requise"),
   time: z.string().regex(/^\d{2}:\d{2}$/, "Format HH:MM requis"),
   whatsappNumber: z.string().optional(),
-  brideName: z.string().optional(),
-  groomName: z.string().optional(),
-  age: z.string().optional(),
-  thesisTitle: z.string().optional(),
+  thesisTitle: z.string().optional(), // uniquement pour les soutenances
 });
 
 type EventFormData = z.infer<typeof eventSchema>;
@@ -109,7 +107,6 @@ export default function EventForm({
   const themeFromUrl = searchParams.get("theme");
   const isEdit = !!initialData;
 
-  // États pour les images
   const [heroImageFile, setHeroImageFile] = useState<File | null>(null);
   const [heroImagePreview, setHeroImagePreview] = useState<string | null>(
     initialData?.imageUrl || null
@@ -120,17 +117,15 @@ export default function EventForm({
   );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Déterminer le type
   const type = propType || initialData?.type || "AUTRE";
 
-  // Déterminer le thème
   let existingThemeId = null;
   if (initialData?.theme) {
     try {
       const themeObj =
         typeof initialData.theme === "string" ? JSON.parse(initialData.theme) : initialData.theme;
       existingThemeId = themeObj.id;
-    } catch { }
+    } catch {}
   }
 
   const [themeId, setThemeId] = useState<string | null>(
@@ -147,9 +142,6 @@ export default function EventForm({
     invitationText: initialData?.invitationText || "",
     program: initialData?.program || "",
     whatsappNumber: initialData?.whatsappNumber || "",
-    brideName: initialData?.brideName || "",
-    groomName: initialData?.groomName || "",
-    age: initialData?.age || "",
     thesisTitle: initialData?.thesisTitle || "",
   };
 
@@ -267,7 +259,7 @@ export default function EventForm({
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
       <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-800 p-6 sm:p-8">
         {errorMessage && (
-          <div className="mb-6 p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl text-red-600 dark:text-red-400 text-sm">
+          <div className="mb-6 p-4 bg-red-50 dark:bg-red-950/30 rounded-xl text-red-600 dark:text-red-400 text-sm">
             {errorMessage}
           </div>
         )}
@@ -278,7 +270,7 @@ export default function EventForm({
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Type d'événement
             </label>
-            <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+            <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-xl">
               <div className={`p-2 rounded-full ${colorClass} text-white`}>
                 <Icon size={18} />
               </div>
@@ -315,44 +307,7 @@ export default function EventForm({
             </div>
           </div>
 
-          {/* Champs spécifiques */}
-          {type === "MARIAGE" && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Nom du marié
-                </label>
-                <input
-                  {...register("groomName")}
-                  placeholder="Jean"
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary-500 dark:bg-gray-800 dark:text-white"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Nom de la mariée
-                </label>
-                <input
-                  {...register("brideName")}
-                  placeholder="Marie"
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary-500 dark:bg-gray-800 dark:text-white"
-                />
-              </div>
-            </div>
-          )}
-          {type === "ANNIVERSAIRE" && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Âge
-              </label>
-              <input
-                {...register("age")}
-                type="number"
-                placeholder="30"
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary-500 dark:bg-gray-800 dark:text-white"
-              />
-            </div>
-          )}
+          {/* Sujet de thèse (uniquement pour les soutenances) */}
           {type === "SOUTENANCE" && (
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -515,7 +470,7 @@ export default function EventForm({
           )}
 
           {themeId && (
-            <div className="p-3 bg-primary-50 dark:bg-primary-900/20 rounded-xl border border-primary-200 dark:border-primary-800 flex items-center gap-2">
+            <div className="p-3 bg-primary-50 dark:bg-primary-900/20 rounded-xl flex items-center gap-2">
               <Sparkles size={18} className="text-primary-500 dark:text-primary-400" />
               <p className="text-sm text-primary-700 dark:text-primary-300">
                 Thème sélectionné : {getThemeById(themeId)?.name || "Thème personnalisé"}

@@ -113,9 +113,8 @@ export default function InvitationCard({
   const invitationLink = `${baseUrl}/invitation/${event.slug}?firstName=${encodeURIComponent(
     guestName.split(" ")[0]
   )}&lastName=${encodeURIComponent(guestName.split(" ").slice(1).join(" ") || "")}`;
-  
 
-  // ✅ Récupération et parsing du thème
+  // Récupération et parsing du thème
   let theme: Theme | null = null;
   try {
     if (event.theme) {
@@ -125,7 +124,6 @@ export default function InvitationCard({
     console.warn("Erreur de parsing du thème", e);
   }
 
-  // ✅ Fallback vers le thème par défaut selon le type
   if (!theme) {
     const defaultThemeId = event.type === "MARIAGE" ? "wedding-romantic" :
       event.type === "ANNIVERSAIRE" ? "birthday-colorful" :
@@ -134,7 +132,6 @@ export default function InvitationCard({
     if (defaultTheme) theme = defaultTheme;
   }
 
-  // ✅ Thème de dernier recours (uniquement pour les couleurs)
   if (!theme) {
     theme = {
       id: "fallback",
@@ -160,12 +157,10 @@ export default function InvitationCard({
     };
   }
 
-  // ✅ Utiliser l'icône basée sur le type d'événement (plus fiable)
   const type = (event.type as EventType) || "AUTRE";
   const config = defaultTypeConfigs[type] || defaultTypeConfigs["AUTRE"];
   const Icon = config.icon;
 
-  // ✅ Extraire les couleurs avec fallback
   const defaultColors = defaultTypeConfigs[type]?.defaultColors || defaultTypeConfigs["AUTRE"].defaultColors;
   const colors = {
     hexPrimary: theme?.colors?.hexPrimary || defaultColors.hexPrimary,
@@ -272,10 +267,7 @@ export default function InvitationCard({
   const invitationTitle = theme?.invitationTitle || config.invitationTitle;
 
   return (
-    <div
-      className="rounded-2xl shadow-xl overflow-hidden border bg-white dark:bg-gray-900"
-      style={{ borderColor: colors.hexPrimary }}
-    >
+    <div className="rounded-2xl shadow-xl overflow-hidden bg-white dark:bg-gray-900">
       {/* Image héros */}
       <div className="relative w-full aspect-video overflow-hidden bg-gray-100 dark:bg-gray-800">
         {event.imageUrl ? (
@@ -296,9 +288,10 @@ export default function InvitationCard({
 
       {/* Contenu */}
       <div ref={cardRef} className="p-4 sm:p-6 md:p-8">
+        {/* En-tête : titre + badge */}
         <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
           <div className="flex items-center gap-2">
-            <Icon size={20} style={{ color: colors.hexPrimary }} className="dark:text-gray-300"/>
+            <Icon size={20} style={{ color: colors.hexPrimary }} className="dark:text-gray-300" />
             <span className="text-sm font-semibold dark:text-gray-300" style={{ color: colors.hexPrimary }}>
               {invitationTitle}
             </span>
@@ -314,27 +307,29 @@ export default function InvitationCard({
         </p>
 
         {event.invitationNumber && (
-          <div className="mt-2 p-2 sm:p-3 bg-gray-50 dark:bg-gray-800 rounded-xl flex flex-wrap items-center gap-2 sm:gap-3 text-xs sm:text-sm">
+          <div className="mt-2 p-2 sm:p-3 bg-gray-50 dark:bg-gray-800 rounded-xl">
             <span className="font-medium text-gray-700 dark:text-gray-300">
               <span style={{ color: colors.hexPrimary }} className="font-bold">#</span> {event.invitationNumber}
             </span>
           </div>
         )}
 
+        {/* Sujet de thèse */}
         {event.type === "SOUTENANCE" && event.thesisTitle && (
-          <div className="mt-4 p-4 bg-purple-50 dark:bg-purple-950/20 rounded-xl border-4 border-purple-500">
+          <div className="mt-4 p-4 bg-purple-50 dark:bg-purple-950/30 rounded-xl">
             <p className="text-sm text-gray-700 dark:text-gray-300">
               <span className="font-semibold">Sujet de thèse :</span> {event.thesisTitle}
             </p>
           </div>
         )}
 
+        {/* Texte d'invitation */}
         {event.invitationText && (
           <div
-            className="mt-4 p-4 rounded-xl border-4"
-            style={{ borderLeftColor: colors.hexPrimary, backgroundColor: colors.hexBackground || '#f8fafc' }}
+            className="mt-4 p-4 rounded-xl"
+            style={{ backgroundColor: colors.hexBackground || '#f8fafc' }}
           >
-            <p className="text-gray-800 dark:text-gray-200 dark:bg-gray-900 italic text-base sm:text-lg">
+            <p className="text-gray-800 dark:text-gray-200 italic text-base sm:text-lg">
               {event.invitationText}
             </p>
           </div>
@@ -378,10 +373,11 @@ export default function InvitationCard({
           </div>
         )}
 
+        {/* QR Code */}
         <div className="mt-6 flex flex-col items-center">
           <div ref={qrRef} className="bg-white p-3 sm:p-4 rounded-xl shadow-md flex flex-col items-center">
             <QRCode value={invitationLink} size={120} />
-            <p className="text-center text-xs text-gray-500 mt-2">
+            <p className="text-center text-xs text-gray-500 dark:text-gray-400 mt-2">
               Scannez pour accéder à l'invitation
             </p>
           </div>
@@ -395,6 +391,7 @@ export default function InvitationCard({
           </button>
         </div>
 
+        {/* Boutons d'action */}
         <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-between items-stretch sm:items-center">
           <button
             onClick={downloadInvitation}
@@ -415,7 +412,7 @@ export default function InvitationCard({
               className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl border transition text-sm sm:text-base ${
                 status === "attending"
                   ? "bg-green-500 text-white border-green-500"
-                  : "border-gray-300 hover:bg-green-50 dark:border-gray-600 dark:hover:bg-green-900/20"
+                  : "bg-gray-100 dark:bg-gray-800 hover:bg-green-50 dark:hover:bg-green-900/20"
               }`}
             >
               <Check size={18} />
@@ -424,10 +421,10 @@ export default function InvitationCard({
             <button
               onClick={() => handleAttendance("annule")}
               disabled={isLoading}
-              className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl border transition text-sm sm:text-base ${
+              className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl transition text-sm sm:text-base ${
                 status === "annule"
-                  ? "bg-red-500 text-white border-red-500"
-                  : "border-gray-300 hover:bg-red-50 dark:border-gray-600 dark:hover:bg-red-900/20"
+                  ? "bg-red-500 text-white"
+                  : "bg-gray-100 dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-red-900/20"
               }`}
             >
               <X size={18} />
@@ -436,7 +433,7 @@ export default function InvitationCard({
           </div>
         </div>
         {status && (
-          <p className="text-center text-sm text-gray-500 mt-3">
+          <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-3">
             {status === "attending"
               ? "Présence confirmée – Merci !"
               : status === "annule"
