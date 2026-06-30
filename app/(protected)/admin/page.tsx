@@ -2,9 +2,9 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Calendar, Users, MessageSquare, User, Mail, Eye, Trash2, Lock, Unlock } from "lucide-react";
+import { Calendar, Users, MessageSquare, User, Mail, Eye, Trash2 } from "lucide-react";
 import DeleteEventButton from "@/components/admin/DeleteEventButton";
-import ToggleUserStatusButton from "./ToggleUserStatusButton";
+import UserStatusToggle from "@/components/admin/UserStatusToggle";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +14,7 @@ export default async function AdminPage() {
     redirect("/dashboard");
   }
 
-  const [users, events, messages] = await Promise.all([
+  const [users, events] = await Promise.all([
     prisma.user.findMany({
       orderBy: { createdAt: "desc" },
       select: { id: true, name: true, email: true, role: true, canCreateEvents: true, createdAt: true },
@@ -27,7 +27,6 @@ export default async function AdminPage() {
         messages: true,
       },
     }),
-    prisma.message.count(),
   ]);
 
   const totalMessages = events.reduce((acc, e) => acc + e.messages.length, 0);
@@ -76,11 +75,11 @@ export default async function AdminPage() {
             {users.length === 0 ? (
               <p className="text-gray-500 dark:text-gray-400 text-center py-6">Aucun utilisateur</p>
             ) : (
-              <div className="overflow-x-auto"> {/* ✅ responsive */}
-                <ul className="divide-y divide-gray-100 dark:divide-gray-800 min-w-[600px]"> {/* ✅ min-width pour éviter l'écrasement */}
+              <div className="overflow-x-auto">
+                <ul className="divide-y divide-gray-100 dark:divide-gray-800 min-w-[600px]">
                   {users.slice(0, 10).map((user) => (
                     <li key={user.id} className="py-3 flex items-center justify-between">
-                      <div>
+                      <div className="min-w-[150px]">
                         <p className="font-medium text-gray-900 dark:text-white">
                           {user.name || "Anonyme"}
                         </p>
@@ -93,7 +92,11 @@ export default async function AdminPage() {
                         <span className="text-xs px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
                           {user.role}
                         </span>
-                        <ToggleUserStatusButton userId={user.id} currentStatus={user.canCreateEvents} userName={user.name || user.email} />
+                        <UserStatusToggle
+                          userId={user.id}
+                          currentStatus={user.canCreateEvents}
+                          userName={user.name || ""}
+                        />
                       </div>
                     </li>
                   ))}
@@ -111,12 +114,12 @@ export default async function AdminPage() {
             {events.length === 0 ? (
               <p className="text-gray-500 dark:text-gray-400 text-center py-6">Aucun événement</p>
             ) : (
-              <div className="overflow-x-auto"> {/* ✅ responsive */}
+              <div className="overflow-x-auto">
                 <ul className="divide-y divide-gray-100 dark:divide-gray-800 min-w-[600px]">
                   {events.slice(0, 10).map((event) => (
                     <li key={event.id} className="py-4">
                       <div className="flex items-start justify-between">
-                        <div className="flex-1">
+                        <div className="flex-1 min-w-[200px]">
                           <p className="font-semibold text-gray-900 dark:text-white">{event.title}</p>
                           <p className="text-sm text-gray-500 dark:text-gray-400">
                             {event.type} • {event.location}
