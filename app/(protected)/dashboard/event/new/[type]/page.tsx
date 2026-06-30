@@ -1,4 +1,3 @@
-// app/(protected)/dashboard/event/new/[type]/page.tsx
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import ThemeSelector from "@/components/events/ThemeSelector";
@@ -8,23 +7,31 @@ export default async function EventNewTypePage({
   searchParams,
 }: {
   params: Promise<{ type: string }>;
-  searchParams: Promise<{ theme?: string }>;
+  searchParams: Promise<{ theme?: string; returnTo?: string }>;
 }) {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
   const { type } = await params;
-  const { theme } = await searchParams;
+  const { theme, returnTo } = await searchParams;
 
   const validTypes = ["ANNIVERSAIRE", "MARIAGE", "SOUTENANCE", "AUTRE"];
   if (!validTypes.includes(type)) redirect("/dashboard/event/new");
 
-  // Si aucun thème n'est sélectionné, afficher le sélecteur de thème
-  if (!theme || theme === "choose") {
-    return <ThemeSelector type={type as any} />;
+  // Si aucun thème sélectionné, afficher le sélecteur
+  if (!theme) {
+    return <ThemeSelector type={type as any} returnTo={returnTo} />;
   }
 
-  // Sinon, afficher le formulaire avec le thème pré-rempli
-  const EventTypeForm = (await import("@/components/events/EventTypeForm")).default;
-  return <EventTypeForm type={type as any} themeId={theme} />;
+  // Si on a un thème et un returnTo, rediriger vers returnTo avec le thème
+  if (returnTo) {
+    const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+    const url = new URL(returnTo, baseUrl);
+    url.searchParams.set("theme", theme);
+    redirect(url.toString());
+  }
+
+  // Cas standard : création normale
+  const EventForm = (await import("@/components/events/EventForm")).default;
+  return <EventForm type={type as any} themeId={theme} />;
 }

@@ -8,7 +8,13 @@ import ThemePreview from "./ThemePreview";
 
 type EventType = "ANNIVERSAIRE" | "MARIAGE" | "SOUTENANCE" | "AUTRE";
 
-export default function ThemeSelector({ type }: { type: EventType }) {
+export default function ThemeSelector({ 
+  type, 
+  returnTo 
+}: { 
+  type: EventType; 
+  returnTo?: string;
+}) {
   const router = useRouter();
   const [selectedTheme, setSelectedTheme] = useState<string>(getDefaultTheme(type));
   const availableThemes = getThemesByCategory(type);
@@ -18,7 +24,14 @@ export default function ThemeSelector({ type }: { type: EventType }) {
   };
 
   const handleContinue = () => {
-    router.push(`/dashboard/event/new/${type}?theme=${selectedTheme}`);
+    if (returnTo) {
+      // Rediriger vers returnTo avec le thème en paramètre
+      const url = new URL(returnTo, window.location.origin);
+      url.searchParams.set("theme", selectedTheme);
+      window.location.href = url.toString();
+    } else {
+      router.push(`/dashboard/event/new/${type}?theme=${selectedTheme}`);
+    }
   };
 
   return (
@@ -80,7 +93,7 @@ export default function ThemeSelector({ type }: { type: EventType }) {
           className="inline-flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-8 py-3 rounded-xl transition text-lg font-medium"
         >
           <Sparkles size={20} />
-          Continuer avec ce thème
+          {returnTo ? "Sélectionner ce thème" : "Continuer avec ce thème"}
         </button>
       </div>
     </div>

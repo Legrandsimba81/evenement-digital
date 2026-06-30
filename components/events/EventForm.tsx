@@ -5,10 +5,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { uploadImage } from "@/actions/upload-actions";
 import { createEvent, updateEvent } from "@/actions/event-actions";
-import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
-import { Gift, Heart, Trophy, Music } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
+import { Gift, Heart, Trophy, Music, Sparkles } from "lucide-react";
 import ImageUploadWithCrop from "@/components/forms/ImageUploadWithCrop";
+import { getThemeById } from "@/lib/themes";
 
 type EventType = "ANNIVERSAIRE" | "MARIAGE" | "SOUTENANCE" | "AUTRE";
 
@@ -74,16 +75,43 @@ const VALID_EVENT_FIELDS = [
   "imageUrl", "invitationImageUrl", "invitationType",
 ];
 
-export default function EventForm({ initialData }: { initialData?: any }) {
+export default function EventForm({
+  initialData,
+  type: propType,
+  themeId: propThemeId,
+}: {
+  initialData?: any;
+  type?: EventType;
+  themeId?: string;
+}) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const themeFromUrl = searchParams.get("theme");
+  const isEdit = !!initialData;
+
+  // États pour les images
   const [heroImageFile, setHeroImageFile] = useState<File | null>(null);
   const [heroImagePreview, setHeroImagePreview] = useState<string | null>(initialData?.imageUrl || null);
   const [invitationImageFile, setInvitationImageFile] = useState<File | null>(null);
   const [invitationImagePreview, setInvitationImagePreview] = useState<string | null>(initialData?.invitationImageUrl || null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Déterminer le type
+  const type = propType || initialData?.type || "AUTRE";
+
+  // Déterminer le thème
+  let existingThemeId = null;
+  if (initialData?.theme) {
+    try {
+      const themeObj = typeof initialData.theme === "string" ? JSON.parse(initialData.theme) : initialData.theme;
+      existingThemeId = themeObj.id;
+    } catch {}
+  }
+
+  const [themeId, setThemeId] = useState<string | null>(existingThemeId || propThemeId || themeFromUrl || null);
+
   const defaultValues: EventFormData = {
-    type: initialData?.type || "AUTRE",
+    type: type,
     invitationType: initialData?.invitationType || "single",
     title: initialData?.title || "",
     location: initialData?.location || "",
@@ -99,7 +127,12 @@ export default function EventForm({ initialData }: { initialData?: any }) {
     thesisTitle: initialData?.thesisTitle || "",
   };
 
-  const { register, handleSubmit, setValue, formState: { errors, isSubmitting } } = useForm<EventFormData>({
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors, isSubmitting },
+  } = useForm<EventFormData>({
     resolver: zodResolver(eventSchema) as any,
     defaultValues,
   });
@@ -161,11 +194,21 @@ export default function EventForm({ initialData }: { initialData?: any }) {
         }
       }
 
+      // ✅ Ajouter le thème
+      let themeData = null;
+      if (themeId) {
+        const theme = getThemeById(themeId);
+        if (theme) {
+          themeData = theme;
+        }
+      }
+
       const payload = {
         ...cleanData,
         date: dateObj,
         imageUrl: heroImageUrl,
         invitationImageUrl,
+        theme: themeData ? JSON.stringify(themeData) : null,
       };
 
       let result;
@@ -186,10 +229,14 @@ export default function EventForm({ initialData }: { initialData?: any }) {
     }
   };
 
-  const type = (initialData?.type || "AUTRE") as EventType;
-  const Icon = typeIcons[type];
-  const colorClass = typeColors[type];
-  const typeSuggestions = suggestions[type] || suggestions["AUTRE"];
+  const Icon = typeIcons[type as EventType];
+  const colorClass = typeColors[type as EventType];
+  const typeSuggestions = suggestions[type as EventType] || suggestions["AUTRE"];
+
+  const handleChooseTheme = () => {
+    const currentPath = window.location.pathname;
+    router.push(`/dashboard/event/new/${type}?returnTo=${encodeURIComponent(currentPath)}`);
+  };
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -200,7 +247,7 @@ export default function EventForm({ initialData }: { initialData?: any }) {
       )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        {/* Type (non modifiable en modification) */}
+        {/* Type */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Type d'événement</label>
           <div className="flex items-center gap-2">
@@ -291,15 +338,6 @@ export default function EventForm({ initialData }: { initialData?: any }) {
           </div>
         </div>
 
-        {/* Type d'invitation */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Type d'invitation</label>
-          <select {...register("invitationType")} className="w-full px-4 py-3 border-2 border-gray-400 rounded-xl focus:ring-2 focus:ring-primary-500 dark:bg-gray-900 dark:border-gray-600 dark:text-white">
-            <option value="single">1 personne</option>
-            <option value="couple">2 personnes (couple/famille)</option>
-          </select>
-        </div>
-
         {/* WhatsApp */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">WhatsApp (contact)</label>
@@ -309,7 +347,7 @@ export default function EventForm({ initialData }: { initialData?: any }) {
         {/* Images */}
         <ImageUploadWithCrop
           label="Image héros (paysage)"
-          aspect={16/9}
+          aspect={16 / 9}
           initialPreview={heroImagePreview}
           onImageChange={handleHeroImageChange}
           description="Image au format paysage (16:9) pour la section héros"
@@ -317,11 +355,36 @@ export default function EventForm({ initialData }: { initialData?: any }) {
 
         <ImageUploadWithCrop
           label="Image de l'invitation (paysage)"
-          aspect={16/9}
+          aspect={16 / 9}
           initialPreview={invitationImagePreview}
           onImageChange={handleInvitationImageChange}
           description="Image au format paysage (16:9) pour l'invitation téléchargeable"
         />
+
+        {/* Thème */}
+        {isEdit && !existingThemeId && (
+          <div className="mt-4">
+            <button
+              type="button"
+              onClick={handleChooseTheme}
+              className="inline-flex items-center gap-2 bg-pink-500 hover:bg-pink-600 text-white px-4 py-2 rounded-xl text-sm transition"
+            >
+              <Sparkles size={16} />
+              Choisir un thème
+            </button>
+            <p className="text-xs text-gray-500 mt-1">
+              Sélectionnez un thème pour personnaliser l'apparence de votre invitation.
+            </p>
+          </div>
+        )}
+
+        {themeId && (
+          <div className="p-3 bg-primary-50 dark:bg-primary-900/20 rounded-xl border border-primary-200 dark:border-primary-800">
+            <p className="text-sm text-primary-700 dark:text-primary-300">
+              ✨ Thème sélectionné : {getThemeById(themeId)?.name || "Thème personnalisé"}
+            </p>
+          </div>
+        )}
 
         <button
           type="submit"
