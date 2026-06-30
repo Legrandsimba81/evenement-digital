@@ -20,6 +20,7 @@ model User {
   sessions      Session[]
   collaborators EventCollaborator[]
   logs          EventLog[] // ✅ relation inverse
+  canCreateEvents Boolean @default(true) // ✅ nouveau champ
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }

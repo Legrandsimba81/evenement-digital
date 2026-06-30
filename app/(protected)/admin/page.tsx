@@ -2,7 +2,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Calendar, Users, MessageSquare, User, Mail, Eye, Trash2 } from "lucide-react";
+import { Calendar, Users, MessageSquare, User, Mail, Eye, Trash2, Lock, Unlock } from "lucide-react";
 import DeleteEventButton from "@/components/admin/DeleteEventButton";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +16,7 @@ export default async function AdminPage() {
   const [users, events, messages] = await Promise.all([
     prisma.user.findMany({
       orderBy: { createdAt: "desc" },
-      select: { id: true, name: true, email: true, role: true, createdAt: true },
+      select: { id: true, name: true, email: true, role: true, canCreateEvents: true, createdAt: true },
     }),
     prisma.event.findMany({
       orderBy: { createdAt: "desc" },
@@ -45,7 +45,6 @@ export default async function AdminPage() {
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Tableau de bord administrateur</h1>
         <p className="text-gray-500 dark:text-gray-400 mb-8">Vue d’ensemble et gestion des données de la plateforme</p>
 
-        {/* Statistiques */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
           {stats.map((stat) => {
             const Icon = stat.icon;
@@ -66,7 +65,6 @@ export default async function AdminPage() {
           })}
         </div>
 
-        {/* Sections : Utilisateurs et Événements */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Utilisateurs */}
           <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-md border border-gray-200 dark:border-gray-800 p-6">
@@ -89,16 +87,38 @@ export default async function AdminPage() {
                         {user.email}
                       </p>
                     </div>
-                    <span className="text-xs px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
-                      {user.role}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
+                        {user.role}
+                      </span>
+                      {/* ✅ Toggle du statut canCreateEvents */}
+                      <form action={`/api/admin/toggle-user-status`} method="POST">
+                        <input type="hidden" name="userId" value={user.id} />
+                        <input type="hidden" name="canCreateEvents" value={user.canCreateEvents ? "false" : "true"} />
+                        <button
+                          type="submit"
+                          className={`px-2 py-1 rounded-full text-xs font-medium transition ${
+                            user.canCreateEvents
+                              ? "bg-green-100 text-green-800 hover:bg-green-200"
+                              : "bg-red-100 text-red-800 hover:bg-red-200"
+                          }`}
+                          title={user.canCreateEvents ? "Désactiver" : "Réactiver"}
+                        >
+                          {user.canCreateEvents ? (
+                            <span className="flex items-center gap-1"><Unlock size={12} /> Actif</span>
+                          ) : (
+                            <span className="flex items-center gap-1"><Lock size={12} /> Désactivé</span>
+                          )}
+                        </button>
+                      </form>
+                    </div>
                   </li>
                 ))}
               </ul>
             )}
           </div>
 
-          {/* Événements */}
+          {/* Événements - inchangé */}
           <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-md border border-gray-200 dark:border-gray-800 p-6">
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
               <Calendar size={20} className="text-green-500" />
@@ -121,7 +141,6 @@ export default async function AdminPage() {
                         </p>
                       </div>
                       <div className="flex items-center gap-2 ml-4">
-                        {/* ✅ Lien vers l'invitation publique (accessible sans authentification) */}
                         <Link
                           href={`/invitation/${event.slug}`}
                           target="_blank"

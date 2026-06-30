@@ -4,17 +4,6 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 
-// Vérifier si l'utilisateur est autorisé (créateur ou co-organisateur)
-export async function checkEventPermission(eventId: string, userId: string) {
-  const event = await prisma.event.findUnique({
-    where: { id: eventId },
-    include: { collaborators: true },
-  });
-  if (!event) return false;
-  if (event.userId === userId) return true;
-  return event.collaborators.some(c => c.userId === userId);
-}
-
 // Ajouter un co-organisateur (seul le créateur peut le faire)
 export async function addCollaborator(eventId: string, email: string) {
   const session = await auth();
@@ -30,9 +19,20 @@ export async function addCollaborator(eventId: string, email: string) {
     throw new Error("Seul le propriétaire de l'événement peut ajouter des collaborateurs");
   }
 
+  // ✅ Vérifier la limite de 2 collaborateurs
+  if (event.collaborators.length >= 2) {
+    throw new Error("Vous ne pouvez ajouter que 2 collaborateurs maximum.");
+  }
+
   // Trouver l'utilisateur par email
-  const user = await prisma.user.findUnique({ where: { email } });
+  const user = await prisma.user.findUnique({
+    where: { email },
+    select: { id: true, canCreateEvents: true },
+  });
   if (!user) throw new Error("Utilisateur non trouvé");
+  if (!user.canCreateEvents) {
+    throw new Error("Cet utilisateur n'est pas autorisé à collaborer.");
+  }
 
   // Vérifier qu'il n'est pas déjà collaborateur ou créateur
   if (event.userId === user.id) {
@@ -95,15 +95,19 @@ export async function getCollaborators(eventId: string) {
   });
   if (!event) throw new Error("Événement non trouvé");
 
-  // Vérifier que l'utilisateur est autorisé (créateur ou collaborateur)
   const isCreator = event.userId === session.user.id;
   const isCollaborator = event.collaborators.some(c => c.userId === session.user.id);
   if (!isCreator && !isCollaborator) {
     throw new Error("Non autorisé");
   }
 
+  const owner = await prisma.user.findUnique({
+    where: { id: event.userId },
+    select: { id: true, name: true },
+  });
+
   return {
-    owner: { id: event.userId, name: (await prisma.user.findUnique({ where: { id: event.userId } }))?.name },
+    owner: { id: owner?.id, name: owner?.name },
     collaborators: event.collaborators.map(c => ({ id: c.id, userId: c.userId, name: c.user.name, email: c.user.email })),
   };
 }

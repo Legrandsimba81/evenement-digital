@@ -12,6 +12,14 @@ export async function createEvent(data: any) {
     const session = await auth();
     if (!session?.user?.id) throw new Error("Non authentifié");
 
+    // ✅ Vérifier que l'utilisateur est autorisé à créer
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { canCreateEvents: true },
+    });
+    if (!user?.canCreateEvents) {
+      throw new Error("Votre compte est désactivé. Vous ne pouvez pas créer d'événement.");
+    }
     const allowedFields = [
       "title",
       "type",

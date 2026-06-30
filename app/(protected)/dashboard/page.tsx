@@ -1,8 +1,9 @@
-import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Calendar, MapPin, Plus, Users, Clock, Gift, Heart, Trophy, Music } from "lucide-react";
+import DeactivatedMessage from "@/components/ui/DeactivatedMessage"; // à créer
 
 const typeIcons: Record<string, any> = {
   ANNIVERSAIRE: Gift,
@@ -11,7 +12,6 @@ const typeIcons: Record<string, any> = {
   AUTRE: Music,
 };
 
-// Type pour les événements avec relations
 type EventWithRelations = {
   id: string;
   title: string;
@@ -30,6 +30,15 @@ export default async function DashboardPage() {
   const session = await auth();
   const userId = session?.user?.id;
   if (!userId) redirect("/login");
+
+  // ✅ Vérifier le statut de l'utilisateur
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { canCreateEvents: true },
+  });
+  if (!user?.canCreateEvents) {
+    return <DeactivatedMessage />;
+  }
 
   // Récupérer les événements
   const events = (await prisma.event.findMany({
