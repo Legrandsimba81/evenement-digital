@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { themes, getThemesByCategory, getDefaultTheme, Theme } from "@/lib/themes";
 import { Check, Sparkles } from "lucide-react";
+import ThemePreview from "./ThemePreview";
 
 type EventType = "ANNIVERSAIRE" | "MARIAGE" | "SOUTENANCE" | "AUTRE";
 
@@ -21,7 +22,7 @@ export default function ThemeSelector({ type }: { type: EventType }) {
   };
 
   return (
-    <div className="max-w-5xl mx-auto p-6 md:p-8">
+    <div className="max-w-6xl mx-auto p-6 md:p-8">
       <div className="text-center mb-10">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
           Choisissez le thème de votre invitation
@@ -31,43 +32,42 @@ export default function ThemeSelector({ type }: { type: EventType }) {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {availableThemes.map((theme) => {
-          const Icon = theme.icons.main;
           const isSelected = selectedTheme === theme.id;
           return (
             <button
               key={theme.id}
               onClick={() => handleSelect(theme.id)}
-              className={`group relative p-6 rounded-2xl border-2 transition-all duration-300 text-left ${
+              className={`group relative rounded-2xl border-2 transition-all duration-300 overflow-hidden ${
                 isSelected
-                  ? "border-primary-500 shadow-lg ring-2 ring-primary-500 ring-offset-2"
+                  ? "border-primary-500 shadow-xl ring-2 ring-primary-500 ring-offset-2"
                   : "border-gray-200 dark:border-gray-700 hover:border-primary-300 hover:shadow-md"
               } bg-white dark:bg-gray-900`}
             >
               {isSelected && (
-                <div className="absolute top-3 right-3 h-6 w-6 rounded-full bg-primary-500 flex items-center justify-center">
+                <div className="absolute top-3 right-3 z-10 h-6 w-6 rounded-full bg-primary-500 flex items-center justify-center">
                   <Check size={14} className="text-white" />
                 </div>
               )}
-              <div className="flex items-center gap-3 mb-3">
-                <div className={`p-2 rounded-full bg-${theme.colors.primary}/10 text-${theme.colors.primary}`}>
-                  <Icon size={24} />
-                </div>
-                <span className="text-lg font-semibold text-gray-900 dark:text-white">
+              <div className="p-4">
+                <ThemePreview theme={theme} />
+              </div>
+              <div className="p-4 text-left border-t border-gray-100 dark:border-gray-800">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                   {theme.name}
-                </span>
-              </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                {theme.description}
-              </p>
-              <div className="mt-4 flex gap-1">
-                <span className={`inline-block h-3 w-3 rounded-full bg-${theme.colors.primary}`}></span>
-                <span className={`inline-block h-3 w-3 rounded-full bg-${theme.colors.secondary}`}></span>
-                <span className={`inline-block h-3 w-3 rounded-full bg-${theme.colors.accent}`}></span>
-              </div>
-              <div className="mt-3 text-xs text-gray-400">
-                Animation : {theme.animation === "none" ? "Aucune" : theme.animation}
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  {theme.description}
+                </p>
+                <div className="mt-3 flex items-center gap-2">
+                  <span className={`inline-block h-3 w-3 rounded-full bg-${theme.colors.primary}`}></span>
+                  <span className={`inline-block h-3 w-3 rounded-full bg-${theme.colors.secondary}`}></span>
+                  <span className={`inline-block h-3 w-3 rounded-full bg-${theme.colors.accent}`}></span>
+                  <span className="text-xs text-gray-400 ml-auto">
+                    {theme.animation === "none" ? "Statique" : `✨ ${theme.animation}`}
+                  </span>
+                </div>
               </div>
             </button>
           );

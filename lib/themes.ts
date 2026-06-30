@@ -5,23 +5,27 @@ export type Theme = {
   id: string;
   name: string;
   description: string;
-  category: string; // MARIAGE, ANNIVERSAIRE, SOUTENANCE, AUTRE
-  previewImage?: string;
+  category: string;
   colors: {
-    primary: string;
+    primary: string;      // classe Tailwind (ex: "rose-600")
     secondary: string;
     background: string;
     accent: string;
     text: string;
+    hexPrimary: string;   // couleur hexadécimale (ex: "#e11d48")
+    hexSecondary: string;
+    hexBackground: string;
+    hexAccent: string;
+    hexText: string;
   };
   icons: {
     main: any;
     secondary?: any;
   };
-  animation: string; // "hearts", "balloons", "confetti", "stars", "none"
-  backgroundStyle?: string; // "gradient", "solid", "pattern"
-  className?: string; // classes Tailwind additionnelles
-  invitationTitle?: string; // personnalisation du titre
+  animation: string;
+  backgroundStyle?: string;
+  className?: string;
+  invitationTitle?: string;
 };
 
 export const themes: Theme[] = [
@@ -37,6 +41,11 @@ export const themes: Theme[] = [
       background: "rose-50",
       accent: "red-500",
       text: "gray-900",
+      hexPrimary: "#e11d48",
+      hexSecondary: "#ec4899",
+      hexBackground: "#fdf2f8",
+      hexAccent: "#ef4444",
+      hexText: "#111827",
     },
     icons: { main: Heart, secondary: Sparkles },
     animation: "hearts",
@@ -55,6 +64,11 @@ export const themes: Theme[] = [
       background: "indigo-50",
       accent: "gold-500",
       text: "gray-900",
+      hexPrimary: "#4f46e5",
+      hexSecondary: "#8b5cf6",
+      hexBackground: "#eef2ff",
+      hexAccent: "#f59e0b",
+      hexText: "#111827",
     },
     icons: { main: Heart, secondary: Sparkles },
     animation: "stars",
@@ -73,6 +87,11 @@ export const themes: Theme[] = [
       background: "white",
       accent: "gray-800",
       text: "gray-900",
+      hexPrimary: "#374151",
+      hexSecondary: "#6b7280",
+      hexBackground: "#ffffff",
+      hexAccent: "#1f2937",
+      hexText: "#111827",
     },
     icons: { main: Heart, secondary: Sparkles },
     animation: "none",
@@ -93,6 +112,11 @@ export const themes: Theme[] = [
       background: "pink-50",
       accent: "blue-500",
       text: "gray-900",
+      hexPrimary: "#ec4899",
+      hexSecondary: "#fbbf24",
+      hexBackground: "#fdf2f8",
+      hexAccent: "#3b82f6",
+      hexText: "#111827",
     },
     icons: { main: Gift, secondary: Sparkles },
     animation: "balloons",
@@ -111,6 +135,11 @@ export const themes: Theme[] = [
       background: "purple-50",
       accent: "green-500",
       text: "gray-900",
+      hexPrimary: "#9333ea",
+      hexSecondary: "#fb923c",
+      hexBackground: "#faf5ff",
+      hexAccent: "#22c55e",
+      hexText: "#111827",
     },
     icons: { main: Gift, secondary: Sparkles },
     animation: "confetti",
@@ -129,6 +158,11 @@ export const themes: Theme[] = [
       background: "white",
       accent: "blue-800",
       text: "gray-900",
+      hexPrimary: "#2563eb",
+      hexSecondary: "#60a5fa",
+      hexBackground: "#ffffff",
+      hexAccent: "#1e40af",
+      hexText: "#111827",
     },
     icons: { main: Gift, secondary: Sparkles },
     animation: "none",
@@ -149,6 +183,11 @@ export const themes: Theme[] = [
       background: "blue-50",
       accent: "gray-600",
       text: "gray-900",
+      hexPrimary: "#1d4ed8",
+      hexSecondary: "#3b82f6",
+      hexBackground: "#eff6ff",
+      hexAccent: "#4b5563",
+      hexText: "#111827",
     },
     icons: { main: Trophy, secondary: Sparkles },
     animation: "none",
@@ -167,6 +206,11 @@ export const themes: Theme[] = [
       background: "emerald-50",
       accent: "gray-700",
       text: "gray-900",
+      hexPrimary: "#059669",
+      hexSecondary: "#2dd4bf",
+      hexBackground: "#ecfdf5",
+      hexAccent: "#374151",
+      hexText: "#111827",
     },
     icons: { main: Trophy, secondary: Sparkles },
     animation: "none",
@@ -185,6 +229,11 @@ export const themes: Theme[] = [
       background: "white",
       accent: "gray-900",
       text: "gray-900",
+      hexPrimary: "#1f2937",
+      hexSecondary: "#4b5563",
+      hexBackground: "#ffffff",
+      hexAccent: "#111827",
+      hexText: "#111827",
     },
     icons: { main: Trophy, secondary: Sparkles },
     animation: "none",
@@ -205,6 +254,11 @@ export const themes: Theme[] = [
       background: "orange-50",
       accent: "red-500",
       text: "gray-900",
+      hexPrimary: "#f97316",
+      hexSecondary: "#fbbf24",
+      hexBackground: "#fff7ed",
+      hexAccent: "#ef4444",
+      hexText: "#111827",
     },
     icons: { main: Music, secondary: Sparkles },
     animation: "confetti",
@@ -223,6 +277,11 @@ export const themes: Theme[] = [
       background: "indigo-50",
       accent: "gold-500",
       text: "gray-900",
+      hexPrimary: "#4f46e5",
+      hexSecondary: "#8b5cf6",
+      hexBackground: "#eef2ff",
+      hexAccent: "#f59e0b",
+      hexText: "#111827",
     },
     icons: { main: Music, secondary: Sparkles },
     animation: "stars",
@@ -241,6 +300,11 @@ export const themes: Theme[] = [
       background: "white",
       accent: "gray-800",
       text: "gray-900",
+      hexPrimary: "#374151",
+      hexSecondary: "#6b7280",
+      hexBackground: "#ffffff",
+      hexAccent: "#1f2937",
+      hexText: "#111827",
     },
     icons: { main: Music, secondary: Sparkles },
     animation: "none",
