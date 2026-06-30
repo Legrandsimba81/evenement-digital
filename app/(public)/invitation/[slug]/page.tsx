@@ -13,18 +13,35 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const event = await prisma.event.findUnique({
     where: { slug },
-    select: { title: true, imageUrl: true, location: true },
+    select: { title: true, imageUrl: true, invitationText: true, date: true, location: true },
   });
-  if (!event) return {};
+  if (!event) return { title: "Invitation" };
+
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://evenement-digital.vercel.app";
+  const imageUrl = event.imageUrl || "/og-image.png";
 
   return {
-    title: `${event.title} - Octavia`,
-    description: `Invitation pour ${event.title} à ${event.location}`,
+    title: `Invitation - ${event.title}`,
+    description: event.invitationText || `Venez célébrer avec nous !`,
     openGraph: {
-      title: event.title,
-      description: `Invitation pour ${event.title}`,
-      images: event.imageUrl ? [event.imageUrl] : ["/og-image.png"],
-      type: "article",
+      title: `Invitation - ${event.title}`,
+      description: event.invitationText || `Venez célébrer avec nous !`,
+      url: `${baseUrl}/invitation/${slug}`,
+      images: [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: event.title,
+        },
+      ],
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `Invitation - ${event.title}`,
+      description: event.invitationText || `Venez célébrer avec nous !`,
+      images: [imageUrl],
     },
   };
 }
