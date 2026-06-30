@@ -8,9 +8,7 @@ import BackButtonFloating from "@/components/ui/BackButtonFloating";
 
 const inter = Inter({ subsets: ["latin"] });
 
-// ✅ Métadonnées complètes pour SEO et partage
 export const metadata: Metadata = {
-  // --- Métadonnées de base ---
   metadataBase: new URL("https://evenement-digital.vercel.app"),
   title: {
     default: "Octavia - Gestion d'événements",
@@ -40,9 +38,6 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
-  verification: {
-    google: "votre-code-de-vérification-google", // À remplacer si vous avez
-  },
   alternates: {
     canonical: "https://evenement-digital.vercel.app",
   },
@@ -63,7 +58,6 @@ export const metadata: Metadata = {
     ],
     type: "website",
     locale: "fr_FR",
-    determiner: "auto",
   },
   twitter: {
     card: "summary_large_image",
@@ -71,10 +65,9 @@ export const metadata: Metadata = {
     description:
       "Créez, gérez et partagez vos invitations en ligne. Simple, rapide et élégant.",
     images: ["/og-image.png"],
-    creator: "@octavia", // À remplacer par votre handle Twitter
+    creator: "@octavia",
     site: "@octavia",
   },
-  // --- Métadonnées pour les applications mobiles ---
   appleWebApp: {
     capable: true,
     title: "Octavia",
@@ -101,7 +94,6 @@ export const metadata: Metadata = {
     maximumScale: 5,
     userScalable: true,
   },
-  // --- Métadonnées supplémentaires (formatage) ---
   formatDetection: {
     email: true,
     address: true,
