@@ -147,9 +147,20 @@ export default async function InvitationPage({
     m.content.toLowerCase().includes("love")
   );
 
+  // ✅ Conversion du thème en chaîne JSON
+  let themeValue = null;
+  if (event.theme) {
+    try {
+      themeValue = typeof event.theme === 'string' ? event.theme : JSON.stringify(event.theme);
+    } catch {
+      themeValue = null;
+    }
+  }
+
   const eventForCard = {
     ...event,
     date: event.date.toISOString(),
+    theme: themeValue,
   };
 
   return (
@@ -161,6 +172,7 @@ export default async function InvitationPage({
           guestName={guestName}
           guestTitle={guest.title || undefined}
           guestId={guest.id}
+          guestInvitationType={guest.invitationType}
         />
 
         {/* Messages d'amour pour les mariages */}
