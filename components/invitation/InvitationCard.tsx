@@ -113,6 +113,7 @@ export default function InvitationCard({
   const invitationLink = `${baseUrl}/invitation/${event.slug}?firstName=${encodeURIComponent(
     guestName.split(" ")[0]
   )}&lastName=${encodeURIComponent(guestName.split(" ").slice(1).join(" ") || "")}`;
+  
 
   // ✅ Récupération et parsing du thème
   let theme: Theme | null = null;
@@ -297,8 +298,8 @@ export default function InvitationCard({
       <div ref={cardRef} className="p-4 sm:p-6 md:p-8">
         <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
           <div className="flex items-center gap-2">
-            <Icon size={20} style={{ color: colors.hexPrimary }} />
-            <span className="text-sm font-semibold" style={{ color: colors.hexPrimary }}>
+            <Icon size={20} style={{ color: colors.hexPrimary }} className="dark:text-gray-300"/>
+            <span className="text-sm font-semibold dark:text-gray-300" style={{ color: colors.hexPrimary }}>
               {invitationTitle}
             </span>
           </div>
@@ -321,7 +322,7 @@ export default function InvitationCard({
         )}
 
         {event.type === "SOUTENANCE" && event.thesisTitle && (
-          <div className="mt-4 p-4 bg-purple-50 dark:bg-purple-950/20 rounded-xl border-l-4 border-purple-500">
+          <div className="mt-4 p-4 bg-purple-50 dark:bg-purple-950/20 rounded-xl border-4 border-purple-500">
             <p className="text-sm text-gray-700 dark:text-gray-300">
               <span className="font-semibold">Sujet de thèse :</span> {event.thesisTitle}
             </p>
@@ -330,10 +331,10 @@ export default function InvitationCard({
 
         {event.invitationText && (
           <div
-            className="mt-4 p-4 rounded-xl border-l-4"
+            className="mt-4 p-4 rounded-xl border-4"
             style={{ borderLeftColor: colors.hexPrimary, backgroundColor: colors.hexBackground || '#f8fafc' }}
           >
-            <p className="text-gray-800 dark:text-gray-200 italic text-base sm:text-lg">
+            <p className="text-gray-800 dark:text-gray-200 dark:bg-gray-900 italic text-base sm:text-lg">
               {event.invitationText}
             </p>
           </div>
@@ -351,25 +352,25 @@ export default function InvitationCard({
 
         <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
           <div className="flex items-center gap-2">
-            <Calendar size={18} style={{ color: colors.hexPrimary }} className="flex-shrink-0" />
+            <Calendar size={18} style={{ color: colors.hexPrimary }} className="flex-shrink-0 dark:text-gray-300" />
             <span className="text-sm sm:text-base text-gray-700 dark:text-gray-300">
               {new Date(event.date).toLocaleDateString('fr-FR')}
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <Clock size={18} style={{ color: colors.hexPrimary }} className="flex-shrink-0" />
+            <Clock size={18} style={{ color: colors.hexPrimary }} className="flex-shrink-0 dark:text-gray-300" />
             <span className="text-sm sm:text-base text-gray-700 dark:text-gray-300">{event.time}</span>
           </div>
           <div className="flex items-center gap-2">
-            <MapPin size={18} style={{ color: colors.hexPrimary }} className="flex-shrink-0" />
+            <MapPin size={18} style={{ color: colors.hexPrimary }} className="flex-shrink-0 dark:text-gray-300" />
             <span className="text-sm sm:text-base text-gray-700 dark:text-gray-300">{event.location}</span>
           </div>
         </div>
 
         {event.program && (
           <div className="mt-6 p-4 bg-gray-100 dark:bg-gray-800 rounded-xl">
-            <h3 className="font-semibold mb-2" style={{ color: colors.hexPrimary }}>
-              Programme
+            <h3 className="font-semibold mb-2 dark:text-gray-300" style={{ color: colors.hexPrimary }}>
+              Programme de la journée
             </h3>
             <div className="text-gray-700 dark:text-gray-300 whitespace-pre-line text-sm sm:text-base">
               {event.program}
