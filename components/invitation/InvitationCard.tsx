@@ -36,35 +36,51 @@ type EventType = "MARIAGE" | "ANNIVERSAIRE" | "SOUTENANCE" | "AUTRE";
 const defaultTypeConfigs = {
   MARIAGE: {
     icon: Heart,
-    bg: "bg-rose-50 dark:bg-rose-950/20",
-    border: "border-rose-200",
-    accent: "text-rose-600",
     label: "Mariage",
     invitationTitle: "Invitation de mariage",
+    defaultColors: {
+      hexPrimary: "#e11d48",
+      hexSecondary: "#ec4899",
+      hexBackground: "#fdf2f8",
+      hexAccent: "#ef4444",
+      hexText: "#111827",
+    },
   },
   ANNIVERSAIRE: {
     icon: Gift,
-    bg: "bg-pink-50 dark:bg-pink-950/20",
-    border: "border-pink-200",
-    accent: "text-pink-600",
     label: "Anniversaire",
     invitationTitle: "Invitation d'anniversaire",
+    defaultColors: {
+      hexPrimary: "#ec4899",
+      hexSecondary: "#fbbf24",
+      hexBackground: "#fdf2f8",
+      hexAccent: "#3b82f6",
+      hexText: "#111827",
+    },
   },
   SOUTENANCE: {
     icon: Trophy,
-    bg: "bg-purple-50 dark:bg-purple-950/20",
-    border: "border-purple-200",
-    accent: "text-purple-600",
     label: "Soutenance",
     invitationTitle: "Invitation à la soutenance",
+    defaultColors: {
+      hexPrimary: "#1d4ed8",
+      hexSecondary: "#3b82f6",
+      hexBackground: "#eff6ff",
+      hexAccent: "#4b5563",
+      hexText: "#111827",
+    },
   },
   AUTRE: {
     icon: Music,
-    bg: "bg-blue-50 dark:bg-blue-950/20",
-    border: "border-blue-200",
-    accent: "text-blue-600",
     label: "Autre",
     invitationTitle: "Invitation",
+    defaultColors: {
+      hexPrimary: "#f97316",
+      hexSecondary: "#fbbf24",
+      hexBackground: "#fff7ed",
+      hexAccent: "#ef4444",
+      hexText: "#111827",
+    },
   },
 } as const;
 
@@ -89,7 +105,6 @@ export default function InvitationCard({
   const qrRef = useRef<HTMLDivElement>(null);
   const [imagesLoaded, setImagesLoaded] = useState(false);
 
-  // ✅ Le badge affiche le nombre de personnes défini par l'organisateur pour cet invité
   const peopleLabel = guestInvitationType === "couple" ? "2 personnes" : "1 personne";
   const peopleIcon = guestInvitationType === "couple" ? Users : User;
 
@@ -99,7 +114,7 @@ export default function InvitationCard({
     guestName.split(" ")[0]
   )}&lastName=${encodeURIComponent(guestName.split(" ").slice(1).join(" ") || "")}`;
 
-  // ✅ Récupérer le thème
+  // ✅ Récupération et parsing du thème
   let theme: Theme | null = null;
   try {
     if (event.theme) {
@@ -109,14 +124,16 @@ export default function InvitationCard({
     console.warn("Erreur de parsing du thème", e);
   }
 
+  // ✅ Fallback vers le thème par défaut selon le type
   if (!theme) {
     const defaultThemeId = event.type === "MARIAGE" ? "wedding-romantic" :
       event.type === "ANNIVERSAIRE" ? "birthday-colorful" :
-        event.type === "SOUTENANCE" ? "defense-academic" : "other-festive";
+      event.type === "SOUTENANCE" ? "defense-academic" : "other-festive";
     const defaultTheme = getThemeById(defaultThemeId);
     if (defaultTheme) theme = defaultTheme;
   }
 
+  // ✅ Thème de dernier recours
   if (!theme) {
     theme = {
       id: "fallback",
@@ -142,8 +159,18 @@ export default function InvitationCard({
     };
   }
 
+  // ✅ Déterminer l'icône (avec fallback)
   const Icon = theme?.icons?.main || defaultTypeConfigs[event.type as EventType]?.icon || Music;
-  const colors = theme.colors;
+
+  // ✅ Extraire les couleurs avec fallback
+  const defaultColors = defaultTypeConfigs[event.type as EventType]?.defaultColors || defaultTypeConfigs["AUTRE"].defaultColors;
+  const colors = {
+    hexPrimary: theme?.colors?.hexPrimary || defaultColors.hexPrimary,
+    hexSecondary: theme?.colors?.hexSecondary || defaultColors.hexSecondary,
+    hexBackground: theme?.colors?.hexBackground || defaultColors.hexBackground,
+    hexAccent: theme?.colors?.hexAccent || defaultColors.hexAccent,
+    hexText: theme?.colors?.hexText || defaultColors.hexText,
+  };
 
   useEffect(() => {
     const savedStatus = localStorage.getItem(`status_${guestId}`);
@@ -246,8 +273,8 @@ export default function InvitationCard({
 
   return (
     <div
-      className={`rounded-2xl shadow-xl overflow-hidden border ${theme.className || 'bg-white dark:bg-gray-900'}`}
-      style={{ borderColor: colors.hexPrimary || '#2563eb' }}
+      className="rounded-2xl shadow-xl overflow-hidden border bg-white dark:bg-gray-900"
+      style={{ borderColor: colors.hexPrimary }}
     >
       {/* Image héros */}
       <div className="relative w-full aspect-video overflow-hidden bg-gray-100 dark:bg-gray-800">
@@ -269,7 +296,7 @@ export default function InvitationCard({
 
       {/* Contenu */}
       <div ref={cardRef} className="p-4 sm:p-6 md:p-8">
-        {/* ✅ En-tête : titre d'invitation + badge personnes (issu de guestInvitationType) */}
+        {/* En-tête */}
         <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
           <div className="flex items-center gap-2">
             <Icon size={20} style={{ color: colors.hexPrimary }} />
@@ -292,11 +319,10 @@ export default function InvitationCard({
             <span className="font-medium text-gray-700 dark:text-gray-300">
               <span style={{ color: colors.hexPrimary }} className="font-bold">#</span> {event.invitationNumber}
             </span>
-            {/* Plus de répétition du type d'invitation ici */}
           </div>
         )}
 
-        {/* Sujet de thèse pour les soutenances */}
+        {/* Sujet de thèse */}
         {event.type === "SOUTENANCE" && event.thesisTitle && (
           <div className="mt-4 p-4 bg-purple-50 dark:bg-purple-950/20 rounded-xl border-l-4 border-purple-500">
             <p className="text-sm text-gray-700 dark:text-gray-300">
@@ -390,10 +416,11 @@ export default function InvitationCard({
             <button
               onClick={() => handleAttendance("attending")}
               disabled={isLoading}
-              className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl border transition text-sm sm:text-base ${status === "attending"
+              className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl border transition text-sm sm:text-base ${
+                status === "attending"
                   ? "bg-green-500 text-white border-green-500"
                   : "border-gray-300 hover:bg-green-50 dark:border-gray-600 dark:hover:bg-green-900/20"
-                }`}
+              }`}
             >
               <Check size={18} />
               {status === "attending" ? "Confirmé" : "Je serai présent(e)"}
@@ -401,10 +428,11 @@ export default function InvitationCard({
             <button
               onClick={() => handleAttendance("annule")}
               disabled={isLoading}
-              className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl border transition text-sm sm:text-base ${status === "annule"
+              className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl border transition text-sm sm:text-base ${
+                status === "annule"
                   ? "bg-red-500 text-white border-red-500"
                   : "border-gray-300 hover:bg-red-50 dark:border-gray-600 dark:hover:bg-red-900/20"
-                }`}
+              }`}
             >
               <X size={18} />
               {status === "annule" ? "Indisponible" : "Indisponible"}
