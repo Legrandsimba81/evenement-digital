@@ -29,6 +29,7 @@ type Event = {
   invitationNumber?: string | null;
   theme?: string | null;
   thesisTitle?: string | null;
+  format?: string | null; // ✅ ajout du champ
 };
 
 type EventType = "MARIAGE" | "ANNIVERSAIRE" | "SOUTENANCE" | "AUTRE";
@@ -170,6 +171,8 @@ export default function InvitationCard({
     hexText: theme?.colors?.hexText || defaultColors.hexText,
   };
 
+  const isBillet = event.format === "BILLET";
+
   useEffect(() => {
     const savedStatus = localStorage.getItem(`status_${guestId}`);
     if (savedStatus) {
@@ -290,16 +293,24 @@ export default function InvitationCard({
       <div ref={cardRef} className="p-4 sm:p-6 md:p-8">
         {/* En-tête : titre + badge */}
         <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
-          <div className="flex items-center gap-2">
-            <Icon size={20} style={{ color: colors.hexPrimary }} className="dark:text-gray-200" />
-            <span className="text-sm font-semibold dark:text-gray-200" style={{ color: colors.hexPrimary }}>
-              {invitationTitle}
-            </span>
-          </div>
-          <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
-            {peopleIcon === Users ? <Users size={14} /> : <User size={14} />}
-            {peopleLabel}
-          </span>
+          {isBillet ? (
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              🎟️ Billet de {event.title}
+            </h1>
+          ) : (
+            <>
+              <div className="flex items-center gap-2">
+                <Icon size={20} style={{ color: colors.hexPrimary }} className="dark:text-gray-200" />
+                <span className="text-sm font-semibold dark:text-gray-200" style={{ color: colors.hexPrimary }}>
+                  {invitationTitle}
+                </span>
+              </div>
+              <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+                {peopleIcon === Users ? <Users size={14} /> : <User size={14} />}
+                {peopleLabel}
+              </span>
+            </>
+          )}
         </div>
 
         <p className="text-base sm:text-lg text-gray-600 dark:text-gray-400 mb-1">
@@ -329,7 +340,7 @@ export default function InvitationCard({
             className="mt-4 p-4 rounded-xl"
             style={{ backgroundColor: colors.hexBackground || '#f8fafc' }}
           >
-            <p className="text-gray-800 dark:text-gray-800 italic text-base sm:text-lg">
+            <p className="text-gray-800 dark:text-gray-200 italic text-base sm:text-lg">
               {event.invitationText}
             </p>
           </div>

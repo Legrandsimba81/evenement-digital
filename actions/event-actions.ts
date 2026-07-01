@@ -34,6 +34,7 @@ export async function createEvent(data: any) {
       "invitationImageUrl",
       "thesisTitle",
       "theme", // ✅ Ajout du thème
+      "format", // ✅ ajout
     ];
 
     const cleanData: any = {};

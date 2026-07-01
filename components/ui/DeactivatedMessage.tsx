@@ -1,10 +1,17 @@
 "use client";
 
+import { Lock } from "lucide-react";
+import { SiWhatsapp } from "react-icons/si";
+
 export default function DeactivatedMessage() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-950">
       <div className="max-w-md w-full bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8 text-center border border-gray-200 dark:border-gray-800">
-        <div className="text-6xl mb-4">🔒</div>
+        <div className="flex justify-center mb-4">
+          <div className="h-16 w-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+            <Lock size={32} className="text-red-600 dark:text-red-400" />
+          </div>
+        </div>
         <h1 className="text-2xl font-bold text-red-600 dark:text-red-400">
           Compte désactivé
         </h1>
@@ -19,7 +26,7 @@ export default function DeactivatedMessage() {
           target="_blank"
           className="inline-flex items-center gap-2 mt-6 bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-xl transition"
         >
-          <span className="text-xl">📱</span>
+          <SiWhatsapp size={20} />
           Contacter le support WhatsApp
         </a>
       </div>

@@ -22,6 +22,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const imageUrl = event.imageUrl
     ? (event.imageUrl.startsWith("http") ? event.imageUrl : `${baseUrl}${event.imageUrl}`)
     : `${baseUrl}/og-image.png`;
+    
 
   return {
     title: `Invitation - ${event.title}`,

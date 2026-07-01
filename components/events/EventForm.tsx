@@ -39,8 +39,7 @@ const suggestions = {
   MARIAGE: {
     titles: ["Mariage de Jean et Marie", "Union de Paul et Claire", "Noce de Pierre et Sophie"],
     invitationTexts: [
-      "Les familles {nom} et {nom} ont l'immense plaisir de vous convier aux cérémonies de mariage civil et religieux de leurs enfants, {noms} et {noms}, qui se tiendront le {jour} 00 mois année. Votre présence à cette heureuse célébration sera pour les mariés et leurs familles un précieux témoignage d'affection et d'amitié. Nous serons honorés de partager avec vous ce moment inoubliable. Vous êtes cordialement les bienvenus !.",
-      
+      "Les familles {nom} et {nom} ont l'immense plaisir de vous convier aux cérémonies de mariage civil et religieux de leurs enfants, {noms} et {noms}, qui se tiendront le {jour} 00 mois année. Votre présence à cette heureuse célébration sera pour les mariés et leurs familles un précieux témoignage d'affection et d'amitié. Nous serons honorés de partager avec vous ce moment inoubliable. Vous êtes cordialement les bienvenus !",
     ],
     locations: ["Hotel Believe", "Hotel Auberge", "Monde Juste"],
   },
@@ -62,7 +61,6 @@ const suggestions = {
   },
 };
 
-// ✅ Schéma mis à jour : plus de brideName, groomName, age
 const eventSchema = z.object({
   title: z.string().min(1, "Le titre est requis"),
   type: z.string().min(1, "Type requis"),
@@ -73,7 +71,8 @@ const eventSchema = z.object({
   date: z.string().min(1, "La date est requise"),
   time: z.string().regex(/^\d{2}:\d{2}$/, "Format HH:MM requis"),
   whatsappNumber: z.string().optional(),
-  thesisTitle: z.string().optional(), // uniquement pour les soutenances
+  thesisTitle: z.string().optional(),
+  format: z.enum(["INVITATION", "BILLET"]).default("INVITATION"), // ✅ ajout du champ
 });
 
 type EventFormData = z.infer<typeof eventSchema>;
@@ -91,6 +90,7 @@ const VALID_EVENT_FIELDS = [
   "imageUrl",
   "invitationImageUrl",
   "thesisTitle",
+  "format",
 ];
 
 export default function EventForm({
@@ -143,6 +143,7 @@ export default function EventForm({
     program: initialData?.program || "",
     whatsappNumber: initialData?.whatsappNumber || "",
     thesisTitle: initialData?.thesisTitle || "",
+    format: initialData?.format || "INVITATION",
   };
 
   const {
@@ -430,6 +431,22 @@ export default function EventForm({
               className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary-500 dark:bg-gray-800 dark:text-white"
             />
           </div>
+
+          {/* Format (uniquement pour AUTRE) */}
+          {type === "AUTRE" && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Format
+              </label>
+              <select
+                {...register("format")}
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary-500 dark:bg-gray-800 dark:text-white"
+              >
+                <option value="INVITATION">Invitation</option>
+                <option value="BILLET">Billet</option>
+              </select>
+            </div>
+          )}
 
           {/* Images */}
           <div className="space-y-6">

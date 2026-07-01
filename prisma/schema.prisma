@@ -82,6 +82,7 @@ model Event {
   whatsappNumber    String?
   invitationNumber  String?
   gateSecret        String?
+  format          String?   @default("INVITATION") // "INVITATION" ou "BILLET"
   thesisTitle       String?   // pour les soutenances
   theme             Json?     // thème stocké en JSON
   createdAt         DateTime  @default(now())
