@@ -1,10 +1,29 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { removeGuest, updateGuestStatus } from "@/actions/guest-actions";
 import EditGuestButton from "@/components/guests/EditGuestButton";
 import GateQRButton from "@/components/guests/GateQRButton";
 import { Search, Copy, Users, User, CheckCircle } from "lucide-react";
+
+type Guest = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  title?: string | null;
+  status?: string | null;
+  invitationNumber?: string | null;
+  invitationType?: string | null;
+};
+
+type Event = {
+  id: string;
+  title: string;
+  slug: string;
+  gateSecret?: string | null;
+  // ajoutez d'autres propriétés si nécessaires
+};
 
 const statusColors: Record<string, string> = {
   en_attente: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300",
@@ -26,11 +45,12 @@ export default function GuestList({
   eventSlug,
   event,
 }: {
-  guests: any[];
+  guests: Guest[];
   eventId: string;
   eventSlug: string;
-  event: any;
+  event: Event;
 }) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [search, setSearch] = useState("");
   const [filteredGuests, setFilteredGuests] = useState(guests);
@@ -53,14 +73,17 @@ export default function GuestList({
   };
 
   const handleRemove = (guestId: string) => {
+    if (!confirm("Voulez-vous vraiment supprimer cet invité ?")) return;
     startTransition(async () => {
       await removeGuest(guestId);
+      router.refresh();
     });
   };
 
   const handleStatusChange = (guestId: string, status: string) => {
     startTransition(async () => {
       await updateGuestStatus(guestId, status);
+      router.refresh();
     });
   };
 
@@ -114,7 +137,7 @@ export default function GuestList({
                     className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50"
                   >
                     <td className="px-3 py-2 font-mono font-semibold">
-                      {guest.invitationNumber}
+                      {guest.invitationNumber || "—"}
                     </td>
                     <td className="px-3 py-2">
                       {guest.title
