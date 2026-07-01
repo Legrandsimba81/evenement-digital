@@ -347,17 +347,17 @@ export default function InvitationCard({
 
         <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
           <div className="flex items-center gap-2">
-            <Calendar size={18} style={{ color: colors.hexPrimary }} className="flex-shrink-0 dark:bg-gray-300 p-2" />
+            <Calendar size={18} style={{ color: colors.hexPrimary }} className="flex-shrink-0 dark:bg-gray-300 dark:text-gray-900 p-2" />
             <span className="text-sm sm:text-base text-gray-700 dark:text-gray-300">
               {new Date(event.date).toLocaleDateString('fr-FR')}
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <Clock size={18} style={{ color: colors.hexPrimary }} className="flex-shrink-0 dark:bg-gray-300 p-2" />
+            <Clock size={18} style={{ color: colors.hexPrimary }} className="flex-shrink-0 dark:bg-gray-300 dark:text-gray-900 p-2" />
             <span className="text-sm sm:text-base text-gray-700 dark:text-gray-300">{event.time}</span>
           </div>
           <div className="flex items-center gap-2">
-            <MapPin size={18} style={{ color: colors.hexPrimary }} className="flex-shrink-0 dark:bg-gray-300 p-2" />
+            <MapPin size={18} style={{ color: colors.hexPrimary }} className="flex-shrink-0 dark:bg-gray-300 dark:text-gray-900 p-2" />
             <span className="text-sm sm:text-base text-gray-700 dark:text-gray-300">{event.location}</span>
           </div>
         </div>
