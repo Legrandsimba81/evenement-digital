@@ -34,15 +34,15 @@ const suggestions = {
       "Nous avons le plaisir de vous inviter à l'anniversaire de ...",
       "Venez célébrer avec nous les ... ans de ...",
     ],
-    locations: ["Hotel Believe", "Hotel Auberge", "Monde Juste", "Espace Koffi"],
+    locations: ["Hotel Believe", "Hotel Auberge", "Monde Juste"],
   },
   MARIAGE: {
     titles: ["Mariage de Jean et Marie", "Union de Paul et Claire", "Noce de Pierre et Sophie"],
     invitationTexts: [
-      "Nous avons le plaisir de vous inviter à notre mariage...",
-      "Avec joie, nous vous convions à notre union...",
+      "Les familles {nom} et {nom} ont l'immense plaisir de vous convier aux cérémonies de mariage civil et religieux de leurs enfants, {noms} et {noms}, qui se tiendront le {jour} 00 mois année. Votre présence à cette heureuse célébration sera pour les mariés et leurs familles un précieux témoignage d'affection et d'amitié. Nous serons honorés de partager avec vous ce moment inoubliable. Vous êtes cordialement les bienvenus !.",
+      
     ],
-    locations: ["Hotel Believe", "Hotel Auberge", "Monde Juste", "Espace Koffi"],
+    locations: ["Hotel Believe", "Hotel Auberge", "Monde Juste"],
   },
   SOUTENANCE: {
     titles: ["Soutenance de thèse de ...", "Soutenance de Master de ..."],
@@ -50,7 +50,7 @@ const suggestions = {
       "J'ai l'honneur de vous inviter à ma soutenance de thèse...",
       "Venez assister à ma soutenance de mémoire...",
     ],
-    locations: ["Université de Cocody", "Université d'Abobo", "Institut de Recherche"],
+    locations: ["Université de L'assomption au congo", "UCG", "ISTM", "UOR"],
   },
   AUTRE: {
     titles: ["Événement spécial", "Fête de ...", "Célébration de ..."],
@@ -58,7 +58,7 @@ const suggestions = {
       "Nous avons le plaisir de vous inviter à ...",
       "Venez nombreux célébrer ...",
     ],
-    locations: ["Hotel Believe", "Hotel Auberge", "Monde Juste", "Espace Koffi"],
+    locations: ["Hotel Believe", "Hotel Auberge", "Monde Juste", "Raine de la paix"],
   },
 };
 
@@ -349,7 +349,7 @@ export default function EventForm({
           {/* Programme */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Programme
+              Programme de la journée
             </label>
             <textarea
               {...register("program")}
@@ -426,7 +426,7 @@ export default function EventForm({
             </label>
             <input
               {...register("whatsappNumber")}
-              placeholder="+225 01 23 45 67 89"
+              placeholder="Ex: 0827733286"
               className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary-500 dark:bg-gray-800 dark:text-white"
             />
           </div>

@@ -61,7 +61,7 @@ const defaultTypeConfigs = {
   SOUTENANCE: {
     icon: Trophy,
     label: "Soutenance",
-    invitationTitle: "Invitation à la soutenance",
+    invitationTitle: "Invitation à la Defense",
     defaultColors: {
       hexPrimary: "#1d4ed8",
       hexSecondary: "#3b82f6",
@@ -291,8 +291,8 @@ export default function InvitationCard({
         {/* En-tête : titre + badge */}
         <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
           <div className="flex items-center gap-2">
-            <Icon size={20} style={{ color: colors.hexPrimary }} className="dark:text-gray-300" />
-            <span className="text-sm font-semibold dark:text-gray-300" style={{ color: colors.hexPrimary }}>
+            <Icon size={20} style={{ color: colors.hexPrimary }} className="dark:text-gray-200" />
+            <span className="text-sm font-semibold dark:text-gray-200" style={{ color: colors.hexPrimary }}>
               {invitationTitle}
             </span>
           </div>
@@ -329,7 +329,7 @@ export default function InvitationCard({
             className="mt-4 p-4 rounded-xl"
             style={{ backgroundColor: colors.hexBackground || '#f8fafc' }}
           >
-            <p className="text-gray-800 dark:text-gray-200 italic text-base sm:text-lg">
+            <p className="text-gray-800 dark:text-gray-800 italic text-base sm:text-lg">
               {event.invitationText}
             </p>
           </div>
@@ -347,24 +347,24 @@ export default function InvitationCard({
 
         <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
           <div className="flex items-center gap-2">
-            <Calendar size={18} style={{ color: colors.hexPrimary }} className="flex-shrink-0 dark:text-gray-300" />
+            <Calendar size={18} style={{ color: colors.hexPrimary }} className="flex-shrink-0 dark:bg-gray-300 p-2" />
             <span className="text-sm sm:text-base text-gray-700 dark:text-gray-300">
               {new Date(event.date).toLocaleDateString('fr-FR')}
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <Clock size={18} style={{ color: colors.hexPrimary }} className="flex-shrink-0 dark:text-gray-300" />
+            <Clock size={18} style={{ color: colors.hexPrimary }} className="flex-shrink-0 dark:bg-gray-300 p-2" />
             <span className="text-sm sm:text-base text-gray-700 dark:text-gray-300">{event.time}</span>
           </div>
           <div className="flex items-center gap-2">
-            <MapPin size={18} style={{ color: colors.hexPrimary }} className="flex-shrink-0 dark:text-gray-300" />
+            <MapPin size={18} style={{ color: colors.hexPrimary }} className="flex-shrink-0 dark:bg-gray-300 p-2" />
             <span className="text-sm sm:text-base text-gray-700 dark:text-gray-300">{event.location}</span>
           </div>
         </div>
 
         {event.program && (
           <div className="mt-6 p-4 bg-gray-100 dark:bg-gray-800 rounded-xl">
-            <h3 className="font-semibold mb-2 dark:text-gray-300" style={{ color: colors.hexPrimary }}>
+            <h3 className="font-semibold mb-2 dark:bg-gray-300 p-3" style={{ color: colors.hexPrimary }}>
               Programme de la journée
             </h3>
             <div className="text-gray-700 dark:text-gray-300 whitespace-pre-line text-sm sm:text-base">
