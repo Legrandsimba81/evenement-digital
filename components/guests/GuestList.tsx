@@ -22,7 +22,6 @@ type Event = {
   title: string;
   slug: string;
   gateSecret?: string | null;
-  // ajoutez d'autres propriétés si nécessaires
 };
 
 const statusColors: Record<string, string> = {
@@ -76,7 +75,7 @@ export default function GuestList({
     if (!confirm("Voulez-vous vraiment supprimer cet invité ?")) return;
     startTransition(async () => {
       await removeGuest(guestId);
-      router.refresh();
+      router.refresh(); // ✅ Rafraîchit les données côté serveur
     });
   };
 

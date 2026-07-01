@@ -21,7 +21,11 @@ export default async function CollaboratorsPage({
   if (!event) redirect("/dashboard");
 
   const isOwner = event.userId === session.user.id;
-  const hasAccess = await canManageEvent(event.id, session.user.id);
+  // ✅ Vérifier que l'ID existe avant de l'utiliser
+  const hasAccess = session.user.id 
+    ? await canManageEvent(event.id, session.user.id) 
+    : false;
+    
   if (!isOwner && !hasAccess) redirect("/dashboard");
 
   return (
