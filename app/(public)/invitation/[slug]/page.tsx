@@ -22,7 +22,6 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const imageUrl = event.imageUrl
     ? (event.imageUrl.startsWith("http") ? event.imageUrl : `${baseUrl}${event.imageUrl}`)
     : `${baseUrl}/og-image.png`;
-    
 
   return {
     title: `Invitation - ${event.title}`,
@@ -94,6 +93,9 @@ export default async function InvitationPage({
   });
 
   if (!event) return notFound();
+
+  // ✅ Déterminer si c'est un billet
+  const isBillet = event.type === "AUTRE" && event.format === "BILLET";
 
   if (!firstName || !lastName) {
     return (
@@ -210,8 +212,8 @@ export default async function InvitationPage({
           guestInvitationType={guest.invitationType}
         />
 
-        {/* Messages d'amour pour les mariages */}
-        {event.type === "MARIAGE" && messagesLove.length > 0 && (
+        {/* Messages d'amour pour les mariages (uniquement si ce n'est pas un billet) */}
+        {!isBillet && event.type === "MARIAGE" && messagesLove.length > 0 && (
           <div className="bg-rose-50/70 dark:bg-rose-950/30 rounded-2xl p-5 shadow-sm">
             <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-2 text-rose-600 dark:text-rose-400">
               <Heart size={24} className="fill-rose-500" />
@@ -230,44 +232,48 @@ export default async function InvitationPage({
           </div>
         )}
 
-        {/* Messages des invités */}
-        <div className="bg-gray-50/70 dark:bg-gray-800/30 rounded-2xl p-5 shadow-sm">
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-4">
-            Messages des invités
-          </h2>
-          {event.messages.length === 0 ? (
-            <p className="text-gray-500 dark:text-gray-400 text-center py-6 bg-white/50 dark:bg-gray-900/30 rounded-xl">
-              Aucun message pour le moment.
-            </p>
-          ) : (
-            <div className="space-y-4">
-              {event.messages.map((msg) => (
-                <MessageItem
-                  key={msg.id}
-                  message={{
-                    ...msg,
-                    createdAt: msg.createdAt.toISOString(),
-                  }}
-                  currentGuestId={guest.id}
-                  currentGuestName={guestName}
-                  eventId={event.id}
-                />
-              ))}
-            </div>
-          )}
-        </div>
+        {/* Messages des invités (uniquement si ce n'est pas un billet) */}
+        {!isBillet && (
+          <div className="bg-gray-50/70 dark:bg-gray-800/30 rounded-2xl p-5 shadow-sm">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-4">
+              Messages des invités
+            </h2>
+            {event.messages.length === 0 ? (
+              <p className="text-gray-500 dark:text-gray-400 text-center py-6 bg-white/50 dark:bg-gray-900/30 rounded-xl">
+                Aucun message pour le moment.
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {event.messages.map((msg) => (
+                  <MessageItem
+                    key={msg.id}
+                    message={{
+                      ...msg,
+                      createdAt: msg.createdAt.toISOString(),
+                    }}
+                    currentGuestId={guest.id}
+                    currentGuestName={guestName}
+                    eventId={event.id}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
-        {/* Formulaire de message */}
-        <div className="bg-white/70 dark:bg-gray-900/50 rounded-2xl p-5 sm:p-6 shadow-sm backdrop-blur-sm">
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">
-            Laissez un message
-          </h2>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-            Partagez vos vœux avec les organisateurs.
-          </p>
-          <MessageSuggestions suggestions={suggestions} />
-          <MessageForm eventId={event.id} guestName={guestName} guestId={guest.id} />
-        </div>
+        {/* Formulaire de message (uniquement si ce n'est pas un billet) */}
+        {!isBillet && (
+          <div className="bg-white/70 dark:bg-gray-900/50 rounded-2xl p-5 sm:p-6 shadow-sm backdrop-blur-sm">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">
+              Laissez un message
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              Partagez vos vœux avec les organisateurs.
+            </p>
+            <MessageSuggestions suggestions={suggestions} />
+            <MessageForm eventId={event.id} guestName={guestName} guestId={guest.id} />
+          </div>
+        )}
       </div>
     </div>
   );
