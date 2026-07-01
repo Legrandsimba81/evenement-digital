@@ -10,6 +10,8 @@ import { Calendar, MapPin, Clock, Users, MessageSquare, Link2, Edit, Eye, Downlo
 import MessageItem from "@/components/invitation/MessageItem";
 import { SiWhatsapp } from "react-icons/si";
 
+export const dynamic = "force-dynamic"; // ✅ Permet le rafraîchissement automatique après chaque mutation
+
 type Guest = {
     id: string;
     firstName: string;
