@@ -75,14 +75,15 @@ export default function GuestList({
     if (!confirm("Voulez-vous vraiment supprimer cet invité ?")) return;
     startTransition(async () => {
       await removeGuest(guestId);
-      router.refresh(); // ✅ Rafraîchit les données côté serveur
+      // ✅ Recharge la page avec les nouvelles données
+      router.replace(window.location.pathname);
     });
   };
 
   const handleStatusChange = (guestId: string, status: string) => {
     startTransition(async () => {
       await updateGuestStatus(guestId, status);
-      router.refresh();
+      router.replace(window.location.pathname);
     });
   };
 
