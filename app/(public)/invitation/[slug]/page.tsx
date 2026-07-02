@@ -201,7 +201,8 @@ export default async function InvitationPage({
   };
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-br from-primary-500/5 to-secondary-500/5 py-8 px-4 sm:py-12 sm:px-6">
+    // ✅ Conteneur principal avec style clair forcé (background blanc, texte noir)
+    <div className="relative min-h-screen bg-white text-gray-900 py-8 px-4 sm:py-12 sm:px-6">
       <FloatingHearts />
       <div className="max-w-3xl mx-auto relative z-10 space-y-6">
         <InvitationCard
