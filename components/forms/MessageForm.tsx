@@ -19,7 +19,7 @@ export default function MessageForm({ eventId, guestName, guestId }: { eventId: 
       <textarea
         name="content"
         placeholder="Écrivez votre message..."
-        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-800 dark:text-white resize-none"
+        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
         rows={3}
         required
       />

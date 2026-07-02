@@ -20,7 +20,7 @@ export default function MessageSuggestions({ suggestions }: MessageSuggestionsPr
         <button
           key={index}
           type="button"
-          className="text-xs px-3 py-1 rounded-full bg-primary-100 text-primary-700 hover:bg-primary-200 transition dark:bg-primary-900/30 dark:text-primary-300"
+          className="text-xs px-3 py-1 rounded-full bg-primary-100 text-primary-700 hover:bg-primary-200"
           onClick={() => handleSuggestionClick(suggestion)}
         >
           {suggestion}

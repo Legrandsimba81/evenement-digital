@@ -29,7 +29,7 @@ type Event = {
   invitationNumber?: string | null;
   theme?: string | null;
   thesisTitle?: string | null;
-  format?: string | null; // ✅ ajout du champ
+  format?: string | null;
 };
 
 type EventType = "MARIAGE" | "ANNIVERSAIRE" | "SOUTENANCE" | "AUTRE";
@@ -115,7 +115,6 @@ export default function InvitationCard({
     guestName.split(" ")[0]
   )}&lastName=${encodeURIComponent(guestName.split(" ").slice(1).join(" ") || "")}`;
 
-  // Récupération et parsing du thème
   let theme: Theme | null = null;
   try {
     if (event.theme) {
@@ -270,9 +269,9 @@ export default function InvitationCard({
   const invitationTitle = theme?.invitationTitle || config.invitationTitle;
 
   return (
-    <div className="rounded-2xl shadow-xl overflow-hidden bg-white dark:bg-gray-900">
+    <div className="rounded-2xl shadow-xl overflow-hidden bg-white">
       {/* Image héros */}
-      <div className="relative w-full aspect-video overflow-hidden bg-gray-100 dark:bg-gray-800">
+      <div className="relative w-full aspect-video overflow-hidden bg-gray-100">
         {event.imageUrl ? (
           <img
             src={event.imageUrl}
@@ -294,18 +293,18 @@ export default function InvitationCard({
         {/* En-tête : titre + badge */}
         <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
           {isBillet ? (
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            <h1 className="text-2xl font-bold text-gray-900">
               🎟️ Billet de {event.title}
             </h1>
           ) : (
             <>
               <div className="flex items-center gap-2">
-                <Icon size={20} style={{ color: colors.hexPrimary }} className="dark:text-gray-200" />
-                <span className="text-sm font-semibold dark:text-gray-200" style={{ color: colors.hexPrimary }}>
+                <Icon size={20} style={{ color: colors.hexPrimary }} />
+                <span className="text-sm font-semibold" style={{ color: colors.hexPrimary }}>
                   {invitationTitle}
                 </span>
               </div>
-              <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+              <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700">
                 {peopleIcon === Users ? <Users size={14} /> : <User size={14} />}
                 {peopleLabel}
               </span>
@@ -313,34 +312,32 @@ export default function InvitationCard({
           )}
         </div>
 
-        <p className="text-base sm:text-lg text-gray-600 dark:text-gray-400 mb-1">
-          Bonjour <span className="font-semibold text-gray-900 dark:text-white">{fullName}</span>
+        <p className="text-base sm:text-lg text-gray-600 mb-1">
+          Bonjour <span className="font-semibold text-gray-900">{fullName}</span>
         </p>
 
         {event.invitationNumber && (
-          <div className="mt-2 p-2 sm:p-3 bg-gray-50 dark:bg-gray-800 rounded-xl">
-            <span className="font-medium text-gray-700 dark:text-gray-300">
+          <div className="mt-2 p-2 sm:p-3 bg-gray-50 rounded-xl">
+            <span className="font-medium text-gray-700">
               <span style={{ color: colors.hexPrimary }} className="font-bold">#</span> {event.invitationNumber}
             </span>
           </div>
         )}
 
-        {/* Sujet de thèse */}
         {event.type === "SOUTENANCE" && event.thesisTitle && (
-          <div className="mt-4 p-4 bg-purple-50 dark:bg-purple-950/30 rounded-xl">
-            <p className="text-sm text-gray-700 dark:text-gray-300">
+          <div className="mt-4 p-4 bg-purple-50 rounded-xl">
+            <p className="text-sm text-gray-700">
               <span className="font-semibold">Sujet de thèse :</span> {event.thesisTitle}
             </p>
           </div>
         )}
 
-        {/* Texte d'invitation */}
         {event.invitationText && (
           <div
             className="mt-4 p-4 rounded-xl"
             style={{ backgroundColor: colors.hexBackground || '#f8fafc' }}
           >
-            <p className="text-gray-800 dark:text-gray-200 italic text-base sm:text-lg">
+            <p className="text-gray-800 italic text-base sm:text-lg">
               {event.invitationText}
             </p>
           </div>
@@ -358,27 +355,27 @@ export default function InvitationCard({
 
         <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
           <div className="flex items-center gap-2">
-            <Calendar size={18} style={{ color: colors.hexPrimary }} className="flex-shrink-0 dark:bg-gray-300 dark:text-gray-900 p-2" />
-            <span className="text-sm sm:text-base text-gray-700 dark:text-gray-300">
+            <Calendar size={18} style={{ color: colors.hexPrimary }} className="flex-shrink-0 p-2 bg-gray-100 rounded-full" />
+            <span className="text-sm sm:text-base text-gray-700">
               {new Date(event.date).toLocaleDateString('fr-FR')}
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <Clock size={18} style={{ color: colors.hexPrimary }} className="flex-shrink-0 dark:bg-gray-300 dark:text-gray-900 p-2" />
-            <span className="text-sm sm:text-base text-gray-700 dark:text-gray-300">{event.time}</span>
+            <Clock size={18} style={{ color: colors.hexPrimary }} className="flex-shrink-0 p-2 bg-gray-100 rounded-full" />
+            <span className="text-sm sm:text-base text-gray-700">{event.time}</span>
           </div>
           <div className="flex items-center gap-2">
-            <MapPin size={18} style={{ color: colors.hexPrimary }} className="flex-shrink-0 dark:bg-gray-300 dark:text-gray-900 p-2" />
-            <span className="text-sm sm:text-base text-gray-700 dark:text-gray-300">{event.location}</span>
+            <MapPin size={18} style={{ color: colors.hexPrimary }} className="flex-shrink-0 p-2 bg-gray-100 rounded-full" />
+            <span className="text-sm sm:text-base text-gray-700">{event.location}</span>
           </div>
         </div>
 
         {event.program && (
-          <div className="mt-6 p-4 bg-gray-100 dark:bg-gray-800 rounded-xl">
-            <h3 className="font-semibold mb-2 dark:bg-gray-300 p-3" style={{ color: colors.hexPrimary }}>
+          <div className="mt-6 p-4 bg-gray-100 rounded-xl">
+            <h3 className="font-semibold mb-2 p-2 bg-gray-200 inline-block rounded" style={{ color: colors.hexPrimary }}>
               Programme de la journée
             </h3>
-            <div className="text-gray-700 dark:text-gray-300 whitespace-pre-line text-sm sm:text-base">
+            <div className="text-gray-700 whitespace-pre-line text-sm sm:text-base">
               {event.program}
             </div>
           </div>
@@ -388,7 +385,7 @@ export default function InvitationCard({
         <div className="mt-6 flex flex-col items-center">
           <div ref={qrRef} className="bg-white p-3 sm:p-4 rounded-xl shadow-md flex flex-col items-center">
             <QRCode value={invitationLink} size={120} />
-            <p className="text-center text-xs text-gray-500 dark:text-gray-400 mt-2">
+            <p className="text-center text-xs text-gray-500 mt-2">
               Scannez pour accéder à l'invitation
             </p>
           </div>
@@ -423,7 +420,7 @@ export default function InvitationCard({
               className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl border transition text-sm sm:text-base ${
                 status === "attending"
                   ? "bg-green-500 text-white border-green-500"
-                  : "bg-gray-100 dark:bg-gray-800 hover:bg-green-50 dark:hover:bg-green-900/20"
+                  : "bg-gray-100 hover:bg-green-50"
               }`}
             >
               <Check size={18} />
@@ -435,7 +432,7 @@ export default function InvitationCard({
               className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl transition text-sm sm:text-base ${
                 status === "annule"
                   ? "bg-red-500 text-white"
-                  : "bg-gray-100 dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-red-900/20"
+                  : "bg-gray-100 hover:bg-red-50"
               }`}
             >
               <X size={18} />
@@ -444,7 +441,7 @@ export default function InvitationCard({
           </div>
         </div>
         {status && (
-          <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-3">
+          <p className="text-center text-sm text-gray-500 mt-3">
             {status === "attending"
               ? "Présence confirmée – Merci !"
               : status === "annule"
