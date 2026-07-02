@@ -113,17 +113,17 @@ export default async function InvitationPage({
 
   if (!guest) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50/30 to-primary-50/30 dark:from-red-950/20 dark:to-primary-950/20 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-3xl shadow-2xl p-8 text-center">
+      <div className="min-h-screen bg-gradient-to-br from-red-50/30 to-primary-50/30 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl p-8 text-center">
           <div className="flex justify-center mb-6">
-            <div className="h-24 w-24 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center">
-              <UserX size={48} className="text-red-500 dark:text-red-400" />
+            <div className="h-24 w-24 rounded-full bg-red-100 flex items-center justify-center">
+              <UserX size={48} className="text-red-500" />
             </div>
           </div>
-          <h1 className="text-2xl font-bold text-red-600 dark:text-red-400">
+          <h1 className="text-2xl font-bold text-red-600">
             Vous n'êtes pas sur la liste des invités.
           </h1>
-          <p className="mt-3 text-gray-600 dark:text-gray-400 text-sm">
+          <p className="mt-3 text-gray-600 text-sm">
             Si c'est une erreur, contactez l'organisateur via WhatsApp.
           </p>
           <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
@@ -154,20 +154,20 @@ export default async function InvitationPage({
 
   if (guest.status === "entre") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50/30 to-primary-50/30 dark:from-green-950/20 dark:to-primary-950/20 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-3xl shadow-2xl p-8 text-center">
+      <div className="min-h-screen bg-gradient-to-br from-green-50/30 to-primary-50/30 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl p-8 text-center">
           <div className="flex justify-center mb-6">
             <div className="h-24 w-24 rounded-full bg-green-500 flex items-center justify-center shadow-lg shadow-green-500/30">
               <Check size={48} className="text-white" strokeWidth={3} />
             </div>
           </div>
-          <h1 className="text-2xl font-bold text-green-600 dark:text-green-400">
+          <h1 className="text-2xl font-bold text-green-600">
             {guest.title ? `${guest.title} ${guest.firstName} ${guest.lastName}` : `${guest.firstName} ${guest.lastName}`}
           </h1>
-          <p className="mt-3 text-gray-600 dark:text-gray-400">
+          <p className="mt-3 text-gray-600">
             est déjà entré dans la salle.
           </p>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-500">
+          <p className="mt-1 text-sm text-gray-500">
             Profitez bien de l'événement !
           </p>
         </div>
@@ -201,7 +201,7 @@ export default async function InvitationPage({
   };
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-br from-primary-500/5 to-secondary-500/5 dark:from-primary-950/20 dark:to-secondary-950/20 py-8 px-4 sm:py-12 sm:px-6">
+    <div className="relative min-h-screen bg-gradient-to-br from-primary-500/5 to-secondary-500/5 py-8 px-4 sm:py-12 sm:px-6">
       <FloatingHearts />
       <div className="max-w-3xl mx-auto relative z-10 space-y-6">
         <InvitationCard
@@ -214,18 +214,18 @@ export default async function InvitationPage({
 
         {/* Messages d'amour pour les mariages (uniquement si ce n'est pas un billet) */}
         {!isBillet && event.type === "MARIAGE" && messagesLove.length > 0 && (
-          <div className="bg-rose-50/70 dark:bg-rose-950/30 rounded-2xl p-5 shadow-sm">
-            <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-2 text-rose-600 dark:text-rose-400">
+          <div className="bg-rose-50/70 rounded-2xl p-5 shadow-sm">
+            <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-2 text-rose-600">
               <Heart size={24} className="fill-rose-500" />
               Messages d'amour
             </h2>
             <div className="mt-4 space-y-4">
               {messagesLove.map((msg) => (
-                <div key={msg.id} className="bg-white/70 dark:bg-gray-800/70 p-4 rounded-xl shadow-sm">
-                  <p className="font-semibold text-gray-900 dark:text-white">
+                <div key={msg.id} className="bg-white/70 p-4 rounded-xl shadow-sm">
+                  <p className="font-semibold text-gray-900">
                     {msg.guestName}
                   </p>
-                  <p className="text-gray-700 dark:text-gray-300 mt-1">{msg.content}</p>
+                  <p className="text-gray-700 mt-1">{msg.content}</p>
                 </div>
               ))}
             </div>
@@ -234,12 +234,12 @@ export default async function InvitationPage({
 
         {/* Messages des invités (uniquement si ce n'est pas un billet) */}
         {!isBillet && (
-          <div className="bg-gray-50/70 dark:bg-gray-800/30 rounded-2xl p-5 shadow-sm">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-4">
+          <div className="bg-gray-50/70 rounded-2xl p-5 shadow-sm">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
               Messages des invités
             </h2>
             {event.messages.length === 0 ? (
-              <p className="text-gray-500 dark:text-gray-400 text-center py-6 bg-white/50 dark:bg-gray-900/30 rounded-xl">
+              <p className="text-gray-500 text-center py-6 bg-white/50 rounded-xl">
                 Aucun message pour le moment.
               </p>
             ) : (
@@ -263,11 +263,11 @@ export default async function InvitationPage({
 
         {/* Formulaire de message (uniquement si ce n'est pas un billet) */}
         {!isBillet && (
-          <div className="bg-white/70 dark:bg-gray-900/50 rounded-2xl p-5 sm:p-6 shadow-sm backdrop-blur-sm">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">
+          <div className="bg-white/70 rounded-2xl p-5 sm:p-6 shadow-sm backdrop-blur-sm">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
               Laissez un message
             </h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            <p className="text-sm text-gray-600 mb-4">
               Partagez vos vœux avec les organisateurs.
             </p>
             <MessageSuggestions suggestions={suggestions} />
