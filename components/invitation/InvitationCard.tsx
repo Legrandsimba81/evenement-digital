@@ -114,10 +114,10 @@ export default function InvitationCard({
 
   const fullName = guestTitle ? `${guestTitle} ${guestName}` : guestName;
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
+  const levelParam = `&level=${encodeURIComponent(guestLevel || "STANDARD")}`;
   const invitationLink = `${baseUrl}/invitation/${event.slug}?firstName=${encodeURIComponent(
     guestName.split(" ")[0]
-  )}&lastName=${encodeURIComponent(guestName.split(" ").slice(1).join(" ") || "")}${guestLevel ? `&level=${encodeURIComponent(guestLevel)}` : ''}`;
-
+  )}&lastName=${encodeURIComponent(guestName.split(" ").slice(1).join(" ") || "")}${levelParam}`;
   let theme: Theme | null = null;
   try {
     if (event.theme) {
@@ -130,7 +130,7 @@ export default function InvitationCard({
   if (!theme) {
     const defaultThemeId = event.type === "MARIAGE" ? "wedding-romantic" :
       event.type === "ANNIVERSAIRE" ? "birthday-colorful" :
-      event.type === "SOUTENANCE" ? "defense-academic" : "other-festive";
+        event.type === "SOUTENANCE" ? "defense-academic" : "other-festive";
     const defaultTheme = getThemeById(defaultThemeId);
     if (defaultTheme) theme = defaultTheme;
   }
@@ -426,8 +426,8 @@ export default function InvitationCard({
               onClick={() => handleAttendance("attending")}
               disabled={isLoading}
               className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl border transition text-sm sm:text-base ${status === "attending"
-                  ? "bg-green-500 text-white border-green-500"
-                  : "bg-gray-100 hover:bg-green-50"
+                ? "bg-green-500 text-white border-green-500"
+                : "bg-gray-100 hover:bg-green-50"
                 }`}
             >
               <Check size={18} />
@@ -437,8 +437,8 @@ export default function InvitationCard({
               onClick={() => handleAttendance("annule")}
               disabled={isLoading}
               className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl transition text-sm sm:text-base ${status === "annule"
-                  ? "bg-red-500 text-white"
-                  : "bg-gray-100 hover:bg-red-50"
+                ? "bg-red-500 text-white"
+                : "bg-gray-100 hover:bg-red-50"
                 }`}
             >
               <X size={18} />
