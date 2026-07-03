@@ -40,3 +40,35 @@ export async function deleteMessage(messageId: string, guestId?: string, isOrgan
   revalidatePath(`/invitation/${message.event.slug}`);
   if (session?.user) revalidatePath(`/dashboard/${message.event.slug}`);
 }
+
+export async function updateMessage(messageId: string, newContent: string, isOrganizer: boolean) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("Non authentifié");
+
+  const message = await prisma.message.findUnique({
+    where: { id: messageId },
+    include: { event: true },
+  });
+
+  if (!message) throw new Error("Message non trouvé");
+
+  if (isOrganizer) {
+    if (message.event.userId !== session.user.id) {
+      // Vérifier si l'utilisateur est collaborateur avec permissions (optionnel)
+      const collaborator = await prisma.eventCollaborator.findUnique({
+        where: { eventId_userId: { eventId: message.eventId, userId: session.user.id } },
+      });
+      if (!collaborator) throw new Error("Non autorisé");
+    }
+  } else {
+    throw new Error("Seul l'organisateur peut modifier un message");
+  }
+
+  await prisma.message.update({
+    where: { id: messageId },
+    data: { content: newContent },
+  });
+
+  revalidatePath(`/invitation/${message.event.slug}`);
+  revalidatePath(`/dashboard/${message.event.slug}`);
+}
