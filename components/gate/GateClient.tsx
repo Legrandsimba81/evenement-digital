@@ -14,6 +14,7 @@ type Guest = {
   status?: string | null;
   invitationNumber?: string | null;
   invitationType?: string | null;
+  guestLevel?: string | null; // ✅ ajout
 };
 
 type Event = {
@@ -57,10 +58,12 @@ export default function GateClient({ event }: { event: Event }) {
     try {
       const url = new URL(result);
 
-      // 1. Cas : QR d'invitation classique (contient firstName et lastName)
+      // Récupérer tous les paramètres
       const firstName = url.searchParams.get("firstName");
       const lastName = url.searchParams.get("lastName");
+      const level = url.searchParams.get("level"); // ✅ nouveau
 
+      // 1. Cas : QR d'invitation classique (contient firstName et lastName)
       if (firstName && lastName) {
         const firstNameClean = firstName.trim();
         const lastNameClean = lastName.trim();
@@ -72,21 +75,32 @@ export default function GateClient({ event }: { event: Event }) {
         );
 
         if (guest) {
+          // ✅ Vérification du niveau (optionnel mais recommandé)
+          const guestLevel = guest.guestLevel || "STANDARD";
+          const scannedLevel = level || "STANDARD";
+
+          if (guestLevel !== scannedLevel) {
+            alert(`⚠️ Le niveau scanné (${scannedLevel}) ne correspond pas au niveau de l'invité (${guestLevel}).`);
+            setScanning(false);
+            setIsProcessing(false);
+            return;
+          }
+
           if (guest.status === "entre") {
-            alert(`✅ ${guest.firstName} ${guest.lastName} est déjà entré.`);
+            alert(`✅ ${guest.firstName} ${guest.lastName} (${guestLevel}) est déjà entré.`);
           } else if (guest.status === "annule") {
-            alert(`❌ ${guest.firstName} ${guest.lastName} a annulé sa présence.`);
+            alert(`❌ ${guest.firstName} ${guest.lastName} (${guestLevel}) a annulé sa présence.`);
           } else {
-            if (confirm(`Valider l'entrée de ${guest.firstName} ${guest.lastName} ?`)) {
+            if (confirm(`Valider l'entrée de ${guest.firstName} ${guest.lastName} (Niveau: ${guestLevel}) ?`)) {
               handleValidateEntry(guest.id);
             }
           }
         } else {
-          // Affichage détaillé pour aider à identifier le problème
           alert(
             `❌ Invité non trouvé.\n\n` +
             `Prénom scanné : "${firstNameClean}"\n` +
-            `Nom scanné : "${lastNameClean}"\n\n` +
+            `Nom scanné : "${lastNameClean}"\n` +
+            `Niveau scanné : "${level || 'STANDARD'}"\n\n` +
             `Vérifiez que le QR contient bien ces informations.`
           );
         }
@@ -101,12 +115,13 @@ export default function GateClient({ event }: { event: Event }) {
       if (guestId && secret && event.gateSecret === secret) {
         const guest = event.guests.find((g) => g.id === guestId);
         if (guest) {
+          const guestLevel = guest.guestLevel || "STANDARD";
           if (guest.status === "entre") {
-            alert(`✅ ${guest.firstName} ${guest.lastName} est déjà entré.`);
+            alert(`✅ ${guest.firstName} ${guest.lastName} (${guestLevel}) est déjà entré.`);
           } else if (guest.status === "annule") {
-            alert(`❌ ${guest.firstName} ${guest.lastName} a annulé sa présence.`);
+            alert(`❌ ${guest.firstName} ${guest.lastName} (${guestLevel}) a annulé sa présence.`);
           } else {
-            if (confirm(`Valider l'entrée de ${guest.firstName} ${guest.lastName} ?`)) {
+            if (confirm(`Valider l'entrée de ${guest.firstName} ${guest.lastName} (Niveau: ${guestLevel}) ?`)) {
               handleValidateEntry(guest.id);
             }
           }
@@ -206,13 +221,14 @@ export default function GateClient({ event }: { event: Event }) {
                   <th className="px-4 py-3 text-left">Nom</th>
                   <th className="px-4 py-3 text-left">Type</th>
                   <th className="px-4 py-3 text-left">Statut</th>
+                  <th className="px-4 py-3 text-left">Niveau</th> {/* ✅ ajout */}
                   <th className="px-4 py-3 text-left">Action</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredGuests.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="text-center py-6 text-gray-500 dark:text-gray-400">
+                    <td colSpan={6} className="text-center py-6 text-gray-500 dark:text-gray-400">
                       Aucun invité trouvé.
                     </td>
                   </tr>
@@ -251,6 +267,11 @@ export default function GateClient({ event }: { event: Event }) {
                         <td className="px-4 py-3">
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${colorClass}`}>
                             {label}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="px-2 py-1 rounded-full bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
+                            {guest.guestLevel || "STANDARD"}
                           </span>
                         </td>
                         <td className="px-4 py-3">
