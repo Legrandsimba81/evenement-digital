@@ -8,13 +8,11 @@ export default function GuestForm({ eventId }: { eventId: string }) {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [invitationType, setInvitationType] = useState("single");
+  const [guestLevel, setGuestLevel] = useState("STANDARD");
+  const [customLevel, setCustomLevel] = useState("");
   const [errors, setErrors] = useState({ firstName: "", lastName: "" });
 
-  const validateField = (value: string) => {
-    // Autorise uniquement les lettres, accents, apostrophes et tirets (pour les noms composés comme "Jean-Pierre")
-    // Mais interdit les espaces
-    return /^[a-zA-ZÀ-ÿ'\-]+$/.test(value);
-  };
+  const validateField = (value: string) => /^[a-zA-ZÀ-ÿ'\-]+$/.test(value);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,14 +27,16 @@ export default function GuestForm({ eventId }: { eventId: string }) {
       setErrors((prev) => ({ ...prev, lastName: "Le nom ne doit contenir qu'un seul mot (pas d'espaces)." }));
       hasError = true;
     }
-
     if (hasError) return;
 
-    await addGuest(eventId, firstName, lastName, title, invitationType);
+    const finalLevel = guestLevel === "custom" ? customLevel.trim() : guestLevel;
+    await addGuest(eventId, firstName, lastName, title, invitationType, finalLevel);
     setTitle("");
     setFirstName("");
     setLastName("");
     setInvitationType("single");
+    setGuestLevel("STANDARD");
+    setCustomLevel("");
     setErrors({ firstName: "", lastName: "" });
   };
 
@@ -52,7 +52,7 @@ export default function GuestForm({ eventId }: { eventId: string }) {
         <option value="Mme">Mme</option>
         <option value="PDG">PDG</option>
         <option value="Boss">Boss</option>
-        <option value="Couple">couple</option>
+        <option value="Couple">Couple</option>
         <option value="Ir">Ir</option>
         <option value="Dr">Dr</option>
         <option value="Papa">Papa</option>
@@ -76,7 +76,7 @@ export default function GuestForm({ eventId }: { eventId: string }) {
         <input
           value={lastName}
           onChange={(e) => setLastName(e.target.value)}
-          placeholder="Nom (Ex: Kasereka) "
+          placeholder="Nom (Ex: Kasereka)"
           className="p-2 border rounded dark:bg-gray-800 dark:border-gray-700"
           required
         />
@@ -91,6 +91,31 @@ export default function GuestForm({ eventId }: { eventId: string }) {
         <option value="single">1 personne</option>
         <option value="couple">2 personnes (couple)</option>
       </select>
+
+      {/* Niveau */}
+      <div className="flex flex-col gap-1">
+        <select
+          value={guestLevel}
+          onChange={(e) => {
+            setGuestLevel(e.target.value);
+            if (e.target.value !== "custom") setCustomLevel("");
+          }}
+          className="p-2 border rounded dark:bg-gray-800 dark:border-gray-700"
+        >
+          <option value="STANDARD">Standard</option>
+          <option value="VIP">VIP</option>
+          <option value="SUPERVIP">Super VIP</option>
+          <option value="custom">Personnalisé</option>
+        </select>
+        {guestLevel === "custom" && (
+          <input
+            value={customLevel}
+            onChange={(e) => setCustomLevel(e.target.value)}
+            placeholder="Ex: Or, Platine, Premium..."
+            className="p-2 border rounded dark:bg-gray-800 dark:border-gray-700"
+          />
+        )}
+      </div>
 
       <button type="submit" className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
         Ajouter

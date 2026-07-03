@@ -82,7 +82,7 @@ export default async function InvitationPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ firstName?: string; lastName?: string }>;
+  searchParams: Promise<{ firstName?: string; lastName?: string; level?: string }>;
 }) {
   const { slug } = await params;
   const { firstName, lastName } = await searchParams;
@@ -211,6 +211,7 @@ export default async function InvitationPage({
           guestTitle={guest.title || undefined}
           guestId={guest.id}
           guestInvitationType={guest.invitationType}
+          guestLevel={guest.guestLevel || null} // ✅ correction ici
         />
 
         {/* Messages d'amour pour les mariages (uniquement si ce n'est pas un billet) */}

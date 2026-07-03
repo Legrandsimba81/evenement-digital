@@ -15,6 +15,7 @@ type Guest = {
   status?: string | null;
   invitationNumber?: string | null;
   invitationType?: string | null;
+  guestLevel?: string | null; // ✅ ajout
 };
 
 type Event = {
@@ -119,6 +120,8 @@ export default function GuestList({
                 <th className="px-3 py-2 text-left">N°</th>
                 <th className="px-3 py-2 text-left">Nom</th>
                 <th className="px-3 py-2 text-left">Type</th>
+                <th className="px-3 py-2 text-left">Niveau</th>
+
                 <th className="px-3 py-2 text-left">Statut</th>
                 <th className="px-3 py-2 text-left">Lien</th>
                 <th className="px-3 py-2 text-left">Contrôle</th>
@@ -155,6 +158,8 @@ export default function GuestList({
                         </span>
                       )}
                     </td>
+                    <td className="px-3 py-2">{guest.guestLevel || "—"}</td>
+
                     <td className="px-3 py-2">
                       <select
                         value={guest.status || "en_attente"}

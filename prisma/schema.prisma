@@ -126,6 +126,7 @@ model Guest {
   status            String?  @default("en_attente")
   invitationType    String?  // "single" ou "couple" (par invité)
   invitationNumber  String?
+  guestLevel        String?  // "SUPERVIP", "VIP", "STANDARD", ou personnalisé
   eventId           String
   event             Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
   createdAt         DateTime @default(now())

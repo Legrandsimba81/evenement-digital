@@ -9,11 +9,11 @@ export default function EditGuestButton({ guest }: { guest: any }) {
   const [firstName, setFirstName] = useState(guest.firstName);
   const [lastName, setLastName] = useState(guest.lastName);
   const [invitationType, setInvitationType] = useState(guest.invitationType || "single");
+  const [guestLevel, setGuestLevel] = useState(guest.guestLevel || "STANDARD");
+  const [customLevel, setCustomLevel] = useState("");
   const [errors, setErrors] = useState({ firstName: "", lastName: "" });
 
-  const validateField = (value: string) => {
-    return /^[a-zA-ZÀ-ÿ'\-]+$/.test(value);
-  };
+  const validateField = (value: string) => /^[a-zA-ZÀ-ÿ'\-]+$/.test(value);
 
   const handleSave = async () => {
     setErrors({ firstName: "", lastName: "" });
@@ -28,7 +28,8 @@ export default function EditGuestButton({ guest }: { guest: any }) {
     }
     if (hasError) return;
 
-    await updateGuest(guest.id, { title, firstName, lastName, invitationType });
+    const finalLevel = guestLevel === "custom" ? customLevel.trim() : guestLevel;
+    await updateGuest(guest.id, { title, firstName, lastName, invitationType, guestLevel: finalLevel });
     setIsEditing(false);
     setErrors({ firstName: "", lastName: "" });
   };
@@ -53,7 +54,7 @@ export default function EditGuestButton({ guest }: { guest: any }) {
         <option value="Mme">Mme</option>
         <option value="PDG">PDG</option>
         <option value="Boss">Boss</option>
-        <option value="Couple">couple</option>
+        <option value="Couple">Couple</option>
         <option value="Ir">Ir</option>
         <option value="Dr">Dr</option>
         <option value="Papa">Papa</option>
@@ -87,6 +88,29 @@ export default function EditGuestButton({ guest }: { guest: any }) {
         <option value="single">1 personne</option>
         <option value="couple">2 personnes</option>
       </select>
+
+      <select
+        value={guestLevel}
+        onChange={(e) => {
+          setGuestLevel(e.target.value);
+          if (e.target.value !== "custom") setCustomLevel("");
+        }}
+        className="p-1 border rounded text-sm dark:bg-gray-800 dark:border-gray-700"
+      >
+        <option value="STANDARD">Standard</option>
+        <option value="VIP">VIP</option>
+        <option value="SUPERVIP">Super VIP</option>
+        <option value="custom">Personnalisé</option>
+      </select>
+      {guestLevel === "custom" && (
+        <input
+          value={customLevel}
+          onChange={(e) => setCustomLevel(e.target.value)}
+          placeholder="Niveau perso"
+          className="p-1 border rounded text-sm dark:bg-gray-800 dark:border-gray-700"
+        />
+      )}
+
       <button onClick={handleSave} className="bg-green-500 text-white px-2 py-1 rounded text-sm">
         OK
       </button>

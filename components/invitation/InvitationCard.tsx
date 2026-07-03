@@ -12,6 +12,7 @@ type Guest = {
   lastName: string;
   title?: string | null;
   status?: string | null;
+  guestLevel?: string | null; // ✅ ajout
 };
 
 type Event = {
@@ -91,12 +92,14 @@ export default function InvitationCard({
   guestTitle,
   guestId,
   guestInvitationType,
+  guestLevel, // ✅ ajout
 }: {
   event: Event;
   guestName: string;
   guestTitle?: string;
   guestId: string;
   guestInvitationType?: string | null;
+  guestLevel?: string | null; // ✅ ajout ici
 }) {
   const [status, setStatus] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -113,7 +116,7 @@ export default function InvitationCard({
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
   const invitationLink = `${baseUrl}/invitation/${event.slug}?firstName=${encodeURIComponent(
     guestName.split(" ")[0]
-  )}&lastName=${encodeURIComponent(guestName.split(" ").slice(1).join(" ") || "")}`;
+  )}&lastName=${encodeURIComponent(guestName.split(" ").slice(1).join(" ") || "")}${guestLevel ? `&level=${encodeURIComponent(guestLevel)}` : ''}`;
 
   let theme: Theme | null = null;
   try {
@@ -294,7 +297,7 @@ export default function InvitationCard({
         <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
           {isBillet ? (
             <h1 className="text-2xl font-bold text-gray-900">
-              🎟️ Billet de {event.title}
+              Billet de {event.title}
             </h1>
           ) : (
             <>
@@ -313,7 +316,12 @@ export default function InvitationCard({
         </div>
 
         <p className="text-base sm:text-lg text-gray-600 mb-1">
-          Bonjour, <span className="font-semibold text-gray-900">{fullName}</span>
+          Bonjour <span className="font-semibold text-gray-900">{fullName}</span>
+          {guestLevel && (
+            <span className="ml-2 inline-block text-xs px-2 py-1 rounded-full bg-primary-100 text-primary-700 font-medium">
+              {guestLevel}
+            </span>
+          )}
         </p>
 
         {event.invitationNumber && (
@@ -417,11 +425,10 @@ export default function InvitationCard({
             <button
               onClick={() => handleAttendance("attending")}
               disabled={isLoading}
-              className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl border transition text-sm sm:text-base ${
-                status === "attending"
+              className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl border transition text-sm sm:text-base ${status === "attending"
                   ? "bg-green-500 text-white border-green-500"
                   : "bg-gray-100 hover:bg-green-50"
-              }`}
+                }`}
             >
               <Check size={18} />
               {status === "attending" ? "Confirmé" : "Je serai présent(e)"}
@@ -429,11 +436,10 @@ export default function InvitationCard({
             <button
               onClick={() => handleAttendance("annule")}
               disabled={isLoading}
-              className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl transition text-sm sm:text-base ${
-                status === "annule"
+              className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl transition text-sm sm:text-base ${status === "annule"
                   ? "bg-red-500 text-white"
                   : "bg-gray-100 hover:bg-red-50"
-              }`}
+                }`}
             >
               <X size={18} />
               {status === "annule" ? "Indisponible" : "Indisponible"}
