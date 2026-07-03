@@ -313,7 +313,7 @@ export default function InvitationCard({
         </div>
 
         <p className="text-base sm:text-lg text-gray-600 mb-1">
-          Bonjour <span className="font-semibold text-gray-900">{fullName}</span>
+          Bonjour, <span className="font-semibold text-gray-900">{fullName}</span>
         </p>
 
         {event.invitationNumber && (

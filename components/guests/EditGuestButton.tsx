@@ -52,6 +52,8 @@ export default function EditGuestButton({ guest }: { guest: any }) {
         <option value="Mr">Mr</option>
         <option value="Mme">Mme</option>
         <option value="PDG">PDG</option>
+        <option value="Boss">Boss</option>
+        <option value="Couple">couple</option>
         <option value="Ir">Ir</option>
         <option value="Dr">Dr</option>
         <option value="Papa">Papa</option>
