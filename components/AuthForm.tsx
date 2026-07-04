@@ -28,6 +28,11 @@ export default function AuthForm({ initialMode = "signin" }: AuthFormProps) {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
 
+  // ✅ Sécuriser le callbackUrl pour éviter les boucles de redirection
+  const safeCallbackUrl = ["/login", "/register", "/auth/signin", "/"].includes(callbackUrl)
+    ? "/dashboard"
+    : callbackUrl;
+
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -38,13 +43,14 @@ export default function AuthForm({ initialMode = "signin" }: AuthFormProps) {
       email: signinForm.email,
       password: signinForm.password,
       redirect: false,
-      callbackUrl,
+      callbackUrl: safeCallbackUrl,
     });
 
     if (res?.error) {
       setError("Identifiants invalides. Veuillez réessayer.");
+      setLoading(false);
     } else {
-      router.push(callbackUrl);
+      router.push(safeCallbackUrl);
     }
 
     setLoading(false);
@@ -77,7 +83,7 @@ export default function AuthForm({ initialMode = "signin" }: AuthFormProps) {
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-950 lg:flex-row">
-      {/* Partie gauche - masquée sur mobile, visible sur lg+ */}
+      {/* Partie gauche */}
       <div className="hidden lg:flex lg:flex-col lg:justify-between bg-primary-500/10 p-8 lg:w-[44%] lg:p-10">
         <div>
           <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-500/15 text-primary">
@@ -104,7 +110,7 @@ export default function AuthForm({ initialMode = "signin" }: AuthFormProps) {
         </div>
       </div>
 
-      {/* Partie droite - pleine largeur sur mobile */}
+      {/* Partie droite */}
       <div className="flex-1 p-6 sm:p-8 lg:p-10">
         <div className="mb-6 flex rounded-full border border-gray-200 p-1 dark:border-gray-800">
           <button
@@ -258,7 +264,7 @@ export default function AuthForm({ initialMode = "signin" }: AuthFormProps) {
                   value={registerForm.phone}
                   onChange={(e) => setRegisterForm({ ...registerForm, phone: e.target.value })}
                   className="w-full border-none bg-transparent outline-none"
-                  placeholder="+225 01 23 45 67 89"
+                  placeholder="Ex: 0827733286"
                 />
               </div>
             </label>
@@ -276,7 +282,7 @@ export default function AuthForm({ initialMode = "signin" }: AuthFormProps) {
 
         <button
           type="button"
-          onClick={() => signIn("google", { callbackUrl })}
+          onClick={() => signIn("google", { callbackUrl: safeCallbackUrl })}
           className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
