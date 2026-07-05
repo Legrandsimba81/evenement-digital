@@ -1,6 +1,7 @@
 "use client";
 
-import { Lock } from "lucide-react";
+import Link from "next/link";
+import { Lock, DollarSign } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 
 export default function DeactivatedMessage() {
@@ -19,16 +20,25 @@ export default function DeactivatedMessage() {
           Vous n'êtes pas autorisé à créer ou accéder à des événements pour le moment.
         </p>
         <p className="mt-2 text-sm text-gray-500 dark:text-gray-500">
-          Si c'est une erreur, contactez le support.
+          Ce message s'affiche généralement si vous n'avez pas payé votre abonnement ou si votre compte a été désactivé.
         </p>
-        <a
-          href="https://wa.me/0827733286"
-          target="_blank"
-          className="inline-flex items-center gap-2 mt-6 bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-xl transition"
-        >
-          <SiWhatsapp size={20} />
-          Contacter le support WhatsApp
-        </a>
+        <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
+          <a
+            href="https://wa.me/243827733286"
+            target="_blank"
+            className="inline-flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-xl transition text-sm font-medium"
+          >
+            <SiWhatsapp size={20} />
+            Contacter le support
+          </a>
+          <Link
+            href="/tarifs"
+            className="inline-flex items-center justify-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-6 py-3 rounded-xl transition text-sm font-medium"
+          >
+            <DollarSign size={20} />
+            Voir les tarifs
+          </Link>
+        </div>
       </div>
     </div>
   );
