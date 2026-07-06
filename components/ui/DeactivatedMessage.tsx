@@ -36,7 +36,7 @@ export default function DeactivatedMessage() {
             className="inline-flex items-center justify-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-6 py-3 rounded-xl transition text-sm font-medium"
           >
             <DollarSign size={20} />
-            Voir les tarifs
+            Voir les tarifs d'Events
           </Link>
         </div>
       </div>
