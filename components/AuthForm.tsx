@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { ArrowRight, BadgeCheck, Lock, Mail, Phone, Sparkles, UserRound } from "lucide-react";
 import { useState } from "react";
@@ -24,7 +24,6 @@ export default function AuthForm({ initialMode = "signin" }: AuthFormProps) {
     phone: "",
   });
 
-  const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
 
@@ -50,7 +49,8 @@ export default function AuthForm({ initialMode = "signin" }: AuthFormProps) {
       setError("Identifiants invalides. Veuillez réessayer.");
       setLoading(false);
     } else {
-      router.push(safeCallbackUrl);
+      // 🔥 Remplacement de router.push par un rechargement complet
+      window.location.href = safeCallbackUrl;
     }
 
     setLoading(false);

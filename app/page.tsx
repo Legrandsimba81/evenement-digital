@@ -123,7 +123,7 @@ export default function HomePage() {
                 </>
               )}
             </div>
-            <p className="mt-4 text-sm text-white/60">Aucune carte bancaire requise</p>
+            <p className="mt-4 text-sm text-white/60">Aucune carte bancaire requise pour commencer</p>
           </div>
         </div>
       </section>
