@@ -1,6 +1,5 @@
-// prisma/seed.ts
-const { PrismaClient } = require('@prisma/client')
-const bcrypt = require('bcryptjs')
+import { PrismaClient } from '@prisma/client'
+import bcrypt from 'bcryptjs'
 
 const prisma = new PrismaClient()
 
@@ -18,9 +17,10 @@ async function main() {
         name: 'Super Admin',
         password: hashedPassword,
         role: 'ADMIN',
+        isSuperAdmin: true, // ✅
       }
     })
-    console.log('✅ Admin créé avec succès')
+    console.log('✅ Super Admin créé avec succès')
   } else {
     console.log('ℹ️ L\'admin existe déjà')
   }

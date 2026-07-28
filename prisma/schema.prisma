@@ -16,6 +16,7 @@ model User {
   password      String?
   phone            String?   // nouveau
   role          String    @default("USER")
+  isSuperAdmin   Boolean   @default(false)   // nouvel ajout
   events        Event[]
   accounts      Account[]
   sessions      Session[]

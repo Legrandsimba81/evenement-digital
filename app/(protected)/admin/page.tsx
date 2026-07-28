@@ -72,6 +72,7 @@ export default async function AdminPage({
         role: true,
         canCreateEvents: true,
         createdAt: true,
+        isSuperAdmin: true, // ✅
       },
     }),
     prisma.event.findMany({
@@ -264,6 +265,7 @@ export default async function AdminPage({
                               currentRole={user.role}
                               currentStatus={user.canCreateEvents}
                               userName={user.name || ""}
+                              isSuperAdmin={user.isSuperAdmin || false}
                             />
                           </td>
                         </tr>

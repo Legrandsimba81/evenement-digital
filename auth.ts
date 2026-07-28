@@ -1,4 +1,3 @@
-// auth.ts
 import NextAuth from "next-auth"
 import Google from "next-auth/providers/google"
 import Credentials from "next-auth/providers/credentials"
@@ -32,7 +31,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if (!user || !user.password) return null
         const isValid = await bcrypt.compare(credentials.password as string, user.password)
         if (!isValid) return null
-        return { id: user.id, name: user.name, email: user.email, role: user.role }
+        // Inclure isSuperAdmin
+        return { 
+          id: user.id, 
+          name: user.name, 
+          email: user.email, 
+          role: user.role,
+          isSuperAdmin: user.isSuperAdmin // ✅
+        }
       }
     })
   ],
@@ -41,6 +47,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (user) {
         token.id = user.id
         token.role = user.role
+        token.isSuperAdmin = user.isSuperAdmin // ✅
       }
       return token
     },
@@ -48,6 +55,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (session.user) {
         session.user.id = token.id as string
         session.user.role = token.role as string
+        session.user.isSuperAdmin = token.isSuperAdmin as boolean // ✅
       }
       return session
     }
