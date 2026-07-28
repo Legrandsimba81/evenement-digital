@@ -8,7 +8,6 @@ interface UserAdminControlsProps {
   currentRole: string;
   currentStatus: boolean;
   userName: string;
-  currentUserId: string; // Ajouté
 }
 
 export default function UserAdminControls({
@@ -16,15 +15,10 @@ export default function UserAdminControls({
   currentRole,
   currentStatus,
   userName,
-  currentUserId,
 }: UserAdminControlsProps) {
   const [role, setRole] = useState(currentRole);
   const [canCreate, setCanCreate] = useState(currentStatus);
   const [isPending, startTransition] = useTransition();
-
-  const isSelf = currentUserId === userId;
-  const isOtherAdmin = currentRole === "ADMIN" && !isSelf;
-  const canModifyRole = !isSelf && !isOtherAdmin;
 
   const updateUser = async (data: { role?: string; canCreateEvents?: boolean }) => {
     const res = await fetch("/api/admin/update-user", {
@@ -51,6 +45,7 @@ export default function UserAdminControls({
         });
         if (res.ok) {
           alert(`✅ Utilisateur ${userName} supprimé.`);
+          // Recharger la page pour actualiser la liste
           window.location.reload();
         } else {
           alert("❌ Erreur lors de la suppression.");
@@ -89,53 +84,43 @@ export default function UserAdminControls({
   };
 
   return (
-    <div className="flex items-center gap-2 flex-wrap">
+    <div className="flex items-center gap-1 flex-wrap">
+      {/* Toggle rôle */}
       <button
         onClick={handleToggleRole}
-        disabled={isPending || !canModifyRole}
-        className={`px-3 py-1.5 rounded-full text-xs font-medium transition flex items-center gap-1 ${
-          role === "ADMIN"
-            ? "bg-purple-100 text-purple-800 hover:bg-purple-200 dark:bg-purple-900/30 dark:text-purple-300"
-            : "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300"
-        } ${!canModifyRole ? "opacity-50 cursor-not-allowed" : ""}`}
-        title={
-          isSelf
-            ? "Vous ne pouvez pas modifier votre propre rôle"
-            : isOtherAdmin
-            ? "Impossible de révoquer un autre administrateur"
-            : role === "ADMIN"
-            ? "Révoquer les droits admin"
-            : "Promouvoir administrateur"
-        }
+        disabled={isPending}
+        className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+        title={role === "ADMIN" ? "Révoquer admin" : "Promouvoir admin"}
       >
-        {role === "ADMIN" ? <Shield size={14} /> : <ShieldOff size={14} />}
-        {role === "ADMIN" ? "Admin" : "Utilisateur"}
+        {role === "ADMIN" ? (
+          <Shield size={16} className="text-purple-600 dark:text-purple-400" />
+        ) : (
+          <ShieldOff size={16} className="text-gray-500 dark:text-gray-400" />
+        )}
       </button>
 
+      {/* Toggle canCreate */}
       <button
         onClick={handleToggleCreate}
-        disabled={isPending || isSelf}
-        className={`px-3 py-1.5 rounded-full text-xs font-medium transition flex items-center gap-1 ${
-          canCreate
-            ? "bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-300"
-            : "bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300"
-        } ${isSelf ? "opacity-50 cursor-not-allowed" : ""}`}
-        title={isSelf ? "Vous ne pouvez pas modifier votre propre statut" : canCreate ? "Bloquer la création" : "Autoriser la création"}
+        disabled={isPending}
+        className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+        title={canCreate ? "Bloquer création" : "Autoriser création"}
       >
-        {canCreate ? <Unlock size={14} /> : <Lock size={14} />}
-        {canCreate ? "Créer" : "Bloqué"}
+        {canCreate ? (
+          <Unlock size={16} className="text-green-600 dark:text-green-400" />
+        ) : (
+          <Lock size={16} className="text-red-600 dark:text-red-400" />
+        )}
       </button>
 
+      {/* Supprimer */}
       <button
         onClick={deleteUser}
-        disabled={isPending || isSelf}
-        className={`px-3 py-1.5 rounded-full text-xs font-medium transition flex items-center gap-1 bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300 ${
-          isSelf ? "opacity-50 cursor-not-allowed" : ""
-        }`}
-        title={isSelf ? "Vous ne pouvez pas vous supprimer vous-même" : "Supprimer définitivement"}
+        disabled={isPending}
+        className="p-1.5 rounded hover:bg-red-100 dark:hover:bg-red-900/30 transition"
+        title="Supprimer cet utilisateur"
       >
-        <Trash2 size={14} />
-        Supprimer
+        <Trash2 size={16} className="text-red-600 dark:text-red-400" />
       </button>
     </div>
   );
