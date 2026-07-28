@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import {
@@ -9,37 +10,72 @@ import {
   User,
   Mail,
   Eye,
-  Trash2,
   CalendarDays,
-  UserCheck,
   Shield,
   Clock,
+  Phone,
+  X,
 } from "lucide-react";
 import DeleteEventButton from "@/components/admin/DeleteEventButton";
 import UserAdminControls from "@/components/admin/UserAdminControls";
+import AdminSearch from "@/components/admin/AdminSearch";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminPage() {
+export default async function AdminPage({
+  searchParams,
+}: {
+  searchParams: { userSearch?: string; eventSearch?: string };
+}) {
   const session = await auth();
   if (!session?.user || session.user.role !== "ADMIN") {
     redirect("/dashboard");
   }
 
+  const userSearch = searchParams.userSearch?.trim() || "";
+  const eventSearch = searchParams.eventSearch?.trim() || "";
+
+  // Filtres utilisateurs avec typage explicite
+  const userWhere: Prisma.UserWhereInput = userSearch
+    ? {
+        OR: [
+          { name: { contains: userSearch, mode: "insensitive" } },
+          { email: { contains: userSearch, mode: "insensitive" } },
+          { phone: { contains: userSearch, mode: "insensitive" } },
+        ],
+      }
+    : {};
+
+  // Filtres événements avec typage explicite
+  const eventWhere: Prisma.EventWhereInput = eventSearch
+    ? {
+        OR: [
+          { title: { contains: eventSearch, mode: "insensitive" } },
+          { location: { contains: eventSearch, mode: "insensitive" } },
+          { type: { contains: eventSearch, mode: "insensitive" } },
+          { user: { name: { contains: eventSearch, mode: "insensitive" } } },
+          { user: { email: { contains: eventSearch, mode: "insensitive" } } },
+        ],
+      }
+    : {};
+
+  // Requêtes
   const [users, events] = await Promise.all([
     prisma.user.findMany({
+      where: userWhere,
       orderBy: { createdAt: "desc" },
       select: {
         id: true,
         name: true,
         email: true,
+        phone: true,
         role: true,
         canCreateEvents: true,
         createdAt: true,
-        // on pourrait aussi compter les événements de chaque user
       },
     }),
     prisma.event.findMany({
+      where: eventWhere,
       orderBy: { createdAt: "desc" },
       include: {
         user: { select: { id: true, name: true, email: true } },
@@ -49,25 +85,22 @@ export default async function AdminPage() {
     }),
   ]);
 
-  // Vérifier si un utilisateur a un mot de passe (indicateur Google)
-  // On va récupérer les comptes liés à chaque user (via Prisma)
-  // Pour simplifier, on suppose que si le champ password est null, c'est un compte Google.
-  // Mais on n'a pas récupéré password. On va faire une requête supplémentaire pour les comptes.
-  // On peut récupérer les accounts dans la même requête :
+  // Récupérer les comptes Google
   const usersWithAccounts = await prisma.user.findMany({
-    where: { id: { in: users.map(u => u.id) } },
+    where: { id: { in: users.map((u) => u.id) } },
     include: { accounts: true },
   });
-  const userMap = new Map(usersWithAccounts.map(u => [u.id, u.accounts.length > 0]));
+  const userMap = new Map(usersWithAccounts.map((u) => [u.id, u.accounts.length > 0]));
 
+  // Calculs pour les statistiques
   const totalMessages = events.reduce((acc, e) => acc + e.messages.length, 0);
   const totalGuests = events.reduce((acc, e) => acc + e.guests.length, 0);
 
   const stats = [
-    { label: "Utilisateurs", value: users.length, icon: Users, color: "bg-blue-500", textColor: "text-blue-700" },
-    { label: "Événements", value: events.length, icon: Calendar, color: "bg-green-500", textColor: "text-green-700" },
-    { label: "Messages", value: totalMessages, icon: MessageSquare, color: "bg-purple-500", textColor: "text-purple-700" },
-    { label: "Invités", value: totalGuests, icon: User, color: "bg-orange-500", textColor: "text-orange-700" },
+    { label: "Utilisateurs", value: users.length, icon: Users, color: "from-blue-500 to-blue-600" },
+    { label: "Événements", value: events.length, icon: Calendar, color: "from-green-500 to-green-600" },
+    { label: "Messages", value: totalMessages, icon: MessageSquare, color: "from-purple-500 to-purple-600" },
+    { label: "Invités", value: totalGuests, icon: User, color: "from-orange-500 to-orange-600" },
   ];
 
   const formatDate = (date: Date) => {
@@ -79,74 +112,95 @@ export default async function AdminPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-6 md:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-2">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Tableau de bord administrateur
-          </h1>
-          <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+        {/* En-tête */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <Shield className="text-purple-600 dark:text-purple-400" size={28} />
+              Administration
+            </h1>
+            <p className="text-gray-500 dark:text-gray-400 mt-1">
+              Gérez les utilisateurs et les événements de la plateforme
+            </p>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mt-2 sm:mt-0">
             <Clock size={16} />
-            <span>Mise à jour en temps réel</span>
+            <span>Données en temps réel</span>
           </div>
         </div>
-        <p className="text-gray-500 dark:text-gray-400 mb-8">
-          Vue d’ensemble et gestion des données de la plateforme
-        </p>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+        {/* Statistiques */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {stats.map((stat) => {
             const Icon = stat.icon;
             return (
               <div
                 key={stat.label}
-                className="bg-white dark:bg-gray-900 rounded-2xl shadow-md border border-gray-200 dark:border-gray-800 p-6 flex items-center justify-between hover:shadow-lg transition"
+                className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-4 flex items-center gap-4 hover:shadow-md transition"
               >
+                <div
+                  className={`h-12 w-12 rounded-full bg-gradient-to-br ${stat.color} bg-opacity-10 flex items-center justify-center text-white`}
+                >
+                  <Icon size={20} />
+                </div>
                 <div>
                   <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{stat.label}</p>
-                  <p className="text-3xl font-bold text-gray-900 dark:text-white">{stat.value}</p>
-                </div>
-                <div
-                  className={`h-12 w-12 rounded-full ${stat.color} bg-opacity-10 dark:bg-opacity-20 flex items-center justify-center`}
-                >
-                  <Icon size={24} className={stat.textColor} />
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{stat.value}</p>
                 </div>
               </div>
             );
           })}
         </div>
 
+        {/* Filtres */}
+        <AdminSearch userSearch={userSearch} eventSearch={eventSearch} />
+
         {/* Tableaux */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Utilisateurs */}
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-md border border-gray-200 dark:border-gray-800 p-6">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-              <Users size={20} className="text-blue-500" />
-              Derniers utilisateurs
-              <span className="ml-auto text-sm font-normal text-gray-500 dark:text-gray-400">
-                {users.length} au total
-              </span>
-            </h2>
-            {users.length === 0 ? (
-              <p className="text-gray-500 dark:text-gray-400 text-center py-6">Aucun utilisateur</p>
-            ) : (
-              <div className="overflow-x-auto">
+          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden flex flex-col">
+            <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                <Users size={18} className="text-blue-500" />
+                Utilisateurs
+                <span className="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">
+                  ({users.length})
+                </span>
+              </h2>
+              {userSearch && (
+                <Link
+                  href="/admin"
+                  className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 flex items-center gap-1"
+                >
+                  <X size={14} /> Réinitialiser
+                </Link>
+              )}
+            </div>
+            <div className="flex-1 overflow-x-auto overflow-y-auto max-h-[500px]">
+              {users.length === 0 ? (
+                <p className="text-gray-500 dark:text-gray-400 text-center py-8">Aucun utilisateur trouvé</p>
+              ) : (
                 <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-200 dark:border-gray-700">
-                      <th className="text-left py-3 px-2 font-semibold text-gray-600 dark:text-gray-400">Utilisateur</th>
-                      <th className="text-left py-3 px-2 font-semibold text-gray-600 dark:text-gray-400">Rôle</th>
-                      <th className="text-left py-3 px-2 font-semibold text-gray-600 dark:text-gray-400">Statut</th>
-                      <th className="text-left py-3 px-2 font-semibold text-gray-600 dark:text-gray-400">Actions</th>
+                  <thead className="sticky top-0 bg-gray-50 dark:bg-gray-800 z-10">
+                    <tr>
+                      <th className="text-left py-3 px-3 font-semibold text-gray-600 dark:text-gray-300">Utilisateur</th>
+                      <th className="text-left py-3 px-3 font-semibold text-gray-600 dark:text-gray-300">Téléphone</th>
+                      <th className="text-left py-3 px-3 font-semibold text-gray-600 dark:text-gray-300">Rôle</th>
+                      <th className="text-left py-3 px-3 font-semibold text-gray-600 dark:text-gray-300">Statut</th>
+                      <th className="text-center py-3 px-3 font-semibold text-gray-600 dark:text-gray-300">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {users.map((user) => {
                       const isGoogle = userMap.get(user.id) || false;
                       return (
-                        <tr key={user.id} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">
-                          <td className="py-3 px-2">
+                        <tr
+                          key={user.id}
+                          className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition"
+                        >
+                          <td className="py-3 px-3">
                             <div className="flex flex-col">
                               <span className="font-medium text-gray-900 dark:text-white">
                                 {user.name || "Anonyme"}
@@ -155,41 +209,51 @@ export default async function AdminPage() {
                                 <Mail size={12} />
                                 {user.email}
                                 {isGoogle && (
-                                  <span className="ml-1 px-1.5 py-0.5 bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 rounded-full text-[10px] font-semibold">
+                                  <span className="ml-1 px-1.5 py-0.5 bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 rounded-full text-[10px] font-medium">
                                     Google
                                   </span>
                                 )}
                               </span>
                               <span className="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1 mt-0.5">
                                 <CalendarDays size={12} />
-                                Membre depuis le {formatDate(user.createdAt)}
+                                {formatDate(user.createdAt)}
                               </span>
                             </div>
                           </td>
-                          <td className="py-3 px-2">
+                          <td className="py-3 px-3">
+                            {user.phone ? (
+                              <span className="text-xs text-gray-600 dark:text-gray-300 flex items-center gap-1">
+                                <Phone size={12} />
+                                {user.phone}
+                              </span>
+                            ) : (
+                              <span className="text-xs text-gray-400 dark:text-gray-500">—</span>
+                            )}
+                          </td>
+                          <td className="py-3 px-3">
                             <span
-                              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${
+                              className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
                                 user.role === "ADMIN"
                                   ? "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
                                   : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300"
                               }`}
                             >
-                              {user.role === "ADMIN" ? <Shield size={12} /> : null}
+                              {user.role === "ADMIN" && <Shield size={12} />}
                               {user.role}
                             </span>
                           </td>
-                          <td className="py-3 px-2">
+                          <td className="py-3 px-3">
                             <span
-                              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${
+                              className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                                 user.canCreateEvents
                                   ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
                                   : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
                               }`}
                             >
-                              {user.canCreateEvents ? "✅ Actif" : "❌ Bloqué"}
+                              {user.canCreateEvents ? "Actif" : "Bloqué"}
                             </span>
                           </td>
-                          <td className="py-3 px-2">
+                          <td className="py-3 px-3">
                             <UserAdminControls
                               userId={user.id}
                               currentRole={user.role}
@@ -202,36 +266,49 @@ export default async function AdminPage() {
                     })}
                   </tbody>
                 </table>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
           {/* Événements */}
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-md border border-gray-200 dark:border-gray-800 p-6">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-              <Calendar size={20} className="text-green-500" />
-              Derniers événements
-              <span className="ml-auto text-sm font-normal text-gray-500 dark:text-gray-400">
-                {events.length} au total
-              </span>
-            </h2>
-            {events.length === 0 ? (
-              <p className="text-gray-500 dark:text-gray-400 text-center py-6">Aucun événement</p>
-            ) : (
-              <div className="overflow-x-auto">
+          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden flex flex-col">
+            <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                <Calendar size={18} className="text-green-500" />
+                Événements
+                <span className="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">
+                  ({events.length})
+                </span>
+              </h2>
+              {eventSearch && (
+                <Link
+                  href="/admin"
+                  className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 flex items-center gap-1"
+                >
+                  <X size={14} /> Réinitialiser
+                </Link>
+              )}
+            </div>
+            <div className="flex-1 overflow-x-auto overflow-y-auto max-h-[500px]">
+              {events.length === 0 ? (
+                <p className="text-gray-500 dark:text-gray-400 text-center py-8">Aucun événement trouvé</p>
+              ) : (
                 <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-200 dark:border-gray-700">
-                      <th className="text-left py-3 px-2 font-semibold text-gray-600 dark:text-gray-400">Événement</th>
-                      <th className="text-left py-3 px-2 font-semibold text-gray-600 dark:text-gray-400">Organisateur</th>
-                      <th className="text-left py-3 px-2 font-semibold text-gray-600 dark:text-gray-400">Infos</th>
-                      <th className="text-left py-3 px-2 font-semibold text-gray-600 dark:text-gray-400">Actions</th>
+                  <thead className="sticky top-0 bg-gray-50 dark:bg-gray-800 z-10">
+                    <tr>
+                      <th className="text-left py-3 px-3 font-semibold text-gray-600 dark:text-gray-300">Événement</th>
+                      <th className="text-left py-3 px-3 font-semibold text-gray-600 dark:text-gray-300">Organisateur</th>
+                      <th className="text-left py-3 px-3 font-semibold text-gray-600 dark:text-gray-300">Infos</th>
+                      <th className="text-center py-3 px-3 font-semibold text-gray-600 dark:text-gray-300">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {events.slice(0, 10).map((event) => (
-                      <tr key={event.id} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">
-                        <td className="py-3 px-2">
+                    {events.map((event) => (
+                      <tr
+                        key={event.id}
+                        className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition"
+                      >
+                        <td className="py-3 px-3">
                           <div className="flex flex-col">
                             <span className="font-medium text-gray-900 dark:text-white">{event.title}</span>
                             <span className="text-xs text-gray-500 dark:text-gray-400">
@@ -239,28 +316,28 @@ export default async function AdminPage() {
                             </span>
                           </div>
                         </td>
-                        <td className="py-3 px-2">
+                        <td className="py-3 px-3">
                           <div className="flex flex-col">
                             <span className="text-gray-900 dark:text-white">{event.user.name || "Anonyme"}</span>
                             <span className="text-xs text-gray-500 dark:text-gray-400">{event.user.email}</span>
                           </div>
                         </td>
-                        <td className="py-3 px-2">
-                          <div className="flex flex-col gap-1">
-                            <span className="text-xs text-gray-600 dark:text-gray-300">
-                              👤 {event.guests.length} invités
+                        <td className="py-3 px-3">
+                          <div className="flex flex-col gap-0.5">
+                            <span className="text-xs text-gray-600 dark:text-gray-300 flex items-center gap-1">
+                              <Users size={12} /> {event.guests.length}
                             </span>
-                            <span className="text-xs text-gray-600 dark:text-gray-300">
-                              💬 {event.messages.length} messages
+                            <span className="text-xs text-gray-600 dark:text-gray-300 flex items-center gap-1">
+                              <MessageSquare size={12} /> {event.messages.length}
                             </span>
                           </div>
                         </td>
-                        <td className="py-3 px-2">
-                          <div className="flex items-center gap-2">
+                        <td className="py-3 px-3">
+                          <div className="flex items-center justify-center gap-2">
                             <Link
                               href={`/invitation/${event.slug}`}
                               target="_blank"
-                              className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition text-blue-500 hover:text-blue-700"
+                              className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition text-blue-500 hover:text-blue-700"
                               title="Voir l'invitation"
                             >
                               <Eye size={16} />
@@ -272,13 +349,8 @@ export default async function AdminPage() {
                     ))}
                   </tbody>
                 </table>
-                {events.length > 10 && (
-                  <div className="text-center text-sm text-gray-500 dark:text-gray-400 mt-4">
-                    + {events.length - 10} autres événements
-                  </div>
-                )}
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </div>

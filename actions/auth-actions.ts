@@ -27,6 +27,7 @@ export async function registerUser(formData: FormData) {
       name,
       email,
       password: hashed,
+      phone: phone || null, // ou phone si fourni
       role: "USER",
     },
   });
