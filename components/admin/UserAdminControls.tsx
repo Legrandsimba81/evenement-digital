@@ -9,7 +9,7 @@ interface UserAdminControlsProps {
   currentRole: string;
   currentStatus: boolean;
   userName: string;
-  isSuperAdmin?: boolean; // optionnel
+  isSuperAdmin?: boolean;
 }
 
 export default function UserAdminControls({
@@ -25,24 +25,33 @@ export default function UserAdminControls({
   const [isPending, startTransition] = useTransition();
 
   const currentUserId = session?.user?.id;
+  const isCurrentUserSuperAdmin = session?.user?.isSuperAdmin === true;
   const isSelf = currentUserId === userId;
-  const isCurrentUserSuperAdmin = session?.user?.isSuperAdmin === true; // à définir dans la session
 
-  // Règles :
-  // - Un superadmin peut tout faire.
-  // - Un admin normal ne peut pas modifier un autre admin (ni soi-même).
-  // - Personne ne peut modifier un superadmin.
+  // Règles de visibilité/actions :
+  // - Si c'est le super admin connecté et que la cible est un autre super admin => on affiche les boutons (sauf suppression)
+  // - Si la cible est un super admin et que l'utilisateur connecté n'est PAS un super admin => badge seul
+  // - Si la cible est un admin normal, le super admin peut tout faire, un admin normal ne peut rien modifier
   const isTargetSuperAdmin = isSuperAdmin;
   const isTargetAdmin = currentRole === "ADMIN";
 
-  // Si la cible est un superadmin, on n'affiche aucun bouton (juste un badge)
-  if (isTargetSuperAdmin) {
+  // Cas où on ne montre aucun bouton : cible est un super admin et nous ne sommes pas super admin
+  if (isTargetSuperAdmin && !isCurrentUserSuperAdmin) {
     return (
       <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300">
         <Shield size={14} /> Super Admin
       </span>
     );
   }
+
+  // Pour un super admin qui regarde un autre super admin (ou un admin normal), on autorise tout sauf se modifier soi-même
+  const isActionDisabled =
+    isPending ||
+    isSelf ||
+    (isTargetAdmin && !isCurrentUserSuperAdmin && !isSelf); // un admin normal ne peut pas modifier un autre admin
+
+  // Mais pour le super admin, on override : il peut modifier les admins (sauf lui-même)
+  const canModify = isCurrentUserSuperAdmin ? !isSelf : !isTargetAdmin && !isSelf;
 
   const updateUser = async (data: { role?: string; canCreateEvents?: boolean }) => {
     const res = await fetch("/api/admin/update-user", {
@@ -62,6 +71,10 @@ export default function UserAdminControls({
   const deleteUser = async () => {
     if (isSelf) {
       alert("❌ Vous ne pouvez pas vous supprimer vous-même.");
+      return;
+    }
+    if (isTargetSuperAdmin) {
+      alert("❌ Vous ne pouvez pas supprimer un Super Admin.");
       return;
     }
     if (isTargetAdmin && !isCurrentUserSuperAdmin) {
@@ -90,6 +103,10 @@ export default function UserAdminControls({
       alert("❌ Vous ne pouvez pas modifier votre propre rôle.");
       return;
     }
+    if (isTargetSuperAdmin && !isCurrentUserSuperAdmin) {
+      alert("❌ Vous ne pouvez pas modifier un Super Admin.");
+      return;
+    }
     if (isTargetAdmin && !isCurrentUserSuperAdmin) {
       alert("❌ Vous ne pouvez pas révoquer les droits d'un autre administrateur.");
       return;
@@ -113,6 +130,10 @@ export default function UserAdminControls({
       alert("❌ Vous ne pouvez pas modifier votre propre statut.");
       return;
     }
+    if (isTargetSuperAdmin && !isCurrentUserSuperAdmin) {
+      alert("❌ Vous ne pouvez pas modifier un Super Admin.");
+      return;
+    }
     if (isTargetAdmin && !isCurrentUserSuperAdmin) {
       alert("❌ Vous ne pouvez pas bloquer/débloquer un autre administrateur.");
       return;
@@ -130,25 +151,30 @@ export default function UserAdminControls({
     }
   };
 
+  // Déterminer si l'utilisateur connecté peut agir sur la cible
+  const canAct = isCurrentUserSuperAdmin ? !isSelf : !isTargetAdmin && !isSelf;
+
   return (
     <div className="flex items-center gap-2 flex-wrap">
       {/* Bouton Rôle */}
       <button
         onClick={handleToggleRole}
-        disabled={isPending || isSelf || (isTargetAdmin && !isCurrentUserSuperAdmin)}
+        disabled={isPending || !canAct || (isTargetSuperAdmin && !isCurrentUserSuperAdmin)}
         className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition ${
           role === "ADMIN"
             ? "bg-purple-100 text-purple-800 hover:bg-purple-200 dark:bg-purple-900/30 dark:text-purple-300"
             : "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300"
-        } ${isPending || isSelf || (isTargetAdmin && !isCurrentUserSuperAdmin) ? "opacity-50 cursor-not-allowed" : ""}`}
+        } ${!canAct ? "opacity-50 cursor-not-allowed" : ""}`}
         title={
           isSelf
             ? "Vous ne pouvez pas modifier votre propre rôle"
+            : isTargetSuperAdmin && !isCurrentUserSuperAdmin
+            ? "Vous ne pouvez pas modifier un Super Admin"
             : isTargetAdmin && !isCurrentUserSuperAdmin
             ? "Vous ne pouvez pas modifier un autre administrateur"
             : role === "ADMIN"
-            ? "Révoquer les droits admin"
-            : "Promouvoir administrateur"
+            ? "Rétrograder"
+            : "Promouvoir"
         }
       >
         {role === "ADMIN" ? <ShieldOff size={14} /> : <Shield size={14} />}
@@ -158,15 +184,17 @@ export default function UserAdminControls({
       {/* Bouton Création */}
       <button
         onClick={handleToggleCreate}
-        disabled={isPending || isSelf || (isTargetAdmin && !isCurrentUserSuperAdmin)}
+        disabled={isPending || !canAct || (isTargetSuperAdmin && !isCurrentUserSuperAdmin)}
         className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition ${
           canCreate
             ? "bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-300"
             : "bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300"
-        } ${isPending || isSelf || (isTargetAdmin && !isCurrentUserSuperAdmin) ? "opacity-50 cursor-not-allowed" : ""}`}
+        } ${!canAct ? "opacity-50 cursor-not-allowed" : ""}`}
         title={
           isSelf
             ? "Vous ne pouvez pas modifier votre propre statut"
+            : isTargetSuperAdmin && !isCurrentUserSuperAdmin
+            ? "Vous ne pouvez pas modifier un Super Admin"
             : isTargetAdmin && !isCurrentUserSuperAdmin
             ? "Vous ne pouvez pas modifier un autre administrateur"
             : canCreate
@@ -178,23 +206,25 @@ export default function UserAdminControls({
         {canCreate ? "Autoriser" : "Bloquer"}
       </button>
 
-      {/* Bouton Supprimer */}
-      <button
-        onClick={deleteUser}
-        disabled={isPending || isSelf || (isTargetAdmin && !isCurrentUserSuperAdmin)}
-        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300 ${
-          isPending || isSelf || (isTargetAdmin && !isCurrentUserSuperAdmin) ? "opacity-50 cursor-not-allowed" : ""
-        }`}
-        title={
-          isSelf
-            ? "Vous ne pouvez pas vous supprimer vous-même"
-            : isTargetAdmin && !isCurrentUserSuperAdmin
-            ? "Vous ne pouvez pas supprimer un autre administrateur"
-            : "Supprimer définitivement"
-        }
-      >
-        <Trash2 size={14} /> Supprimer
-      </button>
+      {/* Bouton Supprimer - jamais pour un Super Admin cible */}
+      {!isTargetSuperAdmin && (
+        <button
+          onClick={deleteUser}
+          disabled={isPending || !canAct}
+          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300 ${
+            !canAct ? "opacity-50 cursor-not-allowed" : ""
+          }`}
+          title={
+            isSelf
+              ? "Vous ne pouvez pas vous supprimer vous-même"
+              : isTargetAdmin && !isCurrentUserSuperAdmin
+              ? "Vous ne pouvez pas supprimer un autre administrateur"
+              : "Supprimer définitivement"
+          }
+        >
+          <Trash2 size={14} /> Supprimer
+        </button>
+      )}
     </div>
   );
 }
