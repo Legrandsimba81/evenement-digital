@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, X } from "lucide-react";
 
 interface AdminSearchProps {
@@ -14,11 +14,17 @@ export default function AdminSearch({ userSearch, eventSearch }: AdminSearchProp
   const [userQuery, setUserQuery] = useState(userSearch);
   const [eventQuery, setEventQuery] = useState(eventSearch);
 
+  // Mettre à jour les champs si les props changent (ex: clic sur réinitialiser)
+  useEffect(() => {
+    setUserQuery(userSearch);
+    setEventQuery(eventSearch);
+  }, [userSearch, eventSearch]);
+
   const handleSearch = () => {
     const params = new URLSearchParams();
     if (userQuery) params.set("userSearch", userQuery);
     if (eventQuery) params.set("eventSearch", eventQuery);
-    router.push(`/admin?${params.toString()}`);
+    router.push(`/admin${params.toString() ? `?${params.toString()}` : ""}`);
   };
 
   const handleClear = () => {
@@ -60,8 +66,9 @@ export default function AdminSearch({ userSearch, eventSearch }: AdminSearchProp
       <div className="flex justify-end gap-2 mt-3">
         <button
           onClick={handleSearch}
-          className="px-4 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition"
+          className="px-4 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition flex items-center gap-2"
         >
+          <Search size={16} />
           Rechercher
         </button>
         <button

@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Shield, ShieldOff, Unlock, Lock, Trash2 } from "lucide-react";
+import { useSession } from "next-auth/react";
 
 interface UserAdminControlsProps {
   userId: string;
@@ -16,9 +17,17 @@ export default function UserAdminControls({
   currentStatus,
   userName,
 }: UserAdminControlsProps) {
+  const { data: session } = useSession();
   const [role, setRole] = useState(currentRole);
   const [canCreate, setCanCreate] = useState(currentStatus);
   const [isPending, startTransition] = useTransition();
+
+  // Vérifier si l'utilisateur connecté est admin
+  const isAdmin = session?.user?.role === "ADMIN";
+  // Vérifier si l'utilisateur cible est admin
+  const isTargetAdmin = role === "ADMIN";
+  // Vérifier si on essaie de modifier ses propres droits
+  const isSelf = session?.user?.id === userId;
 
   const updateUser = async (data: { role?: string; canCreateEvents?: boolean }) => {
     const res = await fetch("/api/admin/update-user", {
@@ -36,6 +45,10 @@ export default function UserAdminControls({
   };
 
   const deleteUser = async () => {
+    if (isSelf) {
+      alert("❌ Vous ne pouvez pas vous supprimer vous-même.");
+      return;
+    }
     if (confirm(`Supprimer définitivement ${userName} ? Cette action est irréversible.`)) {
       startTransition(async () => {
         const res = await fetch("/api/admin/delete-user", {
@@ -45,7 +58,6 @@ export default function UserAdminControls({
         });
         if (res.ok) {
           alert(`✅ Utilisateur ${userName} supprimé.`);
-          // Recharger la page pour actualiser la liste
           window.location.reload();
         } else {
           alert("❌ Erreur lors de la suppression.");
@@ -55,6 +67,11 @@ export default function UserAdminControls({
   };
 
   const handleToggleRole = () => {
+    // Empêcher la révocation des droits admin d'un autre admin ou de soi-même
+    if (isTargetAdmin || isSelf) {
+      alert("❌ Impossible de modifier les droits d'un administrateur.");
+      return;
+    }
     const newRole = role === "ADMIN" ? "USER" : "ADMIN";
     const action = newRole === "ADMIN" ? "promouvoir" : "révoquer les droits admin de";
     if (confirm(`Voulez-vous ${action} ${userName} ?`)) {
@@ -70,6 +87,11 @@ export default function UserAdminControls({
   };
 
   const handleToggleCreate = () => {
+    // Ne pas bloquer/débloquer un admin (ou soi-même) pour éviter de se couper l'accès
+    if (isTargetAdmin || isSelf) {
+      alert("❌ Impossible de modifier le statut de création d'un administrateur.");
+      return;
+    }
     const newStatus = !canCreate;
     if (confirm(`Voulez-vous ${newStatus ? "activer" : "désactiver"} la création d'événements pour ${userName} ?`)) {
       startTransition(async () => {
@@ -84,44 +106,62 @@ export default function UserAdminControls({
   };
 
   return (
-    <div className="flex items-center gap-1 flex-wrap">
-      {/* Toggle rôle */}
-      <button
-        onClick={handleToggleRole}
-        disabled={isPending}
-        className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition"
-        title={role === "ADMIN" ? "Révoquer admin" : "Promouvoir admin"}
-      >
-        {role === "ADMIN" ? (
-          <Shield size={16} className="text-purple-600 dark:text-purple-400" />
-        ) : (
-          <ShieldOff size={16} className="text-gray-500 dark:text-gray-400" />
-        )}
-      </button>
+    <div className="flex items-center gap-2 flex-wrap">
+      {/* Toggle rôle - ne pas afficher si c'est un admin ou soi-même */}
+      {!isTargetAdmin && !isSelf && (
+        <button
+          onClick={handleToggleRole}
+          disabled={isPending}
+          className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition"
+          title={role === "ADMIN" ? "Révoquer admin" : "Promouvoir admin"}
+        >
+          {role === "ADMIN" ? (
+            <>
+              <ShieldOff size={14} /> Rétrograder
+            </>
+          ) : (
+            <>
+              <Shield size={14} /> Promouvoir
+            </>
+          )}
+        </button>
+      )}
 
-      {/* Toggle canCreate */}
-      <button
-        onClick={handleToggleCreate}
-        disabled={isPending}
-        className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition"
-        title={canCreate ? "Bloquer création" : "Autoriser création"}
-      >
-        {canCreate ? (
-          <Unlock size={16} className="text-green-600 dark:text-green-400" />
-        ) : (
-          <Lock size={16} className="text-red-600 dark:text-red-400" />
-        )}
-      </button>
+      {/* Toggle canCreate - ne pas afficher si c'est un admin ou soi-même */}
+      {!isTargetAdmin && !isSelf && (
+        <button
+          onClick={handleToggleCreate}
+          disabled={isPending}
+          className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition ${
+            canCreate
+              ? "bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-300"
+              : "bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300"
+          }`}
+          title={canCreate ? "Bloquer création" : "Autoriser création"}
+        >
+          {canCreate ? (
+            <>
+              <Unlock size={14} /> Autoriser
+            </>
+          ) : (
+            <>
+              <Lock size={14} /> Bloquer
+            </>
+          )}
+        </button>
+      )}
 
-      {/* Supprimer */}
-      <button
-        onClick={deleteUser}
-        disabled={isPending}
-        className="p-1.5 rounded hover:bg-red-100 dark:hover:bg-red-900/30 transition"
-        title="Supprimer cet utilisateur"
-      >
-        <Trash2 size={16} className="text-red-600 dark:text-red-400" />
-      </button>
+      {/* Supprimer - ne pas afficher si c'est soi-même */}
+      {!isSelf && (
+        <button
+          onClick={deleteUser}
+          disabled={isPending}
+          className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300 transition"
+          title="Supprimer cet utilisateur"
+        >
+          <Trash2 size={14} /> Supprimer
+        </button>
+      )}
     </div>
   );
 }
