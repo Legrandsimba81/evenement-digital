@@ -155,7 +155,12 @@ export default async function AdminPage({
         </div>
 
         {/* Filtres */}
-        <AdminSearch userSearch={userSearch} eventSearch={eventSearch} />
+        <AdminSearch
+          userSearch={userSearch}
+          eventSearch={eventSearch}
+          userCount={users.length}
+          eventCount={events.length}
+        />
 
         {/* Tableaux */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

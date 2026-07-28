@@ -2,13 +2,13 @@
 
 import { useState, useTransition } from "react";
 import { Shield, ShieldOff, Unlock, Lock, Trash2 } from "lucide-react";
-import { useSession } from "next-auth/react";
 
 interface UserAdminControlsProps {
   userId: string;
   currentRole: string;
   currentStatus: boolean;
   userName: string;
+  currentUserId: string; // Ajouté
 }
 
 export default function UserAdminControls({
@@ -16,18 +16,15 @@ export default function UserAdminControls({
   currentRole,
   currentStatus,
   userName,
+  currentUserId,
 }: UserAdminControlsProps) {
-  const { data: session } = useSession();
   const [role, setRole] = useState(currentRole);
   const [canCreate, setCanCreate] = useState(currentStatus);
   const [isPending, startTransition] = useTransition();
 
-  // Vérifier si l'utilisateur connecté est admin
-  const isAdmin = session?.user?.role === "ADMIN";
-  // Vérifier si l'utilisateur cible est admin
-  const isTargetAdmin = role === "ADMIN";
-  // Vérifier si on essaie de modifier ses propres droits
-  const isSelf = session?.user?.id === userId;
+  const isSelf = currentUserId === userId;
+  const isOtherAdmin = currentRole === "ADMIN" && !isSelf;
+  const canModifyRole = !isSelf && !isOtherAdmin;
 
   const updateUser = async (data: { role?: string; canCreateEvents?: boolean }) => {
     const res = await fetch("/api/admin/update-user", {
@@ -45,10 +42,6 @@ export default function UserAdminControls({
   };
 
   const deleteUser = async () => {
-    if (isSelf) {
-      alert("❌ Vous ne pouvez pas vous supprimer vous-même.");
-      return;
-    }
     if (confirm(`Supprimer définitivement ${userName} ? Cette action est irréversible.`)) {
       startTransition(async () => {
         const res = await fetch("/api/admin/delete-user", {
@@ -67,11 +60,6 @@ export default function UserAdminControls({
   };
 
   const handleToggleRole = () => {
-    // Empêcher la révocation des droits admin d'un autre admin ou de soi-même
-    if (isTargetAdmin || isSelf) {
-      alert("❌ Impossible de modifier les droits d'un administrateur.");
-      return;
-    }
     const newRole = role === "ADMIN" ? "USER" : "ADMIN";
     const action = newRole === "ADMIN" ? "promouvoir" : "révoquer les droits admin de";
     if (confirm(`Voulez-vous ${action} ${userName} ?`)) {
@@ -87,11 +75,6 @@ export default function UserAdminControls({
   };
 
   const handleToggleCreate = () => {
-    // Ne pas bloquer/débloquer un admin (ou soi-même) pour éviter de se couper l'accès
-    if (isTargetAdmin || isSelf) {
-      alert("❌ Impossible de modifier le statut de création d'un administrateur.");
-      return;
-    }
     const newStatus = !canCreate;
     if (confirm(`Voulez-vous ${newStatus ? "activer" : "désactiver"} la création d'événements pour ${userName} ?`)) {
       startTransition(async () => {
@@ -107,61 +90,53 @@ export default function UserAdminControls({
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
-      {/* Toggle rôle - ne pas afficher si c'est un admin ou soi-même */}
-      {!isTargetAdmin && !isSelf && (
-        <button
-          onClick={handleToggleRole}
-          disabled={isPending}
-          className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition"
-          title={role === "ADMIN" ? "Révoquer admin" : "Promouvoir admin"}
-        >
-          {role === "ADMIN" ? (
-            <>
-              <ShieldOff size={14} /> Rétrograder
-            </>
-          ) : (
-            <>
-              <Shield size={14} /> Promouvoir
-            </>
-          )}
-        </button>
-      )}
+      <button
+        onClick={handleToggleRole}
+        disabled={isPending || !canModifyRole}
+        className={`px-3 py-1.5 rounded-full text-xs font-medium transition flex items-center gap-1 ${
+          role === "ADMIN"
+            ? "bg-purple-100 text-purple-800 hover:bg-purple-200 dark:bg-purple-900/30 dark:text-purple-300"
+            : "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300"
+        } ${!canModifyRole ? "opacity-50 cursor-not-allowed" : ""}`}
+        title={
+          isSelf
+            ? "Vous ne pouvez pas modifier votre propre rôle"
+            : isOtherAdmin
+            ? "Impossible de révoquer un autre administrateur"
+            : role === "ADMIN"
+            ? "Révoquer les droits admin"
+            : "Promouvoir administrateur"
+        }
+      >
+        {role === "ADMIN" ? <Shield size={14} /> : <ShieldOff size={14} />}
+        {role === "ADMIN" ? "Admin" : "Utilisateur"}
+      </button>
 
-      {/* Toggle canCreate - ne pas afficher si c'est un admin ou soi-même */}
-      {!isTargetAdmin && !isSelf && (
-        <button
-          onClick={handleToggleCreate}
-          disabled={isPending}
-          className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition ${
-            canCreate
-              ? "bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-300"
-              : "bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300"
-          }`}
-          title={canCreate ? "Bloquer création" : "Autoriser création"}
-        >
-          {canCreate ? (
-            <>
-              <Unlock size={14} /> Autoriser
-            </>
-          ) : (
-            <>
-              <Lock size={14} /> Bloquer
-            </>
-          )}
-        </button>
-      )}
+      <button
+        onClick={handleToggleCreate}
+        disabled={isPending || isSelf}
+        className={`px-3 py-1.5 rounded-full text-xs font-medium transition flex items-center gap-1 ${
+          canCreate
+            ? "bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-300"
+            : "bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300"
+        } ${isSelf ? "opacity-50 cursor-not-allowed" : ""}`}
+        title={isSelf ? "Vous ne pouvez pas modifier votre propre statut" : canCreate ? "Bloquer la création" : "Autoriser la création"}
+      >
+        {canCreate ? <Unlock size={14} /> : <Lock size={14} />}
+        {canCreate ? "Créer" : "Bloqué"}
+      </button>
 
-      {/* Supprimer - ne pas afficher si c'est soi-même */}
-      {!isSelf && (
-        <button
-          onClick={deleteUser}
-          disabled={isPending}
-          className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300 transition"
-          title="Supprimer cet utilisateur"
-        >
-          <Trash2 size={14} /> Supprimer
-        </button>
-      )}
+      <button
+        onClick={deleteUser}
+        disabled={isPending || isSelf}
+        className={`px-3 py-1.5 rounded-full text-xs font-medium transition flex items-center gap-1 bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300 ${
+          isSelf ? "opacity-50 cursor-not-allowed" : ""
+        }`}
+        title={isSelf ? "Vous ne pouvez pas vous supprimer vous-même" : "Supprimer définitivement"}
+      >
+        <Trash2 size={14} />
+        Supprimer
+      </button>
     </div>
   );
 }
