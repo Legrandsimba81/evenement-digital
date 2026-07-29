@@ -21,6 +21,7 @@ import {
   Star,
   TrendingUp,
   Zap,
+  ExternalLink,
 } from "lucide-react";
 import type { EventWithGuests } from "@/types";
 
@@ -75,35 +76,17 @@ export default function HomePage() {
     },
   ];
 
-  const pricingPlans = [
-    {
-      name: "Starter",
-      price: "Gratuit",
-      features: ["1 événement", "Jusqu'à 50 invités", "Invitation personnalisée", "Statistiques de base"],
-      cta: "Commencer",
-      href: "/register",
-    },
-    {
-      name: "Pro",
-      price: "19€/mois",
-      features: ["Événements illimités", "Invités illimités", "QR code personnalisé", "Collaborateurs (2)"],
-      cta: "Essayer",
-      href: "/register",
-      popular: true,
-    },
-    {
-      name: "Business",
-      price: "49€/mois",
-      features: ["Tout ce que Pro", "Collaborateurs illimités", "Support prioritaire", "Analyses avancées"],
-      cta: "Contacter",
-      href: "/contact",
-    },
+  const eventTypes = [
+    { icon: Gift, label: "Anniversaire", color: "bg-pink-100 text-pink-600" },
+    { icon: Heart, label: "Mariage", color: "bg-red-100 text-red-600" },
+    { icon: Trophy, label: "Soutenance", color: "bg-purple-100 text-purple-600" },
+    { icon: Music, label: "Fête", color: "bg-blue-100 text-blue-600" },
   ];
 
   return (
     <main className="min-h-screen">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-indigo-700 to-purple-800 py-20 text-white">
+      {/* Hero Section - Dégradé original conservé */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-primary-500 via-primary-600 to-secondary-500 py-20 text-white">
         <div className="absolute inset-0 bg-[url('/hero-pattern.svg')] opacity-10" />
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col items-center text-center">
@@ -113,7 +96,7 @@ export default function HomePage() {
             </div>
             <h1 className="mt-6 text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
               Octavia Event
-              <span className="block text-indigo-200">L'invitation numérique nouvelle génération</span>
+              <span className="block text-secondary-200">L'invitation numérique nouvelle génération</span>
             </h1>
             <p className="mt-6 max-w-2xl text-lg text-white/80">
               Créez, gérez et partagez vos invitations en quelques clics. Plus besoin d'imprimer
@@ -123,7 +106,7 @@ export default function HomePage() {
               {session ? (
                 <Link
                   href="/dashboard"
-                  className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 font-semibold text-indigo-600 transition hover:bg-gray-100"
+                  className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 font-semibold text-primary-600 transition hover:bg-gray-100"
                 >
                   Accéder à mon tableau de bord
                   <ArrowRight className="h-4 w-4" />
@@ -132,7 +115,7 @@ export default function HomePage() {
                 <>
                   <Link
                     href="/register"
-                    className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 font-semibold text-indigo-600 transition hover:bg-gray-100"
+                    className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 font-semibold text-primary-600 transition hover:bg-gray-100"
                   >
                     Commencer gratuitement
                     <ArrowRight className="h-4 w-4" />
@@ -153,11 +136,11 @@ export default function HomePage() {
 
       {/* Mes événements */}
       {session && (
-        <section className="py-16 bg-gray-50 dark:bg-gray-950">
+        <section className="py-16 bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-950 dark:to-gray-900">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Mes événements</h2>
-              <Link href="/dashboard" className="text-indigo-500 hover:text-indigo-600 text-sm font-medium flex items-center gap-1">
+              <Link href="/dashboard" className="text-primary-500 hover:text-primary-600 text-sm font-medium flex items-center gap-1">
                 Voir tout <ArrowRight size={16} />
               </Link>
             </div>
@@ -167,7 +150,7 @@ export default function HomePage() {
               <div className="text-center py-12 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800">
                 <p className="text-gray-600 dark:text-gray-400">
                   Vous n'avez pas encore d'événements.{" "}
-                  <Link href="/dashboard/event/new" className="text-indigo-500 hover:underline">
+                  <Link href="/dashboard/event/new" className="text-primary-500 hover:underline">
                     Créez votre premier événement
                   </Link>
                 </p>
@@ -191,11 +174,11 @@ export default function HomePage() {
                         </div>
                       )}
                       <div className="p-5">
-                        <div className="flex items-center gap-2 text-indigo-500">
+                        <div className="flex items-center gap-2 text-primary-500">
                           <Icon size={18} />
                           <span className="text-sm font-medium">{event.type}</span>
                         </div>
-                        <h3 className="text-xl font-semibold text-gray-900 dark:text-white group-hover:text-indigo-500 transition-colors mt-1">
+                        <h3 className="text-xl font-semibold text-gray-900 dark:text-white group-hover:text-primary-500 transition-colors mt-1">
                           {event.title}
                         </h3>
                         <div className="mt-3 space-y-2 text-sm text-gray-600 dark:text-gray-400">
@@ -219,7 +202,7 @@ export default function HomePage() {
                         <div className="mt-4 flex justify-end">
                           <Link
                             href={`/dashboard/${event.slug}`}
-                            className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-600 transition hover:bg-indigo-100 dark:bg-indigo-900/20 dark:text-indigo-400 dark:hover:bg-indigo-900/30"
+                            className="inline-flex items-center gap-1 rounded-full bg-primary-50 px-4 py-2 text-sm font-medium text-primary-600 transition hover:bg-primary-100 dark:bg-primary-900/20 dark:text-primary-400 dark:hover:bg-primary-900/30"
                           >
                             Gérer
                             <ChevronRight className="h-4 w-4" />
@@ -235,8 +218,8 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* Features */}
-      <section className="py-20">
+      {/* Features - Fond bleu doux */}
+      <section className="py-20 bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-950 dark:to-gray-900">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Pourquoi choisir Octavia Event ?</h2>
@@ -250,9 +233,9 @@ export default function HomePage() {
               return (
                 <div
                   key={index}
-                  className="rounded-2xl border border-gray-200 bg-white p-6 transition hover:shadow-lg dark:border-gray-800 dark:bg-gray-900 group"
+                  className="rounded-2xl border border-gray-200 bg-white/80 backdrop-blur-sm p-6 transition hover:shadow-lg hover:bg-white dark:border-gray-800 dark:bg-gray-900/80 dark:hover:bg-gray-900"
                 >
-                  <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400 group-hover:scale-110 transition-transform">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400 group-hover:scale-110 transition-transform">
                     <Icon className="h-7 w-7" />
                   </div>
                   <h3 className="mt-4 text-xl font-semibold text-gray-900 dark:text-white">
@@ -268,63 +251,63 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Pricing Section */}
-      <section className="py-20 bg-gray-50 dark:bg-gray-900/50">
+      {/* Section "Pour tous vos événements" - AMÉLIORÉE */}
+      <section className="py-20 bg-white dark:bg-gray-950">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Nos tarifs</h2>
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Pour tous vos événements</h2>
             <p className="mt-4 text-lg text-gray-600 dark:text-gray-300">
-              Une offre adaptée à chaque besoin.
+              Des invitations adaptées à chaque occasion.
             </p>
           </div>
-          <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-3">
-            {pricingPlans.map((plan, index) => (
-              <div
-                key={index}
-                className={`relative rounded-2xl bg-white p-8 shadow-md transition hover:shadow-xl dark:bg-gray-900 border ${
-                  plan.popular
-                    ? "border-indigo-500 dark:border-indigo-400"
-                    : "border-gray-200 dark:border-gray-800"
-                }`}
-              >
-                {plan.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-indigo-500 px-4 py-1 text-sm font-medium text-white">
-                    Populaire
+          <div className="mt-12 grid grid-cols-2 gap-4 md:grid-cols-4">
+            {eventTypes.map((type, index) => {
+              const Icon = type.icon;
+              const href = session ? `/dashboard/event/new/${type.label.toUpperCase()}` : "/register";
+              return (
+                <Link
+                  key={index}
+                  href={href}
+                  className="group flex flex-col items-center rounded-2xl border border-gray-200 bg-white p-8 transition-all hover:shadow-xl hover:border-primary-300 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-primary-600 hover:-translate-y-1"
+                >
+                  <div className={`rounded-full p-4 ${type.color} group-hover:scale-110 transition-transform`}>
+                    <Icon className="h-8 w-8" />
                   </div>
-                )}
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-white">{plan.name}</h3>
-                <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">{plan.price}</p>
-                <ul className="mt-6 space-y-3">
-                  {plan.features.map((feature, i) => (
-                    <li key={i} className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-                      <CheckCircle size={18} className="text-indigo-500 flex-shrink-0" />
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-                <div className="mt-8">
-                  <Link
-                    href={plan.href}
-                    className={`block w-full rounded-full py-3 text-center font-semibold transition ${
-                      plan.popular
-                        ? "bg-indigo-600 text-white hover:bg-indigo-700"
-                        : "bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700"
-                    }`}
-                  >
-                    {plan.cta}
-                  </Link>
-                </div>
-              </div>
-            ))}
+                  <span className="mt-4 font-semibold text-gray-900 dark:text-white group-hover:text-primary-500 transition-colors">
+                    {type.label}
+                  </span>
+                  <span className="mt-1 text-xs text-gray-400 dark:text-gray-500">Créer</span>
+                </Link>
+              );
+            })}
           </div>
-          <p className="mt-8 text-center text-sm text-gray-500 dark:text-gray-400">
-            * Les tarifs sont en euros, hors taxes. Des offres personnalisées sont disponibles pour les grandes entreprises.
-          </p>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="w-full bg-gradient-to-r from-indigo-600 to-purple-700 py-16 px-4 text-center text-white">
+      {/* Section Tarifs simplifiée */}
+      <section className="py-20 bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-950 dark:to-gray-900">
+        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center">
+          <div className="inline-flex items-center justify-center p-3 bg-primary-100 dark:bg-primary-900/30 rounded-full mb-4">
+            <Euro className="w-6 h-6 text-primary-600 dark:text-primary-400" />
+          </div>
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Des tarifs adaptés à vos besoins</h2>
+          <p className="mt-4 text-lg text-gray-600 dark:text-gray-300">
+            Découvrez nos offres et choisissez celle qui vous convient le mieux.
+          </p>
+          <div className="mt-8">
+            <Link
+              href="/tarifs"
+              className="inline-flex items-center gap-2 rounded-full bg-primary-600 px-8 py-3 text-lg font-medium text-white transition hover:bg-primary-700 hover:scale-105"
+            >
+              Voir nos tarifs
+              <ExternalLink size={20} />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section - Dégradé original conservé */}
+      <section className="w-full bg-gradient-to-r from-primary-600 to-secondary-600 py-16 px-4 text-center text-white">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-3xl font-bold">Prêt à créer votre prochain événement ?</h2>
           <p className="mt-4 text-lg text-white/90">
@@ -333,7 +316,7 @@ export default function HomePage() {
           <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
             <Link
               href={session ? "/dashboard/event/new" : "/register"}
-              className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 font-semibold text-indigo-600 transition hover:bg-gray-100"
+              className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 font-semibold text-primary-600 transition hover:bg-gray-100"
             >
               Créer mon invitation
               <ArrowRight className="h-4 w-4" />
