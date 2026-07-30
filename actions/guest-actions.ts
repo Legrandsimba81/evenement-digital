@@ -18,16 +18,38 @@ export async function addGuest(
   lastName: string,
   title?: string,
   invitationType: string = "seul",
-  guestLevel?: string // ✅ ajout du niveau
+  guestLevel?: string
 ) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Non authentifié");
 
-  const event = await prisma.event.findUnique({ where: { id: eventId } });
+  const event = await prisma.event.findUnique({
+    where: { id: eventId },
+    include: { user: { select: { eventLimits: true } } },
+  });
   if (!event) throw new Error("Événement non trouvé");
 
   const hasAccess = await canManageEvent(eventId, session.user.id);
   if (!hasAccess) throw new Error("Non autorisé");
+
+  // Vérifier les limites par type d'événement
+  const limits = event.user.eventLimits as Record<string, number | null> | null;
+  const limit = limits?.[event.type] ?? 5;
+
+  const existingGuestsCount = await prisma.guest.count({
+    where: {
+      event: {
+        userId: session.user.id,
+        type: event.type,
+      },
+    },
+  });
+
+  if (limit !== null && existingGuestsCount >= limit) {
+    throw new Error(
+      `Limite atteinte : vous ne pouvez pas ajouter plus de ${limit} invités pour les événements de type "${event.type}".`
+    );
+  }
 
   const invitationNumber = await generateInvitationNumber(eventId);
 
@@ -40,7 +62,7 @@ export async function addGuest(
       invitationNumber,
       status: "en_attente",
       eventId,
-      guestLevel: guestLevel || null, // ✅ stockage du niveau
+      guestLevel: guestLevel || null,
     },
   });
   revalidatePath(`/dashboard/${event.slug}`);
@@ -71,7 +93,7 @@ export async function updateGuest(
     lastName?: string;
     invitationType?: string;
     status?: string;
-    guestLevel?: string; // ✅ ajout du niveau
+    guestLevel?: string;
   }
 ) {
   const session = await auth();
@@ -94,7 +116,7 @@ export async function updateGuest(
       lastName: data.lastName,
       invitationType: data.invitationType || guest.invitationType,
       status: data.status || guest.status,
-      guestLevel: data.guestLevel || null, // ✅ mise à jour du niveau
+      guestLevel: data.guestLevel || null,
     },
   });
   revalidatePath(`/dashboard/${guest.event.slug}`);
@@ -156,7 +178,7 @@ export async function exportGuestList(eventId: string, format: "csv" | "pdf" = "
   const guests = event.guests;
 
   if (format === "csv") {
-    const headers = ["N°", "Titre", "Prénom", "Nom", "Type", "Statut", "Numéro d'invitation", "Niveau"]; // ✅ ajout de "Niveau"
+    const headers = ["N°", "Titre", "Prénom", "Nom", "Type", "Statut", "Numéro d'invitation", "Niveau"];
     const rows = guests.map((g, index) => [
       index + 1,
       g.title || "",
@@ -165,7 +187,7 @@ export async function exportGuestList(eventId: string, format: "csv" | "pdf" = "
       g.invitationType === "couple" ? "Couple" : "Seul",
       g.status || "En attente",
       g.invitationNumber || "",
-      g.guestLevel || "", // ✅ ajout du niveau
+      g.guestLevel || "",
     ]);
 
     const csvContent = [headers.join(","), ...rows.map((row) => row.join(","))].join("\n");
@@ -192,8 +214,8 @@ export async function exportGuestList(eventId: string, format: "csv" | "pdf" = "
     });
     y -= 30;
 
-    const headers = ["N°", "Titre", "Prénom", "Nom", "Type", "Statut", "N° Invitation", "Niveau"]; // ✅ ajout
-    const headerX = [50, 90, 140, 200, 260, 310, 370, 430]; // ✅ ajustement des positions
+    const headers = ["N°", "Titre", "Prénom", "Nom", "Type", "Statut", "N° Invitation", "Niveau"];
+    const headerX = [50, 90, 140, 200, 260, 310, 370, 430];
     headers.forEach((h, i) => {
       page.drawText(h, {
         x: headerX[i],
@@ -214,7 +236,7 @@ export async function exportGuestList(eventId: string, format: "csv" | "pdf" = "
         g.invitationType === "couple" ? "Couple" : "Seul",
         g.status || "En attente",
         g.invitationNumber || "",
-        g.guestLevel || "", // ✅ ajout
+        g.guestLevel || "",
       ];
       row.forEach((text, i) => {
         page.drawText(text, {

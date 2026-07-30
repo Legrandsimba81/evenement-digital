@@ -12,14 +12,38 @@ export async function createEvent(data: any) {
     const session = await auth();
     if (!session?.user?.id) throw new Error("Non authentifié");
 
-    // ✅ Vérifier que l'utilisateur est autorisé à créer
+    // Vérifier que l'utilisateur est autorisé à créer
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { canCreateEvents: true },
+      select: { canCreateEvents: true, eventLimits: true },
     });
     if (!user?.canCreateEvents) {
       throw new Error("Votre compte est désactivé. Vous ne pouvez pas créer d'événement.");
     }
+
+    // Vérifier les limites par type d'événement
+    const eventType = data.type;
+    if (!eventType) throw new Error("Le type d'événement est requis.");
+
+    const limits = user.eventLimits as Record<string, number | null> | null;
+    const limit = limits?.[eventType] ?? 5; // 5 par défaut
+
+    // Compter les invités existants pour ce type
+    const existingGuestsCount = await prisma.guest.count({
+      where: {
+        event: {
+          userId: session.user.id,
+          type: eventType,
+        },
+      },
+    });
+
+    if (limit !== null && existingGuestsCount >= limit) {
+      throw new Error(
+        `Limite atteinte : vous ne pouvez pas ajouter plus de ${limit} invités pour les événements de type "${eventType}".`
+      );
+    }
+
     const allowedFields = [
       "title",
       "type",
@@ -33,8 +57,8 @@ export async function createEvent(data: any) {
       "imageUrl",
       "invitationImageUrl",
       "thesisTitle",
-      "theme", // ✅ Ajout du thème
-      "format", // ✅ ajout
+      "theme",
+      "format",
     ];
 
     const cleanData: any = {};
@@ -51,7 +75,6 @@ export async function createEvent(data: any) {
     const slug = randomUUID();
     const gateSecret = randomBytes(32).toString("hex");
 
-    // ✅ Gérer le thème : s'assurer que c'est une chaîne JSON
     let themeValue = null;
     if (data.theme) {
       try {
@@ -102,7 +125,7 @@ export async function updateEvent(slug: string, data: any) {
       "imageUrl",
       "invitationImageUrl",
       "thesisTitle",
-      "theme", // ✅ Ajout du thème
+      "theme",
     ];
 
     const cleanData: any = {};
@@ -117,7 +140,6 @@ export async function updateEvent(slug: string, data: any) {
       if (isNaN(cleanData.date.getTime())) throw new Error("Date invalide");
     }
 
-    // ✅ Gérer le thème : s'assurer que c'est une chaîne JSON
     let themeValue = null;
     if (data.theme) {
       try {

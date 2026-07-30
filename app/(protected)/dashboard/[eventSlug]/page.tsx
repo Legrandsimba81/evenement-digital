@@ -2,10 +2,10 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { notFound, redirect } from "next/navigation";
 import EventDetailsClient from "@/components/EventDetailsClient";
-import { Calendar } from "lucide-react";
+import { Calendar, Users, AlertCircle } from "lucide-react";
 import { canManageEvent } from "@/lib/permissions";
 
-export const dynamic = "force-dynamic"; // ✅ Permet le rafraîchissement automatique après chaque mutation
+export const dynamic = "force-dynamic";
 
 export default async function EventPage({
   params,
@@ -28,6 +28,34 @@ export default async function EventPage({
   if (!hasAccess) return notFound();
 
   const isPast = new Date(event.date) < new Date();
+
+  // Récupérer l'utilisateur avec ses limites
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { eventLimits: true },
+  });
+
+  const limits = user?.eventLimits as Record<string, number | null> | null;
+  const eventLimit = limits?.[event.type] ?? 5; // 5 par défaut
+
+  // Déterminer le plan
+  let planLabel = "Gratuit";
+  let planColor = "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300";
+  let planIcon = <Users className="w-4 h-4" />;
+
+  if (eventLimit === null) {
+    planLabel = "Illimité";
+    planColor = "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300";
+  } else if (eventLimit > 50) {
+    planLabel = "Premium (50+)";
+    planColor = "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300";
+  } else if (eventLimit > 5) {
+    planLabel = `Standard (${eventLimit} invités)`;
+    planColor = "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300";
+  } else {
+    planLabel = "Gratuit (5 invités)";
+    planColor = "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300";
+  }
 
   let themeString = null;
   if (event.theme) {
@@ -62,6 +90,23 @@ export default async function EventPage({
           </div>
         </div>
       )}
+
+      {/* Affichage du plan */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+        <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${planColor}`}>
+          {planIcon}
+          Plan : {planLabel}
+        </div>
+        {eventLimit !== null && eventLimit <= 5 && (
+          <div className="mt-2 flex items-start gap-2 text-sm text-gray-600 dark:text-gray-400">
+            <AlertCircle size={16} className="text-yellow-500 flex-shrink-0 mt-0.5" />
+            <p>
+              Vous êtes sur le plan gratuit (5 invités maximum). Pour plus d'invités, contactez l'administration.
+            </p>
+          </div>
+        )}
+      </div>
+
       <EventDetailsClient event={eventData} />
     </>
   );
