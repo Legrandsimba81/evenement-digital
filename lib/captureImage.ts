@@ -1,15 +1,12 @@
-// lib/captureImage.ts
 import html2canvas from "html2canvas";
 
-/**
- * Capture un élément DOM en le clonant hors écran,
- * en remplaçant toutes les couleurs "lab" par du RGB,
- * et en forçant les couleurs calculées en inline pour les propriétés clés.
- */
 export async function captureElement(
   element: HTMLElement,
-  options?: any
+  options?: { backgroundColor?: string }
 ): Promise<HTMLCanvasElement> {
+  // Couleur de fond par défaut : blanc
+  const bgColor = options?.backgroundColor || "#ffffff";
+
   // 1. Créer un conteneur hors écran
   const container = document.createElement("div");
   container.style.position = "fixed";
@@ -17,7 +14,7 @@ export async function captureElement(
   container.style.top = "-9999px";
   container.style.width = element.offsetWidth + "px";
   container.style.height = element.offsetHeight + "px";
-  container.style.background = "white";
+  container.style.background = bgColor;
   document.body.appendChild(container);
 
   // 2. Cloner l'élément
@@ -31,13 +28,10 @@ export async function captureElement(
     const win = (el as HTMLElement).ownerDocument?.defaultView;
     if (win) {
       const computed = win.getComputedStyle(el);
-      // Couleurs clés à forcer
       const props = ["color", "backgroundColor", "borderColor", "backgroundImage"];
       props.forEach((prop) => {
         const val = computed.getPropertyValue(prop);
         if (val && !val.includes("lab") && !val.includes("var(")) {
-          // On ne force que si la valeur n'est pas déjà une variable ou lab
-          // Pour éviter d'écraser les dégradés, on saute backgroundImage si ce n'est pas un dégradé
           if (prop === "backgroundImage" && val !== "none" && !val.includes("gradient")) {
             return;
           }
@@ -47,7 +41,7 @@ export async function captureElement(
     }
   });
 
-  // 4. Maintenant, remplacer toutes les occurrences restantes de "lab" dans les styles inline
+  // 4. Nettoyer les valeurs "lab"
   allElements.forEach((el) => {
     const style = (el as HTMLElement).style;
     for (let i = 0; i < style.length; i++) {
@@ -57,13 +51,12 @@ export async function captureElement(
         if (prop.includes("color") || prop.includes("border")) {
           style[prop as any] = "#000000";
         } else if (prop.includes("background")) {
-          style[prop as any] = "#ffffff";
+          style[prop as any] = bgColor;
         } else {
           style[prop as any] = "none";
         }
       }
     }
-    // Vérifier aussi via getComputedStyle si des lab subsistent
     const win = (el as HTMLElement).ownerDocument?.defaultView;
     if (win) {
       const computed = win.getComputedStyle(el);
@@ -74,7 +67,7 @@ export async function captureElement(
           if (prop.includes("color") || prop.includes("border")) {
             (el as HTMLElement).style.setProperty(prop, "#000000");
           } else if (prop.includes("background")) {
-            (el as HTMLElement).style.setProperty(prop, "#ffffff");
+            (el as HTMLElement).style.setProperty(prop, bgColor);
           } else {
             (el as HTMLElement).style.setProperty(prop, "none");
           }
@@ -87,12 +80,12 @@ export async function captureElement(
   clone.style.width = element.offsetWidth + "px";
   clone.style.height = element.offsetHeight + "px";
 
-  // 6. Capturer
+  // 6. Capturer avec html2canvas
   const canvas = await html2canvas(clone, {
     scale: 2,
     useCORS: true,
     allowTaint: true,
-    backgroundColor: "#ffffff",
+    backgroundColor: bgColor,
     logging: false,
     ...options,
   });

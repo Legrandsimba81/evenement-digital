@@ -97,6 +97,8 @@ export default function InvitationCard({
   const [isLoading, setIsLoading] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isDownloadingQR, setIsDownloadingQR] = useState(false);
+  const [qrReady, setQrReady] = useState(false);
+
   const cardRef = useRef<HTMLDivElement>(null);
   const qrRef = useRef<HTMLDivElement>(null);
   const [imagesLoaded, setImagesLoaded] = useState(false);
@@ -176,6 +178,7 @@ export default function InvitationCard({
 
   const isBillet = event.format === "BILLET";
 
+  // Gestion du statut
   useEffect(() => {
     const savedStatus = localStorage.getItem(`status_${guestId}`);
     if (savedStatus) {
@@ -183,6 +186,7 @@ export default function InvitationCard({
     }
   }, [guestId]);
 
+  // Vérification du chargement des images
   useEffect(() => {
     const checkImages = () => {
       const images = document.querySelectorAll("img");
@@ -202,6 +206,13 @@ export default function InvitationCard({
     };
     checkImages();
   }, [event.imageUrl, event.invitationImageUrl]);
+
+  // Marquer le QR comme prêt après rendu
+  useEffect(() => {
+    // Le QR est généré immédiatement, mais on attend un tick pour être sûr
+    const timer = setTimeout(() => setQrReady(true), 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleAttendance = async (newStatus: string) => {
     setIsLoading(true);
@@ -240,7 +251,8 @@ export default function InvitationCard({
     }
     setIsDownloading(true);
     try {
-      const canvas = await captureElement(cardRef.current);
+      // captureElement avec fond blanc forcé
+      const canvas = await captureElement(cardRef.current, { backgroundColor: '#ffffff' });
       const link = document.createElement("a");
       link.download = `invitation-${event.slug}.png`;
       link.href = canvas.toDataURL("image/png");
@@ -254,10 +266,17 @@ export default function InvitationCard({
   };
 
   const downloadQR = async () => {
-    if (!qrRef.current) return;
+    if (!qrRef.current) {
+      alert("QR non disponible.");
+      return;
+    }
+    if (!qrReady) {
+      alert("Veuillez attendre le chargement du QR.");
+      return;
+    }
     setIsDownloadingQR(true);
     try {
-      const canvas = await captureElement(qrRef.current);
+      const canvas = await captureElement(qrRef.current, { backgroundColor: '#ffffff' });
       const link = document.createElement("a");
       link.download = `qr-${event.slug}.png`;
       link.href = canvas.toDataURL("image/png");
@@ -272,14 +291,13 @@ export default function InvitationCard({
 
   const invitationTitle = theme?.invitationTitle || config.invitationTitle;
 
-  // Animation classes
   const fadeInUp = "transition-all duration-700 ease-out transform";
   const fadeInUpHidden = "opacity-0 translate-y-6";
   const fadeInUpVisible = "opacity-100 translate-y-0";
 
   return (
     <div className="rounded-2xl shadow-xl overflow-hidden bg-white">
-      {/* Image héros (en dehors de la capture) */}
+      {/* Image héros (non capturée) */}
       <div
         ref={heroRef}
         className={`relative w-full aspect-video overflow-hidden bg-gray-100 ${fadeInUp} ${
@@ -302,9 +320,9 @@ export default function InvitationCard({
         )}
       </div>
 
-      {/* Contenu à capturer (depuis le titre jusqu'au QR) */}
-      <div ref={cardRef} className="bg-white p-4 sm:p-6 md:p-8 space-y-6">
-        {/* En-tête : titre grand, puis icône et nombre de personnes en dessous */}
+      {/* Contenu à capturer (fond blanc forcé) */}
+      <div ref={cardRef} className="bg-white p-4 sm:p-6 md:p-8 space-y-6" style={{ backgroundColor: '#ffffff' }}>
+        {/* Titre + sous-titre (icône + nb personnes) */}
         <div ref={titleRef} className={`space-y-2 ${fadeInUp} ${titleInView ? fadeInUpVisible : fadeInUpHidden}`}>
           {isBillet ? (
             <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">
@@ -312,7 +330,7 @@ export default function InvitationCard({
             </h1>
           ) : (
             <>
-              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900" style={{ color: colors.hexPrimary }}>
+              <h1 className="text-3xl sm:text-4xl font-bold" style={{ color: colors.hexPrimary }}>
                 {event.title}
               </h1>
               <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600">
@@ -329,7 +347,7 @@ export default function InvitationCard({
           )}
         </div>
 
-        {/* Bonjour + niveau + numéro d'invitation */}
+        {/* Salutation + niveau + numéro */}
         <div ref={textRef} className={`${fadeInUp} ${textInView ? fadeInUpVisible : fadeInUpHidden}`}>
           <p className="text-base sm:text-lg text-gray-600">
             Bonjour <span className="font-semibold text-gray-900">{fullName}</span>
@@ -370,7 +388,7 @@ export default function InvitationCard({
           </div>
         )}
 
-        {/* Image d'invitation */}
+        {/* Image d'invitation (deuxième photo) */}
         {event.invitationImageUrl && (
           <div ref={textRef} className={`rounded-xl overflow-hidden shadow-sm ${fadeInUp} ${textInView ? fadeInUpVisible : fadeInUpHidden}`}>
             <img
@@ -428,7 +446,7 @@ export default function InvitationCard({
           </div>
         )}
 
-        {/* QR Code - fond distinct */}
+        {/* QR Code - pleine largeur avec fond distinct */}
         <div
           ref={qrRefObserver}
           className={`w-full -mx-4 sm:-mx-6 md:-mx-8 px-4 sm:px-6 md:px-8 py-6 ${fadeInUp} ${
@@ -436,8 +454,12 @@ export default function InvitationCard({
           }`}
           style={{ background: `linear-gradient(to right, ${colors.hexPrimary}15, ${colors.hexSecondary}25)` }}
         >
-          <div ref={qrRef} className="flex flex-col items-center bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-lg max-w-xs mx-auto">
-            <QRCode value={invitationLink} size={160} />
+          <div
+            ref={qrRef}
+            className="flex flex-col items-center bg-white rounded-2xl p-6 shadow-lg max-w-xs mx-auto"
+            style={{ backgroundColor: '#ffffff' }}
+          >
+            <QRCode value={invitationLink} size={180} />
             <p className="text-center text-sm text-gray-600 mt-3 font-medium">
               Scannez pour accéder à l'invitation
             </p>
@@ -461,7 +483,7 @@ export default function InvitationCard({
           </button>
           <button
             onClick={downloadQR}
-            disabled={isDownloadingQR}
+            disabled={isDownloadingQR || !qrReady}
             className="flex-1 flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-3 rounded-xl transition disabled:opacity-50 text-sm sm:text-base"
           >
             <QrCode size={18} />
