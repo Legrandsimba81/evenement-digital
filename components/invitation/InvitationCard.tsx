@@ -5,6 +5,7 @@ import { Calendar, MapPin, Clock, Download, Check, X, Heart, Gift, Trophy, Music
 import QRCode from "react-qr-code";
 import { captureElement } from "@/lib/captureImage";
 import { Theme, getThemeById } from "@/lib/themes";
+import { useInView } from "react-intersection-observer";
 
 type Guest = {
   id: string;
@@ -12,7 +13,7 @@ type Guest = {
   lastName: string;
   title?: string | null;
   status?: string | null;
-  guestLevel?: string | null; // ✅ ajout
+  guestLevel?: string | null;
 };
 
 type Event = {
@@ -92,14 +93,14 @@ export default function InvitationCard({
   guestTitle,
   guestId,
   guestInvitationType,
-  guestLevel, // ✅ ajout
+  guestLevel,
 }: {
   event: Event;
   guestName: string;
   guestTitle?: string;
   guestId: string;
   guestInvitationType?: string | null;
-  guestLevel?: string | null; // ✅ ajout ici
+  guestLevel?: string | null;
 }) {
   const [status, setStatus] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -108,6 +109,11 @@ export default function InvitationCard({
   const cardRef = useRef<HTMLDivElement>(null);
   const qrRef = useRef<HTMLDivElement>(null);
   const [imagesLoaded, setImagesLoaded] = useState(false);
+
+  // Animations with IntersectionObserver
+  const [heroRef, heroInView] = useInView({ triggerOnce: true, threshold: 0.1 });
+  const [detailsRef, detailsInView] = useInView({ triggerOnce: true, threshold: 0.1 });
+  const [qrRefObserver, qrInView] = useInView({ triggerOnce: true, threshold: 0.1 });
 
   const peopleLabel = guestInvitationType === "couple" ? "2 personnes" : "1 personne";
   const peopleIcon = guestInvitationType === "couple" ? Users : User;
@@ -118,6 +124,7 @@ export default function InvitationCard({
   const invitationLink = `${baseUrl}/invitation/${event.slug}?firstName=${encodeURIComponent(
     guestName.split(" ")[0]
   )}&lastName=${encodeURIComponent(guestName.split(" ").slice(1).join(" ") || "")}${levelParam}`;
+
   let theme: Theme | null = null;
   try {
     if (event.theme) {
@@ -271,148 +278,183 @@ export default function InvitationCard({
 
   const invitationTitle = theme?.invitationTitle || config.invitationTitle;
 
+  // Animation classes
+  const fadeInUp = "transition-all duration-700 ease-out transform";
+  const fadeInUpHidden = "opacity-0 translate-y-6";
+  const fadeInUpVisible = "opacity-100 translate-y-0";
+
   return (
     <div className="rounded-2xl shadow-xl overflow-hidden bg-white">
-      {/* Image héros */}
-      <div className="relative w-full aspect-video overflow-hidden bg-gray-100">
-        {event.imageUrl ? (
-          <img
-            src={event.imageUrl}
-            alt="Photo de l'événement"
-            className="w-full h-full object-cover object-center"
-          />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center">
-            <div className="flex flex-col items-center text-white">
-              <Icon size={64} className="mb-4" />
-              <span className="text-4xl font-bold">{config.label}</span>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Contenu */}
-      <div ref={cardRef} className="p-4 sm:p-6 md:p-8">
-        {/* En-tête : titre + badge */}
-        <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
-          {isBillet ? (
-            <h1 className="text-2xl font-bold text-gray-900">
-              Billet de {event.title}
-            </h1>
+      {/* Carte à capturer */}
+      <div ref={cardRef} className="bg-white">
+        {/* Image héros avec animation */}
+        <div
+          ref={heroRef}
+          className={`relative w-full aspect-video overflow-hidden bg-gray-100 ${fadeInUp} ${
+            heroInView ? fadeInUpVisible : fadeInUpHidden
+          }`}
+        >
+          {event.imageUrl ? (
+            <img
+              src={event.imageUrl}
+              alt="Photo de l'événement"
+              className="w-full h-full object-cover object-center"
+            />
           ) : (
-            <>
-              <div className="flex items-center gap-2">
-                <Icon size={20} style={{ color: colors.hexPrimary }} />
-                <span className="text-sm font-semibold" style={{ color: colors.hexPrimary }}>
-                  {invitationTitle}
+            <div className="w-full h-full bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center">
+              <div className="flex flex-col items-center text-white">
+                <Icon size={64} className="mb-4" />
+                <span className="text-4xl font-bold">{config.label}</span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Contenu de l'invitation */}
+        <div className="p-4 sm:p-6 md:p-8 space-y-6">
+          {/* En-tête */}
+          <div
+            ref={detailsRef}
+            className={`${fadeInUp} ${
+              detailsInView ? fadeInUpVisible : fadeInUpHidden
+            }`}
+          >
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              {isBillet ? (
+                <h1 className="text-2xl font-bold text-gray-900">
+                  Billet de {event.title}
+                </h1>
+              ) : (
+                <>
+                  <div className="flex items-center gap-2">
+                    <Icon size={20} style={{ color: colors.hexPrimary }} />
+                    <span className="text-sm font-semibold" style={{ color: colors.hexPrimary }}>
+                      {invitationTitle}
+                    </span>
+                  </div>
+                  <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700">
+                    {peopleIcon === Users ? <Users size={14} /> : <User size={14} />}
+                    {peopleLabel}
+                  </span>
+                </>
+              )}
+            </div>
+
+            <p className="text-base sm:text-lg text-gray-600 mt-2">
+              Bonjour <span className="font-semibold text-gray-900">{fullName}</span>
+              {guestLevel && (
+                <span className="ml-2 inline-block text-xs px-2 py-1 rounded-full bg-primary-100 text-primary-700 font-medium">
+                  {guestLevel}
+                </span>
+              )}
+            </p>
+
+            {event.invitationNumber && (
+              <div className="mt-3 p-3 bg-gray-50 rounded-xl">
+                <span className="font-medium text-gray-700">
+                  <span style={{ color: colors.hexPrimary }} className="font-bold">#</span> {event.invitationNumber}
                 </span>
               </div>
-              <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700">
-                {peopleIcon === Users ? <Users size={14} /> : <User size={14} />}
-                {peopleLabel}
-              </span>
-            </>
-          )}
-        </div>
+            )}
 
-        <p className="text-base sm:text-lg text-gray-600 mb-1">
-          Bonjour <span className="font-semibold text-gray-900">{fullName}</span>
-          {guestLevel && (
-            <span className="ml-2 inline-block text-xs px-2 py-1 rounded-full bg-primary-100 text-primary-700 font-medium">
-              {guestLevel}
-            </span>
-          )}
-        </p>
-
-        {event.invitationNumber && (
-          <div className="mt-2 p-2 sm:p-3 bg-gray-50 rounded-xl">
-            <span className="font-medium text-gray-700">
-              <span style={{ color: colors.hexPrimary }} className="font-bold">#</span> {event.invitationNumber}
-            </span>
+            {event.type === "SOUTENANCE" && event.thesisTitle && (
+              <div className="mt-4 p-4 bg-purple-50 rounded-xl">
+                <p className="text-sm text-gray-700">
+                  <span className="font-semibold">Sujet de thèse :</span> {event.thesisTitle}
+                </p>
+              </div>
+            )}
           </div>
-        )}
 
-        {event.type === "SOUTENANCE" && event.thesisTitle && (
-          <div className="mt-4 p-4 bg-purple-50 rounded-xl">
-            <p className="text-sm text-gray-700">
-              <span className="font-semibold">Sujet de thèse :</span> {event.thesisTitle}
-            </p>
-          </div>
-        )}
+          {/* Texte d'invitation */}
+          {event.invitationText && (
+            <div
+              className={`p-5 rounded-xl ${fadeInUp} ${
+                detailsInView ? fadeInUpVisible : fadeInUpHidden
+              }`}
+              style={{ backgroundColor: colors.hexBackground || '#f8fafc' }}
+            >
+              <p className="text-gray-800 italic text-base sm:text-lg leading-relaxed">
+                {event.invitationText}
+              </p>
+            </div>
+          )}
 
-        {event.invitationText && (
+          {/* Image d'invitation */}
+          {event.invitationImageUrl && (
+            <div className="rounded-xl overflow-hidden shadow-sm">
+              <img
+                src={event.invitationImageUrl}
+                alt="Invitation"
+                className="w-full h-auto aspect-video object-cover"
+              />
+            </div>
+          )}
+
+          {/* Détails (date, heure, lieu) */}
           <div
-            className="mt-4 p-4 rounded-xl"
-            style={{ backgroundColor: colors.hexBackground || '#f8fafc' }}
+            className={`grid grid-cols-1 sm:grid-cols-3 gap-4 ${fadeInUp} ${
+              detailsInView ? fadeInUpVisible : fadeInUpHidden
+            }`}
           >
-            <p className="text-gray-800 italic text-base sm:text-lg">
-              {event.invitationText}
-            </p>
-          </div>
-        )}
-
-        {event.invitationImageUrl && (
-          <div className="mt-4 rounded-xl overflow-hidden">
-            <img
-              src={event.invitationImageUrl}
-              alt="Invitation"
-              className="w-full h-auto aspect-video object-cover"
-            />
-          </div>
-        )}
-
-        <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
-          <div className="flex items-center gap-2">
-            <Calendar size={18} style={{ color: colors.hexPrimary }} className="flex-shrink-0 p-2 bg-gray-100 rounded-full" />
-            <span className="text-sm sm:text-base text-gray-700">
-              {new Date(event.date).toLocaleDateString('fr-FR')}
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Clock size={18} style={{ color: colors.hexPrimary }} className="flex-shrink-0 p-2 bg-gray-100 rounded-full" />
-            <span className="text-sm sm:text-base text-gray-700">{event.time}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <MapPin size={18} style={{ color: colors.hexPrimary }} className="flex-shrink-0 p-2 bg-gray-100 rounded-full" />
-            <span className="text-sm sm:text-base text-gray-700">{event.location}</span>
-          </div>
-        </div>
-
-        {event.program && (
-          <div className="mt-6 p-4 bg-gray-100 rounded-xl">
-            <h3 className="font-semibold mb-2 p-2 bg-gray-200 inline-block rounded" style={{ color: colors.hexPrimary }}>
-              Programme de la journée
-            </h3>
-            <div className="text-gray-700 whitespace-pre-line text-sm sm:text-base">
-              {event.program}
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50">
+              <Calendar size={20} style={{ color: colors.hexPrimary }} className="flex-shrink-0" />
+              <span className="text-sm text-gray-700">
+                {new Date(event.date).toLocaleDateString('fr-FR', {
+                  weekday: 'long',
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric'
+                })}
+              </span>
+            </div>
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50">
+              <Clock size={20} style={{ color: colors.hexPrimary }} className="flex-shrink-0" />
+              <span className="text-sm text-gray-700">{event.time}</span>
+            </div>
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50">
+              <MapPin size={20} style={{ color: colors.hexPrimary }} className="flex-shrink-0" />
+              <span className="text-sm text-gray-700">{event.location}</span>
             </div>
           </div>
-        )}
 
-        {/* QR Code */}
-        <div className="mt-6 flex flex-col items-center">
-          <div ref={qrRef} className="bg-white p-3 sm:p-4 rounded-xl shadow-md flex flex-col items-center">
-            <QRCode value={invitationLink} size={120} />
-            <p className="text-center text-xs text-gray-500 mt-2">
-              Scannez pour accéder à l'invitation
-            </p>
-          </div>
-          <button
-            onClick={downloadQR}
-            disabled={isDownloadingQR}
-            className="mt-3 flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-xl transition disabled:opacity-50 text-sm"
+          {/* Programme */}
+          {event.program && (
+            <div className="p-5 bg-gray-50 rounded-xl">
+              <h3 className="font-semibold mb-3 inline-block px-3 py-1 rounded-lg" style={{ backgroundColor: colors.hexPrimary, color: '#fff' }}>
+                Programme de la journée
+              </h3>
+              <div className="text-gray-700 whitespace-pre-line text-sm sm:text-base">
+                {event.program}
+              </div>
+            </div>
+          )}
+
+          {/* QR Code - pleine largeur avec fond distinct */}
+          <div
+            ref={qrRefObserver}
+            className={`w-full -mx-4 sm:-mx-6 md:-mx-8 px-4 sm:px-6 md:px-8 py-6 bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 ${fadeInUp} ${
+              qrInView ? fadeInUpVisible : fadeInUpHidden
+            }`}
           >
-            <QrCode size={16} />
-            {isDownloadingQR ? "Téléchargement..." : "Télécharger le QR"}
-          </button>
+            <div ref={qrRef} className="flex flex-col items-center bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg max-w-xs mx-auto">
+              <QRCode value={invitationLink} size={160} />
+              <p className="text-center text-sm text-gray-600 mt-3 font-medium">
+                Scannez pour accéder à l'invitation
+              </p>
+            </div>
+          </div>
         </div>
+      </div>
 
-        {/* Boutons d'action */}
-        <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-between items-stretch sm:items-center">
+      {/* BOUTONS D'ACTION - EN DEHORS DE LA CARTE */}
+      <div className="p-4 sm:p-6 md:p-8 pt-0 space-y-4 bg-white rounded-b-2xl">
+        {/* Ligne de téléchargements */}
+        <div className="flex flex-col sm:flex-row gap-3">
           <button
             onClick={downloadInvitation}
             disabled={isDownloading || !imagesLoaded}
-            className="flex items-center justify-center gap-2 text-white px-4 py-3 rounded-xl transition disabled:opacity-50 text-sm sm:text-base"
+            className="flex-1 flex items-center justify-center gap-2 text-white px-4 py-3 rounded-xl transition disabled:opacity-50 text-sm sm:text-base"
             style={{ backgroundColor: colors.hexPrimary }}
             onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.hexSecondary}
             onMouseLeave={(e) => e.currentTarget.style.backgroundColor = colors.hexPrimary}
@@ -420,39 +462,51 @@ export default function InvitationCard({
             <Download size={18} />
             {isDownloading ? "Téléchargement..." : "Télécharger l'invitation"}
           </button>
-
-          <div className="flex flex-col sm:flex-row gap-2">
-            <button
-              onClick={() => handleAttendance("attending")}
-              disabled={isLoading}
-              className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl border transition text-sm sm:text-base ${status === "attending"
-                ? "bg-green-500 text-white border-green-500"
-                : "bg-gray-100 hover:bg-green-50"
-                }`}
-            >
-              <Check size={18} />
-              {status === "attending" ? "Confirmé" : "Je serai présent(e)"}
-            </button>
-            <button
-              onClick={() => handleAttendance("annule")}
-              disabled={isLoading}
-              className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl transition text-sm sm:text-base ${status === "annule"
-                ? "bg-red-500 text-white"
-                : "bg-gray-100 hover:bg-red-50"
-                }`}
-            >
-              <X size={18} />
-              {status === "annule" ? "Indisponible" : "Indisponible"}
-            </button>
-          </div>
+          <button
+            onClick={downloadQR}
+            disabled={isDownloadingQR}
+            className="flex-1 flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-3 rounded-xl transition disabled:opacity-50 text-sm sm:text-base"
+          >
+            <QrCode size={18} />
+            {isDownloadingQR ? "Téléchargement..." : "Télécharger le QR"}
+          </button>
         </div>
+
+        {/* Boutons de statut (présent/absent) */}
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <button
+            onClick={() => handleAttendance("attending")}
+            disabled={isLoading}
+            className={`flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl border-2 transition text-sm sm:text-base font-medium ${
+              status === "attending"
+                ? "bg-green-500 text-white border-green-500"
+                : "bg-white text-gray-700 border-gray-300 hover:border-green-500 hover:bg-green-50"
+            }`}
+          >
+            <Check size={18} />
+            {status === "attending" ? "Présence confirmée" : "Je serai présent(e)"}
+          </button>
+          <button
+            onClick={() => handleAttendance("annule")}
+            disabled={isLoading}
+            className={`flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl border-2 transition text-sm sm:text-base font-medium ${
+              status === "annule"
+                ? "bg-red-500 text-white border-red-500"
+                : "bg-white text-gray-700 border-gray-300 hover:border-red-500 hover:bg-red-50"
+            }`}
+          >
+            <X size={18} />
+            {status === "annule" ? "Indisponible" : "Indisponible"}
+          </button>
+        </div>
+
         {status && (
-          <p className="text-center text-sm text-gray-500 mt-3">
+          <p className="text-center text-sm text-gray-500">
             {status === "attending"
-              ? "Présence confirmée – Merci !"
+              ? "✅ Présence confirmée – Merci !"
               : status === "annule"
-                ? "Indisponible – Nous avons bien noté votre réponse."
-                : "En attente de confirmation."}
+                ? "❌ Indisponible – Nous avons bien noté votre réponse."
+                : "⏳ En attente de confirmation."}
           </p>
         )}
       </div>
