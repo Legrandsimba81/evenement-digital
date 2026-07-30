@@ -8,14 +8,12 @@ interface UserLimitsButtonProps {
   userId: string;
   currentLimits: Record<string, number | null> | null;
   userName: string;
-  onUpdate: () => void;
 }
 
 export default function UserLimitsButton({
   userId,
   currentLimits,
   userName,
-  onUpdate,
 }: UserLimitsButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -34,7 +32,6 @@ export default function UserLimitsButton({
           currentLimits={currentLimits}
           userName={userName}
           onClose={() => setIsOpen(false)}
-          onUpdate={onUpdate}
         />
       )}
     </>

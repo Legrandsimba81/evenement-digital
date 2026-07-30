@@ -36,7 +36,6 @@ export default async function AdminPage({
   const userSearch = searchParams.userSearch?.trim() || "";
   const eventSearch = searchParams.eventSearch?.trim() || "";
 
-  // Filtres utilisateurs
   const userWhere: Prisma.UserWhereInput = userSearch
     ? {
         OR: [
@@ -47,7 +46,6 @@ export default async function AdminPage({
       }
     : {};
 
-  // Filtres événements
   const eventWhere: Prisma.EventWhereInput = eventSearch
     ? {
         OR: [
@@ -60,7 +58,6 @@ export default async function AdminPage({
       }
     : {};
 
-  // Requêtes
   const [users, events] = await Promise.all([
     prisma.user.findMany({
       where: userWhere,
@@ -88,14 +85,12 @@ export default async function AdminPage({
     }),
   ]);
 
-  // Comptes Google
   const usersWithAccounts = await prisma.user.findMany({
     where: { id: { in: users.map((u) => u.id) } },
     include: { accounts: true },
   });
   const userMap = new Map(usersWithAccounts.map((u) => [u.id, u.accounts.length > 0]));
 
-  // Statistiques
   const totalMessages = events.reduce((acc, e) => acc + e.messages.length, 0);
   const totalGuests = events.reduce((acc, e) => acc + e.guests.length, 0);
 
@@ -117,7 +112,6 @@ export default async function AdminPage({
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
-        {/* En-tête */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
@@ -134,7 +128,6 @@ export default async function AdminPage({
           </div>
         </div>
 
-        {/* Statistiques */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {stats.map((stat) => {
             const Icon = stat.icon;
@@ -157,7 +150,6 @@ export default async function AdminPage({
           })}
         </div>
 
-        {/* Filtres */}
         <AdminSearch
           userSearch={userSearch}
           eventSearch={eventSearch}
@@ -165,7 +157,6 @@ export default async function AdminPage({
           eventCount={events.length}
         />
 
-        {/* Tableaux en pleine largeur */}
         <div className="space-y-6">
           {/* Utilisateurs */}
           <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden flex flex-col">
@@ -268,10 +259,6 @@ export default async function AdminPage({
                               userId={user.id}
                               currentLimits={limits}
                               userName={user.name || "Utilisateur"}
-                              onUpdate={() => {
-                                // Recharger la page pour rafraîchir les données
-                                window.location.reload();
-                              }}
                             />
                           </td>
                           <td className="py-3 px-3">

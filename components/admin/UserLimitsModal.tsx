@@ -17,7 +17,6 @@ interface UserLimitsModalProps {
   currentLimits: Record<string, number | null> | null;
   userName: string;
   onClose: () => void;
-  onUpdate: () => void;
 }
 
 export default function UserLimitsModal({
@@ -25,14 +24,12 @@ export default function UserLimitsModal({
   currentLimits,
   userName,
   onClose,
-  onUpdate,
 }: UserLimitsModalProps) {
   const [limits, setLimits] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    // Initialiser les champs avec les limites actuelles
     const initial: Record<string, string> = {};
     EVENT_TYPES.forEach((type) => {
       const val = currentLimits?.[type];
@@ -50,7 +47,6 @@ export default function UserLimitsModal({
     setIsLoading(true);
     setError("");
 
-    // Convertir les valeurs : "" => null, sinon Number
     const parsedLimits: Record<string, number | null> = {};
     EVENT_TYPES.forEach((type) => {
       const val = limits[type];
@@ -65,8 +61,9 @@ export default function UserLimitsModal({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Erreur");
-      onUpdate();
       onClose();
+      // Recharger la page après mise à jour
+      window.location.reload();
     } catch (err: any) {
       setError(err.message);
     } finally {
