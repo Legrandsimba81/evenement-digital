@@ -19,6 +19,7 @@ import {
 import DeleteEventButton from "@/components/admin/DeleteEventButton";
 import UserAdminControls from "@/components/admin/UserAdminControls";
 import AdminSearch from "@/components/admin/AdminSearch";
+import UserLimitsButton from "@/components/admin/UserLimitsButton";
 
 export const dynamic = "force-dynamic";
 
@@ -35,7 +36,7 @@ export default async function AdminPage({
   const userSearch = searchParams.userSearch?.trim() || "";
   const eventSearch = searchParams.eventSearch?.trim() || "";
 
-  // Filtres utilisateurs avec typage explicite
+  // Filtres utilisateurs
   const userWhere: Prisma.UserWhereInput = userSearch
     ? {
         OR: [
@@ -46,7 +47,7 @@ export default async function AdminPage({
       }
     : {};
 
-  // Filtres événements avec typage explicite
+  // Filtres événements
   const eventWhere: Prisma.EventWhereInput = eventSearch
     ? {
         OR: [
@@ -72,7 +73,8 @@ export default async function AdminPage({
         role: true,
         canCreateEvents: true,
         createdAt: true,
-        isSuperAdmin: true, // ✅
+        isSuperAdmin: true,
+        eventLimits: true,
       },
     }),
     prisma.event.findMany({
@@ -86,14 +88,14 @@ export default async function AdminPage({
     }),
   ]);
 
-  // Récupérer les comptes Google
+  // Comptes Google
   const usersWithAccounts = await prisma.user.findMany({
     where: { id: { in: users.map((u) => u.id) } },
     include: { accounts: true },
   });
   const userMap = new Map(usersWithAccounts.map((u) => [u.id, u.accounts.length > 0]));
 
-  // Calculs pour les statistiques
+  // Statistiques
   const totalMessages = events.reduce((acc, e) => acc + e.messages.length, 0);
   const totalGuests = events.reduce((acc, e) => acc + e.guests.length, 0);
 
@@ -123,7 +125,7 @@ export default async function AdminPage({
               Administration
             </h1>
             <p className="text-gray-500 dark:text-gray-400 mt-1">
-              Gérez les utilisateurs et les événements de la plateforme
+              Gérez les utilisateurs, les événements et les limites d'invités.
             </p>
           </div>
           <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mt-2 sm:mt-0">
@@ -163,8 +165,8 @@ export default async function AdminPage({
           eventCount={events.length}
         />
 
-        {/* Tableaux */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Tableaux en pleine largeur */}
+        <div className="space-y-6">
           {/* Utilisateurs */}
           <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden flex flex-col">
             <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
@@ -195,12 +197,14 @@ export default async function AdminPage({
                       <th className="text-left py-3 px-3 font-semibold text-gray-600 dark:text-gray-300">Téléphone</th>
                       <th className="text-left py-3 px-3 font-semibold text-gray-600 dark:text-gray-300">Rôle</th>
                       <th className="text-left py-3 px-3 font-semibold text-gray-600 dark:text-gray-300">Statut</th>
+                      <th className="text-left py-3 px-3 font-semibold text-gray-600 dark:text-gray-300">Limites</th>
                       <th className="text-center py-3 px-3 font-semibold text-gray-600 dark:text-gray-300">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {users.map((user) => {
                       const isGoogle = userMap.get(user.id) || false;
+                      const limits = user.eventLimits as Record<string, number | null> | null;
                       return (
                         <tr
                           key={user.id}
@@ -258,6 +262,17 @@ export default async function AdminPage({
                             >
                               {user.canCreateEvents ? "Actif" : "Bloqué"}
                             </span>
+                          </td>
+                          <td className="py-3 px-3">
+                            <UserLimitsButton
+                              userId={user.id}
+                              currentLimits={limits}
+                              userName={user.name || "Utilisateur"}
+                              onUpdate={() => {
+                                // Recharger la page pour rafraîchir les données
+                                window.location.reload();
+                              }}
+                            />
                           </td>
                           <td className="py-3 px-3">
                             <UserAdminControls

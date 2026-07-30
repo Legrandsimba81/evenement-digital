@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import { Check, Gift, Heart, Trophy, Music, Sparkles, Calendar, Users, Star, X } from "lucide-react";
-import Link from "next/link";
 import { SiWhatsapp } from "react-icons/si";
 import PaymentForm from "@/components/PaymentForm";
+import { useRouter } from "next/navigation";
 
 // Définition des plans
 const plans = [
+  // Plans gratuits pour chaque type avec 5 invités
   {
     id: "anniv-gratuit",
     category: "gratuit",
@@ -18,7 +19,57 @@ const plans = [
     color: "emerald",
     description: "Testez notre plateforme avec une invitation d'anniversaire pour 5 invités.",
     features: ["Invitation personnalisée", "Gestion de 5 invités", "QR code d'accès", "Téléchargement de l'invitation"],
+    eventType: "ANNIVERSAIRE",
   },
+  {
+    id: "soutenance-gratuit",
+    category: "gratuit",
+    name: "Soutenance (5 invités)",
+    price: 0,
+    currency: "$",
+    icon: Trophy,
+    color: "emerald",
+    description: "Testez notre plateforme avec une invitation de soutenance pour 5 invités.",
+    features: ["Invitation personnalisée", "Gestion de 5 invités", "QR code d'accès", "Téléchargement de l'invitation"],
+    eventType: "SOUTENANCE",
+  },
+  {
+    id: "mariage-gratuit",
+    category: "gratuit",
+    name: "Mariage (5 invités)",
+    price: 0,
+    currency: "$",
+    icon: Heart,
+    color: "emerald",
+    description: "Testez notre plateforme avec une invitation de mariage pour 5 invités.",
+    features: ["Invitation personnalisée", "Gestion de 5 invités", "QR code d'accès", "Téléchargement de l'invitation"],
+    eventType: "MARIAGE",
+  },
+  {
+    id: "concert-gratuit",
+    category: "gratuit",
+    name: "Concert (5 invités)",
+    price: 0,
+    currency: "$",
+    icon: Music,
+    color: "emerald",
+    description: "Testez notre plateforme avec un billet de concert pour 5 invités.",
+    features: ["Billet personnalisé", "Gestion de 5 billets", "QR code d'accès", "Téléchargement du billet"],
+    eventType: "CONCERT",
+  },
+  {
+    id: "autre-gratuit",
+    category: "gratuit",
+    name: "Autre événement (5 invités)",
+    price: 0,
+    currency: "$",
+    icon: Calendar,
+    color: "emerald",
+    description: "Testez notre plateforme avec un autre type d'événement pour 5 invités.",
+    features: ["Invitation personnalisée", "Gestion de 5 invités", "QR code d'accès", "Téléchargement de l'invitation"],
+    eventType: "AUTRE",
+  },
+  // Plans payants existants
   {
     id: "anniv-50",
     category: "classique",
@@ -29,6 +80,7 @@ const plans = [
     color: "pink",
     description: "Idéal pour un anniversaire avec une liste d'invités moyenne.",
     features: ["Invitation personnalisée", "Gestion de 50 invités", "QR code d'accès", "Téléchargement", "Messages des invités"],
+    eventType: "ANNIVERSAIRE",
   },
   {
     id: "anniv-illimite",
@@ -40,6 +92,7 @@ const plans = [
     color: "pink",
     description: "Organisez un anniversaire sans limite d'invités.",
     features: ["Invitation personnalisée", "Invités illimités", "QR code d'accès", "Téléchargement", "Messages", "Statistiques"],
+    eventType: "ANNIVERSAIRE",
   },
   {
     id: "soutenance-50",
@@ -51,6 +104,7 @@ const plans = [
     color: "purple",
     description: "Invitez vos professeurs et proches à votre soutenance.",
     features: ["Invitation personnalisée", "Gestion de 50 invités", "QR code d'accès", "Téléchargement", "Sujet de thèse"],
+    eventType: "SOUTENANCE",
   },
   {
     id: "soutenance-illimite",
@@ -62,6 +116,7 @@ const plans = [
     color: "purple",
     description: "Soutenez-vous sans limite d'invités.",
     features: ["Invitation personnalisée", "Invités illimités", "QR code d'accès", "Téléchargement", "Sujet de thèse", "Statistiques"],
+    eventType: "SOUTENANCE",
   },
   {
     id: "mariage",
@@ -73,6 +128,7 @@ const plans = [
     color: "rose",
     description: "Une invitation élégante et complète pour votre mariage.",
     features: ["Invitation personnalisée", "Invités illimités", "QR code d'accès", "Téléchargement", "Messages d'amour", "Thèmes romantiques", "Statistiques"],
+    eventType: "MARIAGE",
   },
   {
     id: "concert",
@@ -84,6 +140,7 @@ const plans = [
     color: "orange",
     description: "Billets numériques pour votre concert ou festival.",
     features: ["Billets personnalisés", "Invités illimités", "QR code d'accès", "Téléchargement", "Niveaux (VIP, Standard)", "Statistiques de vente", "Contrôle d'accès"],
+    eventType: "CONCERT",
   },
   {
     id: "autre",
@@ -95,7 +152,9 @@ const plans = [
     color: "blue",
     description: "Personnalisez votre événement sur mesure.",
     features: ["Invitation personnalisée", "Invités illimités", "QR code d'accès", "Téléchargement", "Messages", "Statistiques", "Thèmes variés"],
+    eventType: "AUTRE",
   },
+  // Abonnements
   {
     id: "abonnement-3mois",
     category: "abonnement",
@@ -114,6 +173,47 @@ const plans = [
       "Invités illimités",
       "Toutes les fonctionnalités",
     ],
+    eventType: "ABONNEMENT",
+  },
+  {
+    id: "abonnement-6mois",
+    category: "abonnement",
+    name: "Abonnement 6 mois",
+    price: 90,
+    currency: "$",
+    icon: Star,
+    color: "gold",
+    description: "Créez jusqu'à 5 événements de chaque catégorie pendant 6 mois.",
+    features: [
+      "5 événements Anniversaire",
+      "5 événements Soutenance",
+      "5 événements Mariage",
+      "5 événements Concert",
+      "5 événements Autre",
+      "Invités illimités",
+      "Toutes les fonctionnalités",
+    ],
+    eventType: "ABONNEMENT",
+  },
+  {
+    id: "abonnement-1an",
+    category: "abonnement",
+    name: "Abonnement 1 an",
+    price: 150,
+    currency: "$",
+    icon: Star,
+    color: "gold",
+    description: "Créez jusqu'à 10 événements de chaque catégorie pendant 1 an.",
+    features: [
+      "10 événements Anniversaire",
+      "10 événements Soutenance",
+      "10 événements Mariage",
+      "10 événements Concert",
+      "10 événements Autre",
+      "Invités illimités",
+      "Toutes les fonctionnalités",
+    ],
+    eventType: "ABONNEMENT",
   },
 ];
 
@@ -184,10 +284,18 @@ const colorClasses = {
 };
 
 export default function PricingPage() {
+  const router = useRouter();
   const [selectedPlan, setSelectedPlan] = useState<typeof plans[0] | null>(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
   const handleChoosePlan = (plan: typeof plans[0]) => {
+    // Si le plan est gratuit, rediriger directement vers la page de création de l'événement
+    if (plan.price === 0 && plan.eventType && plan.eventType !== "ABONNEMENT") {
+      router.push(`/dashboard/event/new/${plan.eventType}`);
+      return;
+    }
+
+    // Sinon, pour les plans payants ou abonnements, ouvrir la modale de paiement
     setSelectedPlan(plan);
     setIsPaymentModalOpen(true);
   };
@@ -197,12 +305,22 @@ export default function PricingPage() {
     setSelectedPlan(null);
   };
 
+  const handlePaymentSuccess = (plan: typeof plans[0]) => {
+    closePaymentModal();
+    // Après paiement réussi, rediriger vers la page de création
+    if (plan.eventType && plan.eventType !== "ABONNEMENT") {
+      router.push(`/dashboard/event/new/${plan.eventType}`);
+    } else {
+      router.push("/dashboard");
+    }
+  };
+
   // Regrouper par catégorie
   const groupedPlans = {
-    gratuit: plans.filter(p => p.category === "gratuit"),
-    classique: plans.filter(p => p.category === "classique"),
-    premium: plans.filter(p => p.category === "premium"),
-    abonnement: plans.filter(p => p.category === "abonnement"),
+    gratuit: plans.filter((p) => p.category === "gratuit"),
+    classique: plans.filter((p) => p.category === "classique"),
+    premium: plans.filter((p) => p.category === "premium"),
+    abonnement: plans.filter((p) => p.category === "abonnement"),
   };
 
   return (
@@ -227,18 +345,21 @@ export default function PricingPage() {
             <Gift className="w-5 h-5 text-emerald-500" />
             Offre découverte
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
             {groupedPlans.gratuit.map((plan) => {
               const Icon = plan.icon;
               const colors = colorClasses[plan.color as keyof typeof colorClasses];
               return (
-                <div key={plan.id} className={`bg-white dark:bg-gray-900 rounded-2xl shadow-lg border ${colors.border} overflow-hidden transition hover:shadow-xl`}>
+                <div
+                  key={plan.id}
+                  className={`bg-white dark:bg-gray-900 rounded-2xl shadow-lg border ${colors.border} overflow-hidden transition hover:shadow-xl`}
+                >
                   <div className={`p-6 ${colors.bg} ${colors.border} border-b`}>
                     <div className="flex items-center gap-3 mb-2">
                       <div className={`p-2 rounded-full ${colors.iconBg} ${colors.iconText}`}>
                         <Icon size={24} />
                       </div>
-                      <h3 className={`text-xl font-bold ${colors.text}`}>{plan.name}</h3>
+                      <h3 className={`text-lg font-bold ${colors.text}`}>{plan.name}</h3>
                     </div>
                     <div className="flex items-baseline">
                       <span className="text-3xl font-bold text-gray-900 dark:text-white">Gratuit</span>
@@ -258,7 +379,7 @@ export default function PricingPage() {
                       onClick={() => handleChoosePlan(plan)}
                       className="w-full mt-4 py-2 px-4 rounded-xl text-white font-medium bg-emerald-600 hover:bg-emerald-700 transition"
                     >
-                      Choisir
+                      Commencer
                     </button>
                   </div>
                 </div>
@@ -278,7 +399,10 @@ export default function PricingPage() {
               const Icon = plan.icon;
               const colors = colorClasses[plan.color as keyof typeof colorClasses];
               return (
-                <div key={plan.id} className={`bg-white dark:bg-gray-900 rounded-2xl shadow-lg border ${colors.border} overflow-hidden transition hover:shadow-xl flex flex-col`}>
+                <div
+                  key={plan.id}
+                  className={`bg-white dark:bg-gray-900 rounded-2xl shadow-lg border ${colors.border} overflow-hidden transition hover:shadow-xl flex flex-col`}
+                >
                   <div className={`p-6 ${colors.bg} ${colors.border} border-b`}>
                     <div className="flex items-center gap-3 mb-2">
                       <div className={`p-2 rounded-full ${colors.iconBg} ${colors.iconText}`}>
@@ -287,7 +411,10 @@ export default function PricingPage() {
                       <h3 className={`text-xl font-bold ${colors.text}`}>{plan.name}</h3>
                     </div>
                     <div className="flex items-baseline">
-                      <span className="text-3xl font-bold text-gray-900 dark:text-white">{plan.price}{plan.currency}</span>
+                      <span className="text-3xl font-bold text-gray-900 dark:text-white">
+                        {plan.price}
+                        {plan.currency}
+                      </span>
                       <span className="text-sm text-gray-500 dark:text-gray-400 ml-1">/ événement</span>
                     </div>
                     <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">{plan.description}</p>
@@ -327,7 +454,10 @@ export default function PricingPage() {
               const Icon = plan.icon;
               const colors = colorClasses[plan.color as keyof typeof colorClasses];
               return (
-                <div key={plan.id} className={`bg-white dark:bg-gray-900 rounded-2xl shadow-lg border ${colors.border} overflow-hidden transition hover:shadow-xl flex flex-col`}>
+                <div
+                  key={plan.id}
+                  className={`bg-white dark:bg-gray-900 rounded-2xl shadow-lg border ${colors.border} overflow-hidden transition hover:shadow-xl flex flex-col`}
+                >
                   <div className={`p-6 ${colors.bg} ${colors.border} border-b`}>
                     <div className="flex items-center gap-3 mb-2">
                       <div className={`p-2 rounded-full ${colors.iconBg} ${colors.iconText}`}>
@@ -336,7 +466,10 @@ export default function PricingPage() {
                       <h3 className={`text-xl font-bold ${colors.text}`}>{plan.name}</h3>
                     </div>
                     <div className="flex items-baseline">
-                      <span className="text-3xl font-bold text-gray-900 dark:text-white">{plan.price}{plan.currency}</span>
+                      <span className="text-3xl font-bold text-gray-900 dark:text-white">
+                        {plan.price}
+                        {plan.currency}
+                      </span>
                       <span className="text-sm text-gray-500 dark:text-gray-400 ml-1">/ événement</span>
                     </div>
                     <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">{plan.description}</p>
@@ -371,12 +504,15 @@ export default function PricingPage() {
             <Calendar className="w-5 h-5 text-yellow-500" />
             Abonnement flexible
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
             {groupedPlans.abonnement.map((plan) => {
               const Icon = plan.icon;
               const colors = colorClasses[plan.color as keyof typeof colorClasses];
               return (
-                <div key={plan.id} className={`bg-white dark:bg-gray-900 rounded-2xl shadow-lg border ${colors.border} overflow-hidden transition hover:shadow-xl flex flex-col md:col-span-1`}>
+                <div
+                  key={plan.id}
+                  className={`bg-white dark:bg-gray-900 rounded-2xl shadow-lg border ${colors.border} overflow-hidden transition hover:shadow-xl flex flex-col`}
+                >
                   <div className={`p-6 ${colors.bg} ${colors.border} border-b`}>
                     <div className="flex items-center gap-3 mb-2">
                       <div className={`p-2 rounded-full ${colors.iconBg} ${colors.iconText}`}>
@@ -385,8 +521,13 @@ export default function PricingPage() {
                       <h3 className={`text-xl font-bold ${colors.text}`}>{plan.name}</h3>
                     </div>
                     <div className="flex items-baseline">
-                      <span className="text-3xl font-bold text-gray-900 dark:text-white">{plan.price}{plan.currency}</span>
-                      <span className="text-sm text-gray-500 dark:text-gray-400 ml-1">/ 3 mois</span>
+                      <span className="text-3xl font-bold text-gray-900 dark:text-white">
+                        {plan.price}
+                        {plan.currency}
+                      </span>
+                      <span className="text-sm text-gray-500 dark:text-gray-400 ml-1">
+                        / {plan.id.includes("3mois") ? "3 mois" : plan.id.includes("6mois") ? "6 mois" : "1 an"}
+                      </span>
                     </div>
                     <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">{plan.description}</p>
                   </div>
@@ -446,7 +587,7 @@ export default function PricingPage() {
               </button>
             </div>
             <div className="p-6">
-              <PaymentForm plan={selectedPlan} onSuccess={closePaymentModal} />
+              <PaymentForm plan={selectedPlan} onSuccess={handlePaymentSuccess} />
             </div>
           </div>
         </div>

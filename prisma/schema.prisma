@@ -19,6 +19,7 @@ model User {
   balance       Float         @default(0)
   transactions  Transaction[]
   isSuperAdmin   Boolean   @default(false)   // nouvel ajout
+  eventLimits   Json?   // { "ANNIVERSAIRE": 50, "SOUTENANCE": null, ... } null = illimité
   events        Event[]
   accounts      Account[]
   sessions      Session[]
@@ -153,12 +154,16 @@ model Message {
 model Transaction {
   id          String   @id @default(cuid())
   userId      String
-  user        User     @relation(fields: [userId], references: [id])
-  type        String   // "deposit", "withdraw", "payment"
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        String   // "deposit" ou "payment"
+  operator    String?  // "mpesa" ou "airtel"
+  countryCode String?  // "CD", "KE", "UG", "TZ", "RW", "BI"
+  phoneNumber String?
   amount      Float
   currency    String   @default("USD")
   description String?
-  status      String   @default("pending")
-  reference   String?
+  proofImage  String?  // URL Cloudinary de la capture
+  status      String   @default("pending") // pending, completed, failed
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
