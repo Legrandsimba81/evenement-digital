@@ -14,12 +14,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "ID utilisateur manquant" }, { status: 400 });
     }
 
-    const { plan, operator, phoneNumber, proofImage, countryCode } = await request.json();
+    const { plan, operator, phoneNumber, proofImage, countryCode, fullName } = await request.json();
 
-    // Validation des champs obligatoires
-    if (!plan || !operator || !phoneNumber || !proofImage || !countryCode) {
+    // Validation
+    if (!plan || !operator || !phoneNumber || !proofImage || !countryCode || !fullName) {
       return NextResponse.json(
-        { error: "Tous les champs sont requis : plan, operator, phoneNumber, proofImage, countryCode" },
+        { error: "Tous les champs sont requis : plan, operator, phoneNumber, proofImage, countryCode, fullName" },
         { status: 400 }
       );
     }
@@ -32,6 +32,7 @@ export async function POST(request: Request) {
         operator,
         countryCode,
         phoneNumber,
+        fullName,
         amount: Number(plan.price),
         currency: plan.currency || "USD",
         description: `Dépôt pour ${plan.name}`,

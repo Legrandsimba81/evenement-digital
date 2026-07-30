@@ -1,3 +1,4 @@
+// app/(protected)/admin/page.tsx
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
@@ -15,11 +16,14 @@ import {
   Clock,
   Phone,
   X,
+  CreditCard,
+  Check,
 } from "lucide-react";
 import DeleteEventButton from "@/components/admin/DeleteEventButton";
 import UserAdminControls from "@/components/admin/UserAdminControls";
 import AdminSearch from "@/components/admin/AdminSearch";
 import UserLimitsButton from "@/components/admin/UserLimitsButton";
+import TransactionActions from "@/components/admin/TransactionActions";
 
 export const dynamic = "force-dynamic";
 
@@ -58,7 +62,7 @@ export default async function AdminPage({
       }
     : {};
 
-  const [users, events] = await Promise.all([
+  const [users, events, transactions] = await Promise.all([
     prisma.user.findMany({
       where: userWhere,
       orderBy: { createdAt: "desc" },
@@ -83,6 +87,11 @@ export default async function AdminPage({
         messages: true,
       },
     }),
+    prisma.transaction.findMany({
+      orderBy: { createdAt: "desc" },
+      include: { user: { select: { id: true, name: true, email: true } } },
+      take: 50,
+    }),
   ]);
 
   const usersWithAccounts = await prisma.user.findMany({
@@ -99,6 +108,7 @@ export default async function AdminPage({
     { label: "Événements", value: events.length, icon: Calendar, color: "from-green-500 to-green-600" },
     { label: "Messages", value: totalMessages, icon: MessageSquare, color: "from-purple-500 to-purple-600" },
     { label: "Invités", value: totalGuests, icon: User, color: "from-orange-500 to-orange-600" },
+    { label: "Transactions", value: transactions.length, icon: CreditCard, color: "from-yellow-500 to-yellow-600" },
   ];
 
   const formatDate = (date: Date) => {
@@ -106,8 +116,12 @@ export default async function AdminPage({
       day: "numeric",
       month: "long",
       year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     }).format(date);
   };
+
+  const pendingTransactions = transactions.filter((t) => t.status === "pending").length;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900 p-4 md:p-8">
@@ -119,7 +133,7 @@ export default async function AdminPage({
               Administration
             </h1>
             <p className="text-gray-500 dark:text-gray-400 mt-1">
-              Gérez les utilisateurs, les événements et les limites d'invités.
+              Gérez les utilisateurs, les événements et les transactions.
             </p>
           </div>
           <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mt-2 sm:mt-0">
@@ -128,7 +142,7 @@ export default async function AdminPage({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
           {stats.map((stat) => {
             const Icon = stat.icon;
             return (
@@ -356,6 +370,112 @@ export default async function AdminPage({
                         </td>
                       </tr>
                     ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+
+          {/* Transactions */}
+          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden flex flex-col">
+            <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                <CreditCard size={18} className="text-yellow-500" />
+                Transactions
+                <span className="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">
+                  ({transactions.length})
+                </span>
+                {pendingTransactions > 0 && (
+                  <span className="ml-2 px-2 py-0.5 bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300 rounded-full text-xs font-medium">
+                    {pendingTransactions} en attente
+                  </span>
+                )}
+              </h2>
+              <Link
+                href="/admin/transactions"
+                className="text-xs text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 flex items-center gap-1"
+              >
+                Voir tout <span className="inline-block transition-transform group-hover:translate-x-1">→</span>
+              </Link>
+            </div>
+            <div className="flex-1 overflow-x-auto overflow-y-auto max-h-[500px]">
+              {transactions.length === 0 ? (
+                <p className="text-gray-500 dark:text-gray-400 text-center py-8">Aucune transaction</p>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead className="sticky top-0 bg-gray-50 dark:bg-gray-800 z-10">
+                    <tr>
+                      <th className="text-left py-3 px-3 font-semibold text-gray-600 dark:text-gray-300">Utilisateur</th>
+                      <th className="text-left py-3 px-3 font-semibold text-gray-600 dark:text-gray-300">Nom complet</th>
+                      <th className="text-left py-3 px-3 font-semibold text-gray-600 dark:text-gray-300">Montant</th>
+                      <th className="text-left py-3 px-3 font-semibold text-gray-600 dark:text-gray-300">Opérateur</th>
+                      <th className="text-left py-3 px-3 font-semibold text-gray-600 dark:text-gray-300">Téléphone</th>
+                      <th className="text-left py-3 px-3 font-semibold text-gray-600 dark:text-gray-300">Pays</th>
+                      <th className="text-left py-3 px-3 font-semibold text-gray-600 dark:text-gray-300">Statut</th>
+                      <th className="text-left py-3 px-3 font-semibold text-gray-600 dark:text-gray-300">Date</th>
+                      <th className="text-center py-3 px-3 font-semibold text-gray-600 dark:text-gray-300">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {transactions.map((tx) => {
+                      const countryName = new Map([
+                        ["CD", "RDC"],
+                        ["KE", "Kenya"],
+                        ["UG", "Ouganda"],
+                        ["TZ", "Tanzanie"],
+                        ["RW", "Rwanda"],
+                        ["BI", "Burundi"],
+                      ]).get(tx.countryCode || "") || tx.countryCode || "—";
+                      return (
+                        <tr
+                          key={tx.id}
+                          className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition"
+                        >
+                          <td className="py-3 px-3">
+                            <div className="flex flex-col">
+                              <span className="font-medium text-gray-900 dark:text-white">
+                                {tx.user?.name || "Anonyme"}
+                              </span>
+                              <span className="text-xs text-gray-500 dark:text-gray-400">{tx.user?.email}</span>
+                            </div>
+                          </td>
+                          <td className="py-3 px-3">{tx.fullName || "—"}</td>
+                          <td className="py-3 px-3 font-medium">
+                            {tx.amount} {tx.currency}
+                          </td>
+                          <td className="py-3 px-3 capitalize">{tx.operator}</td>
+                          <td className="py-3 px-3 text-xs">{tx.phoneNumber}</td>
+                          <td className="py-3 px-3 text-xs">{countryName}</td>
+                          <td className="py-3 px-3">
+                            <span
+                              className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                tx.status === "completed"
+                                  ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
+                                  : tx.status === "pending"
+                                  ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300"
+                                  : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
+                              }`}
+                            >
+                              {tx.status === "completed"
+                                ? "Validé"
+                                : tx.status === "pending"
+                                ? "En attente"
+                                : "Rejeté"}
+                            </span>
+                          </td>
+                          <td className="py-3 px-3 text-xs whitespace-nowrap">
+                            {formatDate(tx.createdAt)}
+                          </td>
+                          <td className="py-3 px-3">
+                            <TransactionActions
+                              transactionId={tx.id}
+                              status={tx.status}
+                              proofImage={tx.proofImage}
+                            />
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               )}

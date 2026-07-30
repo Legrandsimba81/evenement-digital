@@ -17,20 +17,19 @@ interface PaymentFormProps {
 }
 
 const countries = [
-  { code: "CD", name: "République Démocratique du Congo", flag: "🇨🇩" },
-  { code: "KE", name: "Kenya", flag: "🇰🇪" },
-  { code: "UG", name: "Ouganda", flag: "🇺🇬" },
-  { code: "TZ", name: "Tanzanie", flag: "🇹🇿" },
-  { code: "RW", name: "Rwanda", flag: "🇷🇼" },
-  { code: "BI", name: "Burundi", flag: "🇧🇮" },
+  { code: "CD", name: "République Démocratique du Congo" },
+  { code: "KE", name: "Kenya" },
+  { code: "UG", name: "Ouganda" },
+  { code: "TZ", name: "Tanzanie" },
+  { code: "RW", name: "Rwanda" },
+  { code: "BI", name: "Burundi" },
 ];
 
 const operators = [
-  { id: "mpesa", name: "M-Pesa", logo: "📱" },
-  { id: "airtel", name: "Airtel Money", logo: "📲" },
+  { id: "mpesa", name: "M-Pesa" },
+  { id: "airtel", name: "Airtel Money" },
 ];
 
-// Numéros de dépôt (à remplacer par vos vrais numéros)
 const depositNumbers = {
   mpesa: {
     CD: "+243 999 999 999",
@@ -62,6 +61,7 @@ export default function PaymentForm({ plan, onSuccess }: PaymentFormProps) {
     countryCode: "CD",
     operator: "mpesa",
     phoneNumber: "",
+    fullName: session?.user?.name || "",
   });
 
   const [proofImage, setProofImage] = useState<File | null>(null);
@@ -85,17 +85,16 @@ export default function PaymentForm({ plan, onSuccess }: PaymentFormProps) {
   };
 
   const uploadImage = async (file: File): Promise<string> => {
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("upload_preset", "simba_events"); // À configurer dans Cloudinary
+    const uploadFormData = new FormData();
+    uploadFormData.append("file", file);
 
-    const res = await fetch(`https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`, {
+    const res = await fetch("/api/upload", {
       method: "POST",
-      body: formData,
+      body: uploadFormData,
     });
 
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error?.message || "Erreur d'upload");
+    if (!res.ok) throw new Error(data.error || "Erreur d'upload");
     return data.secure_url;
   };
 
@@ -110,10 +109,8 @@ export default function PaymentForm({ plan, onSuccess }: PaymentFormProps) {
     setError("");
 
     try {
-      // Upload de l'image
       const imageUrl = await uploadImage(proofImage);
 
-      // Envoi de la transaction
       const res = await fetch("/api/payment/initiate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -122,6 +119,7 @@ export default function PaymentForm({ plan, onSuccess }: PaymentFormProps) {
           operator: formData.operator,
           phoneNumber: formData.phoneNumber,
           countryCode: formData.countryCode,
+          fullName: formData.fullName,
           proofImage: imageUrl,
         }),
       });
@@ -131,7 +129,6 @@ export default function PaymentForm({ plan, onSuccess }: PaymentFormProps) {
 
       setIsSuccess(true);
       setTimeout(() => {
-        // Rediriger vers la création d'événement avec un paramètre pour indiquer que le paiement est en attente
         if (plan.eventType) {
           router.push(`/dashboard/event/new/${plan.eventType}?payment=pending`);
         } else {
@@ -173,9 +170,19 @@ export default function PaymentForm({ plan, onSuccess }: PaymentFormProps) {
         <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 rounded-xl text-2xl font-bold text-gray-900 dark:text-white">
           {plan.price} {plan.currency}
         </div>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-          Pour {plan.name}
-        </p>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Pour {plan.name}</p>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Nom complet (titulaire du compte)</label>
+        <input
+          type="text"
+          name="fullName"
+          value={formData.fullName}
+          onChange={handleChange}
+          required
+          className="mt-1 w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -189,7 +196,7 @@ export default function PaymentForm({ plan, onSuccess }: PaymentFormProps) {
           >
             {countries.map((c) => (
               <option key={c.code} value={c.code}>
-                {c.flag} {c.name}
+                {c.name}
               </option>
             ))}
           </select>
@@ -204,7 +211,7 @@ export default function PaymentForm({ plan, onSuccess }: PaymentFormProps) {
           >
             {operators.map((op) => (
               <option key={op.id} value={op.id}>
-                {op.logo} {op.name}
+                {op.name}
               </option>
             ))}
           </select>
@@ -212,9 +219,7 @@ export default function PaymentForm({ plan, onSuccess }: PaymentFormProps) {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Numéro de téléphone (pour le dépôt)
-        </label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Votre numéro de téléphone</label>
         <input
           type="tel"
           name="phoneNumber"
@@ -228,7 +233,7 @@ export default function PaymentForm({ plan, onSuccess }: PaymentFormProps) {
 
       <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-800">
         <p className="text-sm text-blue-700 dark:text-blue-300 font-medium">
-          📲 Effectuez le dépôt vers le numéro suivant :
+          Effectuez le dépôt vers le numéro suivant :
         </p>
         <p className="text-lg font-bold text-blue-800 dark:text-blue-200 mt-1">
           {getDepositNumber()}
@@ -239,9 +244,7 @@ export default function PaymentForm({ plan, onSuccess }: PaymentFormProps) {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Capture d'écran du dépôt
-        </label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Capture d'écran du dépôt</label>
         <div
           onClick={() => fileInputRef.current?.click()}
           className={`mt-1 flex flex-col items-center justify-center w-full p-6 border-2 border-dashed rounded-xl cursor-pointer transition ${
@@ -260,14 +263,12 @@ export default function PaymentForm({ plan, onSuccess }: PaymentFormProps) {
           {proofPreview ? (
             <div className="w-full">
               <img src={proofPreview} alt="Preuve" className="max-h-48 mx-auto rounded-lg" />
-              <p className="text-sm text-green-600 dark:text-green-400 mt-2 text-center">✅ Capture téléchargée</p>
+              <p className="text-sm text-green-600 dark:text-green-400 mt-2 text-center">Capture téléchargée</p>
             </div>
           ) : (
             <>
               <Upload size={40} className="text-gray-400" />
-              <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                Cliquez pour ajouter une capture
-              </p>
+              <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Cliquez pour ajouter une capture</p>
               <p className="text-xs text-gray-400">PNG, JPG, JPEG (max 5MB)</p>
             </>
           )}

@@ -156,6 +156,7 @@ model Transaction {
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   type        String   // "deposit" ou "payment"
+  fullName     String?   // nom de l'utilisateur qui fait le dépôt
   operator    String?  // "mpesa" ou "airtel"
   countryCode String?  // "CD", "KE", "UG", "TZ", "RW", "BI"
   phoneNumber String?
