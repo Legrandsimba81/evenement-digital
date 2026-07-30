@@ -10,13 +10,15 @@ export default function GuestForm({ eventId }: { eventId: string }) {
   const [invitationType, setInvitationType] = useState("single");
   const [guestLevel, setGuestLevel] = useState("STANDARD");
   const [customLevel, setCustomLevel] = useState("");
-  const [errors, setErrors] = useState({ firstName: "", lastName: "" });
+  const [errors, setErrors] = useState({ firstName: "", lastName: "", general: "" });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const validateField = (value: string) => /^[a-zA-ZÀ-ÿ'\-]+$/.test(value);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrors({ firstName: "", lastName: "" });
+    setErrors({ firstName: "", lastName: "", general: "" });
+    setIsSubmitting(true);
 
     let hasError = false;
     if (!validateField(firstName)) {
@@ -27,21 +29,37 @@ export default function GuestForm({ eventId }: { eventId: string }) {
       setErrors((prev) => ({ ...prev, lastName: "Le nom ne doit contenir qu'un seul mot (pas d'espaces)." }));
       hasError = true;
     }
-    if (hasError) return;
+    if (hasError) {
+      setIsSubmitting(false);
+      return;
+    }
 
     const finalLevel = guestLevel === "custom" ? customLevel.trim() : guestLevel;
-    await addGuest(eventId, firstName, lastName, title, invitationType, finalLevel);
-    setTitle("");
-    setFirstName("");
-    setLastName("");
-    setInvitationType("single");
-    setGuestLevel("STANDARD");
-    setCustomLevel("");
-    setErrors({ firstName: "", lastName: "" });
+
+    try {
+      await addGuest(eventId, firstName, lastName, title, invitationType, finalLevel);
+      setTitle("");
+      setFirstName("");
+      setLastName("");
+      setInvitationType("single");
+      setGuestLevel("STANDARD");
+      setCustomLevel("");
+      setErrors({ firstName: "", lastName: "", general: "" });
+    } catch (error: any) {
+      setErrors((prev) => ({ ...prev, general: error.message || "Erreur lors de l'ajout" }));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row flex-wrap gap-2 mt-2">
+      {errors.general && (
+        <div className="w-full p-2 bg-red-100 text-red-700 rounded text-sm border border-red-300">
+          {errors.general}
+        </div>
+      )}
+
       <select
         value={title}
         onChange={(e) => setTitle(e.target.value)}
@@ -118,8 +136,12 @@ export default function GuestForm({ eventId }: { eventId: string }) {
         )}
       </div>
 
-      <button type="submit" className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
-        Ajouter
+      <button
+        type="submit"
+        disabled={isSubmitting}
+        className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 disabled:opacity-50"
+      >
+        {isSubmitting ? "Ajout en cours..." : "Ajouter"}
       </button>
     </form>
   );

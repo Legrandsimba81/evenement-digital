@@ -25,6 +25,14 @@ export async function addCollaborator(eventId: string, email: string) {
   });
   if (existing) throw new Error("Cet utilisateur est déjà collaborateur");
 
+  // Vérifier le nombre de collaborateurs (max 2)
+  const count = await prisma.eventCollaborator.count({
+    where: { eventId },
+  });
+  if (count >= 2) {
+    throw new Error("Vous ne pouvez pas ajouter plus de 2 collaborateurs par événement.");
+  }
+
   await prisma.eventCollaborator.create({
     data: {
       eventId,

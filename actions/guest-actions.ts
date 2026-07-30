@@ -25,21 +25,23 @@ export async function addGuest(
 
   const event = await prisma.event.findUnique({
     where: { id: eventId },
-    include: { user: { select: { eventLimits: true } } },
+    include: { user: true },
   });
   if (!event) throw new Error("Événement non trouvé");
 
   const hasAccess = await canManageEvent(eventId, session.user.id);
   if (!hasAccess) throw new Error("Non autorisé");
 
-  // Vérifier les limites par type d'événement
-  const limits = event.user.eventLimits as Record<string, number | null> | null;
-  const limit = limits?.[event.type] ?? 5;
+  // Vérification des limites de l'organisateur
+  const owner = event.user;
+  const limits = owner.eventLimits as Record<string, number | null> | null;
+  const limit = limits?.[event.type] ?? 5; // par défaut 5
 
+  // Compter le nombre d'invités existants pour ce type d'événement
   const existingGuestsCount = await prisma.guest.count({
     where: {
       event: {
-        userId: session.user.id,
+        userId: owner.id,
         type: event.type,
       },
     },
@@ -189,7 +191,6 @@ export async function exportGuestList(eventId: string, format: "csv" | "pdf" = "
       g.invitationNumber || "",
       g.guestLevel || "",
     ]);
-
     const csvContent = [headers.join(","), ...rows.map((row) => row.join(","))].join("\n");
     return { success: true, csvContent };
   }
