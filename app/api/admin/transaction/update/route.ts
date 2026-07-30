@@ -1,6 +1,8 @@
+// app/api/admin/transaction/update/route.ts
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { notifyDepositValidated, notifyDepositRejected } from "@/lib/notifications";
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -15,22 +17,36 @@ export async function POST(request: Request) {
   }
 
   try {
-    const transaction = await prisma.transaction.update({
+    // Mise à jour avec sélection des champs nécessaires pour les notifications
+    const updated = await prisma.transaction.update({
       where: { id: transactionId },
       data: { status },
+      select: {
+        userId: true,
+        amount: true,
+        currency: true,
+      },
     });
 
-    // Si le statut devient "completed", ajouter le montant au solde de l'utilisateur
+    // Si la transaction est validée, créditer le solde et notifier
     if (status === "completed") {
       await prisma.user.update({
-        where: { id: transaction.userId },
-        data: { balance: { increment: transaction.amount } },
+        where: { id: updated.userId },
+        data: { balance: { increment: updated.amount } },
       });
+      await notifyDepositValidated(updated.userId, updated.amount, updated.currency);
+    } else if (status === "failed") {
+      await notifyDepositRejected(updated.userId, updated.amount, updated.currency);
     }
 
-    return NextResponse.json({ success: true, transaction });
+    // Récupérer la transaction complète pour la réponse (optionnel mais utile pour le frontend)
+    const fullTransaction = await prisma.transaction.findUnique({
+      where: { id: transactionId },
+    });
+
+    return NextResponse.json({ success: true, transaction: fullTransaction });
   } catch (error) {
-    console.error(error);
+    console.error("Erreur mise à jour transaction:", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

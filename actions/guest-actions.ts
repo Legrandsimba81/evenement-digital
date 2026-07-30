@@ -1,3 +1,4 @@
+// actions/guest-actions.ts
 "use server";
 
 import { prisma } from "@/lib/prisma";
@@ -5,6 +6,7 @@ import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import { canManageEvent } from "@/lib/permissions";
+import { createNotification, notifyLimitReached } from "@/lib/notifications";
 
 async function generateInvitationNumber(eventId: string): Promise<string> {
   const count = await prisma.guest.count({ where: { eventId } });
@@ -37,7 +39,6 @@ export async function addGuest(
   const limits = owner.eventLimits as Record<string, number | null> | null;
   const limit = limits?.[event.type] ?? 5; // par défaut 5
 
-  // Compter le nombre d'invités existants pour ce type d'événement
   const existingGuestsCount = await prisma.guest.count({
     where: {
       event: {
@@ -48,6 +49,8 @@ export async function addGuest(
   });
 
   if (limit !== null && existingGuestsCount >= limit) {
+    // Notification de limite atteinte avant de lancer l'erreur
+    await notifyLimitReached(owner.id, event.type, limit);
     throw new Error(
       `Limite atteinte : vous ne pouvez pas ajouter plus de ${limit} invités pour les événements de type "${event.type}".`
     );
@@ -67,6 +70,16 @@ export async function addGuest(
       guestLevel: guestLevel || null,
     },
   });
+
+  // Notification à l'organisateur
+  await createNotification({
+    userId: owner.id,
+    type: "info",
+    title: "Nouvel invité ajouté",
+    message: `${firstName} ${lastName} a été ajouté à l'événement "${event.title}".`,
+    link: `/dashboard/${event.slug}/guests`,
+  });
+
   revalidatePath(`/dashboard/${event.slug}`);
 }
 
@@ -83,7 +96,19 @@ export async function removeGuest(guestId: string) {
   const hasAccess = await canManageEvent(guest.eventId, session.user.id);
   if (!hasAccess) throw new Error("Non autorisé");
 
+  const guestName = guest.title ? `${guest.title} ${guest.firstName} ${guest.lastName}` : `${guest.firstName} ${guest.lastName}`;
+
   await prisma.guest.delete({ where: { id: guestId } });
+
+  // Notification à l'organisateur
+  await createNotification({
+    userId: guest.event.userId,
+    type: "warning",
+    title: "Invité supprimé",
+    message: `${guestName} a été retiré de l'événement "${guest.event.title}".`,
+    link: `/dashboard/${guest.event.slug}/guests`,
+  });
+
   revalidatePath(`/dashboard/${guest.event.slug}`);
 }
 
@@ -121,6 +146,19 @@ export async function updateGuest(
       guestLevel: data.guestLevel || null,
     },
   });
+
+  // Notification à l'organisateur
+  const guestName = data.firstName && data.lastName 
+    ? `${data.firstName} ${data.lastName}` 
+    : `${guest.firstName} ${guest.lastName}`;
+  await createNotification({
+    userId: guest.event.userId,
+    type: "info",
+    title: "Informations d'invité modifiées",
+    message: `Les informations de ${guestName} ont été mises à jour pour l'événement "${guest.event.title}".`,
+    link: `/dashboard/${guest.event.slug}/guests`,
+  });
+
   revalidatePath(`/dashboard/${guest.event.slug}`);
 }
 
@@ -137,10 +175,29 @@ export async function updateGuestStatus(guestId: string, status: string) {
   const hasAccess = await canManageEvent(guest.eventId, session.user.id);
   if (!hasAccess) throw new Error("Non autorisé");
 
+  const statusLabels: Record<string, string> = {
+    en_attente: "En attente",
+    attending: "Présent",
+    annule: "Annulé",
+    entre: "Entré",
+  };
+  const statusLabel = statusLabels[status] || status;
+
   await prisma.guest.update({
     where: { id: guestId },
     data: { status },
   });
+
+  // Notification à l'organisateur
+  const guestName = guest.title ? `${guest.title} ${guest.firstName} ${guest.lastName}` : `${guest.firstName} ${guest.lastName}`;
+  await createNotification({
+    userId: guest.event.userId,
+    type: "info",
+    title: "Statut d'invité mis à jour",
+    message: `${guestName} est maintenant "${statusLabel}" pour l'événement "${guest.event.title}".`,
+    link: `/dashboard/${guest.event.slug}/guests`,
+  });
+
   revalidatePath(`/dashboard/${guest.event.slug}`);
 }
 

@@ -1,3 +1,4 @@
+// actions/event-actions.ts
 "use server";
 
 import { prisma } from "@/lib/prisma";
@@ -6,13 +7,13 @@ import { revalidatePath } from "next/cache";
 import { randomUUID, randomBytes } from "crypto";
 import { canManageEvent } from "@/lib/permissions";
 import { createLog } from "@/actions/log-actions";
+import { notifyEventCreated, createNotification } from "@/lib/notifications";
 
 export async function createEvent(data: any) {
   try {
     const session = await auth();
     if (!session?.user?.id) throw new Error("Non authentifié");
 
-    // Vérifier que l'utilisateur est autorisé à créer
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
       select: { canCreateEvents: true, eventLimits: true },
@@ -21,14 +22,12 @@ export async function createEvent(data: any) {
       throw new Error("Votre compte est désactivé. Vous ne pouvez pas créer d'événement.");
     }
 
-    // Vérifier les limites par type d'événement
     const eventType = data.type;
     if (!eventType) throw new Error("Le type d'événement est requis.");
 
     const limits = user.eventLimits as Record<string, number | null> | null;
-    const limit = limits?.[eventType] ?? 5; // 5 par défaut
+    const limit = limits?.[eventType] ?? 5;
 
-    // Compter les invités existants pour ce type
     const existingGuestsCount = await prisma.guest.count({
       where: {
         event: {
@@ -93,6 +92,10 @@ export async function createEvent(data: any) {
     };
 
     const event = await prisma.event.create({ data: eventData });
+
+    // ✅ Notification de création
+    await notifyEventCreated(session.user.id, event.title, event.slug);
+
     revalidatePath("/dashboard");
     return { success: true, event };
   } catch (error: any) {
@@ -156,6 +159,16 @@ export async function updateEvent(slug: string, data: any) {
     });
 
     await createLog(event.id, session.user.id, "UPDATED_EVENT", `Modification de l'événement "${event.title}"`);
+
+    // ✅ Notification de modification
+    await createNotification({
+      userId: session.user.id,
+      type: "info",
+      title: "Événement modifié",
+      message: `L'événement "${updated.title}" a été mis à jour.`,
+      link: `/dashboard/${slug}`,
+    });
+
     revalidatePath(`/dashboard/${slug}`);
     return { success: true, event: updated };
   } catch (error: any) {
@@ -175,7 +188,18 @@ export async function deleteEvent(slug: string) {
     const hasAccess = await canManageEvent(event.id, session.user.id);
     if (!hasAccess) throw new Error("Non autorisé");
 
+    const eventTitle = event.title;
+
     await prisma.event.delete({ where: { slug } });
+
+    // ✅ Notification de suppression
+    await createNotification({
+      userId: session.user.id,
+      type: "warning",
+      title: "Événement supprimé",
+      message: `L'événement "${eventTitle}" a été supprimé.`,
+    });
+
     revalidatePath("/dashboard");
     return { success: true };
   } catch (error: any) {
@@ -194,7 +218,19 @@ export async function deleteEventAsAdmin(slug: string) {
     const event = await prisma.event.findUnique({ where: { slug } });
     if (!event) throw new Error("Événement non trouvé");
 
+    const eventTitle = event.title;
+    const ownerId = event.userId;
+
     await prisma.event.delete({ where: { slug } });
+
+    // ✅ Notification au propriétaire
+    await createNotification({
+      userId: ownerId,
+      type: "error",
+      title: "Événement supprimé par l'admin",
+      message: `Votre événement "${eventTitle}" a été supprimé par l'administration.`,
+    });
+
     revalidatePath("/admin");
     return { success: true };
   } catch (error: any) {

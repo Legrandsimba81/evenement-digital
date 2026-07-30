@@ -20,6 +20,8 @@ import {
   ChevronRight,
   BookOpen,
   Edit,
+  AlertTriangle,
+  Trash2,
 } from "lucide-react";
 
 type Transaction = {
@@ -40,6 +42,16 @@ type Event = {
   slug: string;
 };
 
+type Notification = {
+  id: string;
+  type: string;
+  title: string | null;
+  message: string;
+  read: boolean;
+  link: string | null;
+  createdAt: string;
+};
+
 type User = {
   id: string;
   name: string | null;
@@ -56,21 +68,15 @@ interface ProfileClientProps {
   user: User;
 }
 
-// Notifications simulées (à remplacer par des données réelles de la DB)
-const mockNotifications = [
-  { id: "1", message: "Votre dépôt de 5$ a été validé.", read: false, createdAt: new Date() },
-  { id: "2", message: "Votre événement 'Anniversaire de Marie' est prêt.", read: true, createdAt: new Date() },
-  { id: "3", message: "Limite d'invités atteinte pour les événements de type 'Mariage'.", read: false, createdAt: new Date() },
-];
-
 export default function ProfileClient({ user }: ProfileClientProps) {
   const { data: session } = useSession();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [phone, setPhone] = useState(user.phone || "");
   const [isPhoneModalOpen, setIsPhoneModalOpen] = useState(false);
-  const [notifications, setNotifications] = useState(mockNotifications);
-  const [unreadCount, setUnreadCount] = useState(mockNotifications.filter((n) => !n.read).length);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
 
   // Formatage
   const formatDate = (date: Date) => {
@@ -87,6 +93,27 @@ export default function ProfileClient({ user }: ProfileClientProps) {
       currency: "USD",
     }).format(amount);
   };
+
+  // Chargement des notifications
+  const fetchNotifications = async () => {
+    setIsLoadingNotifications(true);
+    try {
+      const res = await fetch("/api/notifications");
+      const data = await res.json();
+      if (res.ok) {
+        setNotifications(data);
+        setUnreadCount(data.filter((n: Notification) => !n.read).length);
+      }
+    } catch (error) {
+      console.error("Erreur chargement notifications:", error);
+    } finally {
+      setIsLoadingNotifications(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
 
   // Mise à jour du téléphone
   const handleUpdatePhone = async (e: React.FormEvent) => {
@@ -115,11 +142,60 @@ export default function ProfileClient({ user }: ProfileClientProps) {
 
   // Marquer une notification comme lue
   const markAsRead = async (id: string) => {
-    // Simuler un appel API
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-    );
-    setUnreadCount((prev) => Math.max(0, prev - 1));
+    try {
+      const res = await fetch("/api/notifications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "markRead", notificationId: id }),
+      });
+      if (res.ok) {
+        setNotifications((prev) =>
+          prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+        );
+        setUnreadCount((prev) => Math.max(0, prev - 1));
+      }
+    } catch (error) {
+      console.error("Erreur marquage lecture:", error);
+    }
+  };
+
+  // Supprimer une notification
+  const deleteNotification = async (id: string) => {
+    if (!confirm("Supprimer cette notification ?")) return;
+    try {
+      const res = await fetch("/api/notifications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "delete", notificationId: id }),
+      });
+      if (res.ok) {
+        setNotifications((prev) => prev.filter((n) => n.id !== id));
+        // Recalculer le compteur non lues
+        setUnreadCount((prev) => {
+          const removed = notifications.find((n) => n.id === id);
+          return removed && !removed.read ? prev - 1 : prev;
+        });
+      }
+    } catch (error) {
+      console.error("Erreur suppression:", error);
+    }
+  };
+
+  // Tout marquer comme lu
+  const markAllRead = async () => {
+    try {
+      const res = await fetch("/api/notifications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "markAllRead" }),
+      });
+      if (res.ok) {
+        setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+        setUnreadCount(0);
+      }
+    } catch (error) {
+      console.error("Erreur marquage tout lu:", error);
+    }
   };
 
   return (
@@ -130,6 +206,27 @@ export default function ProfileClient({ user }: ProfileClientProps) {
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Mon profil</h1>
           <p className="text-gray-600 dark:text-gray-400">Gérez vos informations, votre portefeuille et vos préférences.</p>
         </div>
+
+        {/* Alerte si téléphone manquant */}
+        {!user.phone && (
+          <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl flex items-start gap-3">
+            <AlertTriangle size={20} className="text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                Numéro de téléphone manquant
+              </p>
+              <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                Pour recevoir des notifications et faciliter vos paiements, ajoutez votre numéro de téléphone.
+              </p>
+              <button
+                onClick={() => setIsPhoneModalOpen(true)}
+                className="mt-1 text-sm font-medium text-yellow-800 dark:text-yellow-200 underline hover:no-underline"
+              >
+                Ajouter maintenant
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Colonne de gauche : Infos personnelles et événements */}
@@ -255,7 +352,6 @@ export default function ProfileClient({ user }: ProfileClientProps) {
                 </p>
               </div>
 
-              {/* Bouton Déposer (redirige vers les tarifs) */}
               <button
                 onClick={() => router.push("/tarifs")}
                 className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition text-sm font-medium"
@@ -311,37 +407,55 @@ export default function ProfileClient({ user }: ProfileClientProps) {
                 </h3>
                 {notifications.length > 0 && (
                   <button
-                    onClick={() => {
-                      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-                      setUnreadCount(0);
-                    }}
+                    onClick={markAllRead}
                     className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
                   >
                     Tout marquer comme lu
                   </button>
                 )}
               </div>
-              {notifications.length === 0 ? (
+              {isLoadingNotifications ? (
+                <div className="flex justify-center py-4">
+                  <Loader2 size={24} className="animate-spin text-blue-500" />
+                </div>
+              ) : notifications.length === 0 ? (
                 <p className="text-xs text-gray-500 dark:text-gray-400">Aucune notification.</p>
               ) : (
                 <ul className="space-y-2 max-h-48 overflow-y-auto pr-1">
                   {notifications.map((n) => (
                     <li
                       key={n.id}
-                      className={`flex items-start gap-2 text-sm py-2 px-2 rounded-lg ${!n.read ? "bg-blue-50 dark:bg-blue-900/20" : ""}`}
+                      className={`flex items-start gap-2 text-sm py-2 px-2 rounded-lg transition ${
+                        !n.read ? "bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800" : ""
+                      }`}
                     >
-                      <div className="flex-1">
-                        <p className="text-gray-700 dark:text-gray-300">{n.message}</p>
-                        <p className="text-xs text-gray-400">{new Date(n.createdAt).toLocaleDateString('fr-FR')}</p>
+                      <div className="flex-1 min-w-0">
+                        {n.title && (
+                          <p className="font-medium text-gray-800 dark:text-gray-200">{n.title}</p>
+                        )}
+                        <p className="text-gray-700 dark:text-gray-300 break-words">{n.message}</p>
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          {new Date(n.createdAt).toLocaleDateString('fr-FR')} à {new Date(n.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                        </p>
                       </div>
-                      {!n.read && (
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        {!n.read && (
+                          <button
+                            onClick={() => markAsRead(n.id)}
+                            className="p-1 rounded hover:bg-blue-100 dark:hover:bg-blue-800 text-blue-500 hover:text-blue-700 transition"
+                            title="Marquer comme lu"
+                          >
+                            <CheckCircle size={14} />
+                          </button>
+                        )}
                         <button
-                          onClick={() => markAsRead(n.id)}
-                          className="text-xs text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                          onClick={() => deleteNotification(n.id)}
+                          className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/20 text-red-400 hover:text-red-600 transition"
+                          title="Supprimer"
                         >
-                          Marquer lu
+                          <Trash2 size={14} />
                         </button>
-                      )}
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -401,3 +515,22 @@ export default function ProfileClient({ user }: ProfileClientProps) {
     </div>
   );
 }
+
+// Composant local pour CheckCircle (ou importer de lucide-react)
+const CheckCircle = ({ size = 16, className = "" }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+    <polyline points="22 4 12 14.01 9 11.01" />
+  </svg>
+);
