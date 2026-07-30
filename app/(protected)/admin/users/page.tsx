@@ -24,6 +24,7 @@ export default async function AdminUsersPage({
   searchParams: { search?: string };
 }) {
   const session = await auth();
+  const currentUserIsSuperAdmin = session?.user?.isSuperAdmin || false;
   if (!session?.user || session.user.role !== "ADMIN") {
     redirect("/dashboard");
   }
@@ -192,6 +193,7 @@ export default async function AdminUsersPage({
                           currentStatus={user.canCreateEvents}
                           userName={user.name || ""}
                           isSuperAdmin={user.isSuperAdmin || false}
+                          currentUserIsSuperAdmin={currentUserIsSuperAdmin}
                         />
                       </td>
                     </tr>
