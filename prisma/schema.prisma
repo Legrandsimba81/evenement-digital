@@ -16,6 +16,8 @@ model User {
   password      String?
   phone            String?   // nouveau
   role          String    @default("USER")
+  balance       Float         @default(0)
+  transactions  Transaction[]
   isSuperAdmin   Boolean   @default(false)   // nouvel ajout
   events        Event[]
   accounts      Account[]
@@ -148,3 +150,15 @@ model Message {
   updatedAt     DateTime  @updatedAt
 }
 
+model Transaction {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  type        String   // "deposit", "withdraw", "payment"
+  amount      Float
+  currency    String   @default("USD")
+  description String?
+  status      String   @default("pending")
+  reference   String?
+  createdAt   DateTime @default(now())
+}

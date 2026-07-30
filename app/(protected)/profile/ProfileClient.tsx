@@ -1,0 +1,350 @@
+// app/(protected)/profile/ProfileClient.tsx
+"use client";
+
+import { useState } from "react";
+import { Calendar, Mail, User, Users, Wallet, ArrowDownRight, ArrowUpRight, CreditCard, Plus, Minus, X, Loader2 } from "lucide-react";
+import Link from "next/link";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+
+type Transaction = {
+  id: string;
+  type: string;
+  amount: number;
+  currency: string;
+  description: string | null;
+  status: string;
+  createdAt: Date;
+};
+
+type Event = {
+  id: string;
+  title: string;
+  type: string;
+  date: Date;
+  slug: string;
+};
+
+type User = {
+  id: string;
+  name: string | null;
+  email: string;
+  role: string;
+  balance: number;
+  createdAt: Date;
+  events: Event[];
+  transactions: Transaction[];
+};
+
+interface ProfileClientProps {
+  user: User;
+}
+
+export default function ProfileClient({ user }: ProfileClientProps) {
+  const { data: session } = useSession();
+  const router = useRouter();
+  const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
+  const [walletAction, setWalletAction] = useState<"deposit" | "withdraw" | null>(null);
+  const [amount, setAmount] = useState("");
+  const [description, setDescription] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Gestion du dépôt / retrait
+  const handleWalletAction = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!amount || parseFloat(amount) <= 0) {
+      alert("Veuillez saisir un montant valide.");
+      return;
+    }
+    if (walletAction === "withdraw" && parseFloat(amount) > user.balance) {
+      alert("Solde insuffisant.");
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const res = await fetch("/api/wallet/transaction", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: walletAction,
+          amount: parseFloat(amount),
+          description: description || (walletAction === "deposit" ? "Dépôt" : "Retrait"),
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(data.message);
+        router.refresh();
+        setIsWalletModalOpen(false);
+        setAmount("");
+        setDescription("");
+        setWalletAction(null);
+      } else {
+        alert(data.error || "Erreur lors de l'opération.");
+      }
+    } catch (error) {
+      alert("Erreur réseau.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Paiement d'un événement (exemple : on peut payer depuis le profil)
+  const handlePayEvent = async (eventId: string, amount: number) => {
+    if (!confirm(`Payer ${amount}$ pour cet événement ?`)) return;
+    setIsLoading(true);
+    try {
+      const res = await fetch("/api/wallet/pay-event", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eventId, amount }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert("Paiement effectué avec succès !");
+        router.refresh();
+      } else {
+        alert(data.error || "Erreur de paiement.");
+      }
+    } catch (error) {
+      alert("Erreur réseau.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const formatDate = (date: Date) => {
+    return new Intl.DateTimeFormat("fr-FR", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }).format(date);
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("fr-FR", {
+      style: "currency",
+      currency: "USD",
+    }).format(amount);
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-950 dark:to-gray-900 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-5xl mx-auto">
+        {/* En-tête */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Mon profil</h1>
+          <p className="text-gray-600 dark:text-gray-400">Gérez vos informations et votre portefeuille.</p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Informations personnelles */}
+          <div className="lg:col-span-2 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50 dark:border-gray-800/50">
+            <div className="flex items-start gap-6">
+              <div className="h-20 w-20 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-3xl font-bold text-white shadow-lg">
+                {user.name?.charAt(0).toUpperCase() || "U"}
+              </div>
+              <div className="flex-1">
+                <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
+                  {user.name || "Utilisateur"}
+                </h2>
+                <div className="mt-2 space-y-1 text-sm text-gray-600 dark:text-gray-400">
+                  <div className="flex items-center gap-2">
+                    <Mail size={16} className="text-blue-500" />
+                    <span>{user.email}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <User size={16} className="text-blue-500" />
+                    <span>Rôle : {user.role}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Calendar size={16} className="text-blue-500" />
+                    <span>Membre depuis le {formatDate(user.createdAt)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Derniers événements */}
+            <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                <Users size={18} className="text-blue-500" />
+                Mes derniers événements
+              </h3>
+              {user.events.length === 0 ? (
+                <p className="text-gray-500 dark:text-gray-400 text-sm">Vous n'avez pas encore créé d'événement.</p>
+              ) : (
+                <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+                  {user.events.map((event) => (
+                    <li key={event.id} className="py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                      <div>
+                        <p className="font-medium text-gray-900 dark:text-white">{event.title}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          {event.type} • {formatDate(event.date)}
+                        </p>
+                      </div>
+                      <Link
+                        href={`/dashboard/${event.slug}`}
+                        className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium inline-flex items-center gap-1"
+                      >
+                        Gérer
+                        <span className="inline-block transition-transform group-hover:translate-x-1">→</span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {user.events.length > 0 && (
+                <div className="mt-4 text-center">
+                  <Link href="/dashboard" className="text-blue-600 hover:underline dark:text-blue-400 text-sm">
+                    Voir tous mes événements
+                  </Link>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Portefeuille */}
+          <div className="lg:col-span-1 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50 dark:border-gray-800/50">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                <Wallet size={18} className="text-blue-500" />
+                Portefeuille
+              </h3>
+              <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
+                {user.balance >= 0 ? "Actif" : "En attente"}
+              </span>
+            </div>
+
+            <div className="text-center mb-6">
+              <p className="text-sm text-gray-500 dark:text-gray-400">Solde disponible</p>
+              <p className="text-4xl font-bold text-gray-900 dark:text-white">
+                {formatCurrency(user.balance)}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => {
+                  setWalletAction("deposit");
+                  setIsWalletModalOpen(true);
+                }}
+                className="flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition text-sm font-medium"
+              >
+                <Plus size={16} />
+                Déposer
+              </button>
+              <button
+                onClick={() => {
+                  setWalletAction("withdraw");
+                  setIsWalletModalOpen(true);
+                }}
+                className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-xl transition text-sm font-medium"
+              >
+                <Minus size={16} />
+                Retirer
+              </button>
+            </div>
+
+            {/* Historique des transactions */}
+            <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                <CreditCard size={14} />
+                Dernières transactions
+              </h4>
+              {user.transactions.length === 0 ? (
+                <p className="text-xs text-gray-500 dark:text-gray-400">Aucune transaction.</p>
+              ) : (
+                <ul className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                  {user.transactions.map((tx) => (
+                    <li key={tx.id} className="flex items-center justify-between text-sm py-1.5 border-b border-gray-100 dark:border-gray-800 last:border-0">
+                      <div className="flex items-center gap-2">
+                        {tx.type === "deposit" && <ArrowDownRight size={14} className="text-green-500" />}
+                        {tx.type === "withdraw" && <ArrowUpRight size={14} className="text-red-500" />}
+                        {tx.type === "payment" && <CreditCard size={14} className="text-blue-500" />}
+                        <span className="text-gray-700 dark:text-gray-300">
+                          {tx.type === "deposit" ? "Dépôt" : tx.type === "withdraw" ? "Retrait" : "Paiement"}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className={`font-medium ${tx.type === "deposit" ? "text-green-600" : tx.type === "withdraw" ? "text-red-600" : "text-blue-600"}`}>
+                          {tx.type === "deposit" ? "+" : "-"}
+                          {formatCurrency(tx.amount)}
+                        </span>
+                        <span className="text-xs text-gray-400">{new Date(tx.createdAt).toLocaleDateString('fr-FR')}</span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Modal Dépôt/Retrait */}
+      {isWalletModalOpen && walletAction && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl max-w-md w-full p-6 shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                {walletAction === "deposit" ? "Déposer" : "Retirer"} des fonds
+              </h3>
+              <button
+                onClick={() => setIsWalletModalOpen(false)}
+                className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+              >
+                <X size={24} className="text-gray-500 dark:text-gray-400" />
+              </button>
+            </div>
+
+            <form onSubmit={handleWalletAction} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Montant</label>
+                <div className="mt-1 relative">
+                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">$</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    required
+                    className="pl-8 w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="0.00"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Description (optionnel)</label>
+                <input
+                  type="text"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="mt-1 w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Motif..."
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 size={20} className="animate-spin" />
+                    Traitement...
+                  </>
+                ) : (
+                  `${walletAction === "deposit" ? "Déposer" : "Retirer"}`
+                )}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
