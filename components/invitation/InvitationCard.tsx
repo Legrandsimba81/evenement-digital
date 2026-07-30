@@ -7,15 +7,6 @@ import { captureElement } from "@/lib/captureImage";
 import { Theme, getThemeById } from "@/lib/themes";
 import { useInView } from "react-intersection-observer";
 
-type Guest = {
-  id: string;
-  firstName: string;
-  lastName: string;
-  title?: string | null;
-  status?: string | null;
-  guestLevel?: string | null;
-};
-
 type Event = {
   id: string;
   title: string;
@@ -110,9 +101,12 @@ export default function InvitationCard({
   const qrRef = useRef<HTMLDivElement>(null);
   const [imagesLoaded, setImagesLoaded] = useState(false);
 
-  // Animations with IntersectionObserver
+  // Animations
   const [heroRef, heroInView] = useInView({ triggerOnce: true, threshold: 0.1 });
+  const [titleRef, titleInView] = useInView({ triggerOnce: true, threshold: 0.1 });
+  const [textRef, textInView] = useInView({ triggerOnce: true, threshold: 0.1 });
   const [detailsRef, detailsInView] = useInView({ triggerOnce: true, threshold: 0.1 });
+  const [programRef, programInView] = useInView({ triggerOnce: true, threshold: 0.1 });
   const [qrRefObserver, qrInView] = useInView({ triggerOnce: true, threshold: 0.1 });
 
   const peopleLabel = guestInvitationType === "couple" ? "2 personnes" : "1 personne";
@@ -285,171 +279,174 @@ export default function InvitationCard({
 
   return (
     <div className="rounded-2xl shadow-xl overflow-hidden bg-white">
-      {/* Carte à capturer */}
-      <div ref={cardRef} className="bg-white">
-        {/* Image héros avec animation */}
-        <div
-          ref={heroRef}
-          className={`relative w-full aspect-video overflow-hidden bg-gray-100 ${fadeInUp} ${
-            heroInView ? fadeInUpVisible : fadeInUpHidden
-          }`}
-        >
-          {event.imageUrl ? (
-            <img
-              src={event.imageUrl}
-              alt="Photo de l'événement"
-              className="w-full h-full object-cover object-center"
-            />
+      {/* Image héros (en dehors de la capture) */}
+      <div
+        ref={heroRef}
+        className={`relative w-full aspect-video overflow-hidden bg-gray-100 ${fadeInUp} ${
+          heroInView ? fadeInUpVisible : fadeInUpHidden
+        }`}
+      >
+        {event.imageUrl ? (
+          <img
+            src={event.imageUrl}
+            alt="Photo de l'événement"
+            className="w-full h-full object-cover object-center"
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center">
+            <div className="flex flex-col items-center text-white">
+              <Icon size={64} className="mb-4" />
+              <span className="text-4xl font-bold">{config.label}</span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Contenu à capturer (depuis le titre jusqu'au QR) */}
+      <div ref={cardRef} className="bg-white p-4 sm:p-6 md:p-8 space-y-6">
+        {/* En-tête : titre grand, puis icône et nombre de personnes en dessous */}
+        <div ref={titleRef} className={`space-y-2 ${fadeInUp} ${titleInView ? fadeInUpVisible : fadeInUpHidden}`}>
+          {isBillet ? (
+            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">
+              Billet de {event.title}
+            </h1>
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center">
-              <div className="flex flex-col items-center text-white">
-                <Icon size={64} className="mb-4" />
-                <span className="text-4xl font-bold">{config.label}</span>
+            <>
+              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900" style={{ color: colors.hexPrimary }}>
+                {event.title}
+              </h1>
+              <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600">
+                <span className="flex items-center gap-1">
+                  <Icon size={18} style={{ color: colors.hexPrimary }} />
+                  {invitationTitle}
+                </span>
+                <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700">
+                  {peopleIcon === Users ? <Users size={14} /> : <User size={14} />}
+                  {peopleLabel}
+                </span>
               </div>
+            </>
+          )}
+        </div>
+
+        {/* Bonjour + niveau + numéro d'invitation */}
+        <div ref={textRef} className={`${fadeInUp} ${textInView ? fadeInUpVisible : fadeInUpHidden}`}>
+          <p className="text-base sm:text-lg text-gray-600">
+            Bonjour <span className="font-semibold text-gray-900">{fullName}</span>
+            {guestLevel && (
+              <span className="ml-2 inline-block text-xs px-2 py-1 rounded-full bg-primary-100 text-primary-700 font-medium">
+                {guestLevel}
+              </span>
+            )}
+          </p>
+
+          {event.invitationNumber && (
+            <div className="mt-3 p-3 bg-gray-50 rounded-xl">
+              <span className="font-medium text-gray-700">
+                <span style={{ color: colors.hexPrimary }} className="font-bold">#</span> {event.invitationNumber}
+              </span>
+            </div>
+          )}
+
+          {event.type === "SOUTENANCE" && event.thesisTitle && (
+            <div className="mt-4 p-4 bg-purple-50 rounded-xl">
+              <p className="text-sm text-gray-700">
+                <span className="font-semibold">Sujet de thèse :</span> {event.thesisTitle}
+              </p>
             </div>
           )}
         </div>
 
-        {/* Contenu de l'invitation */}
-        <div className="p-4 sm:p-6 md:p-8 space-y-6">
-          {/* En-tête */}
+        {/* Texte d'invitation */}
+        {event.invitationText && (
           <div
-            ref={detailsRef}
-            className={`${fadeInUp} ${
-              detailsInView ? fadeInUpVisible : fadeInUpHidden
-            }`}
+            ref={textRef}
+            className={`p-5 rounded-xl ${fadeInUp} ${textInView ? fadeInUpVisible : fadeInUpHidden}`}
+            style={{ backgroundColor: colors.hexBackground || '#f8fafc' }}
           >
-            <div className="flex flex-wrap items-start justify-between gap-2">
-              {isBillet ? (
-                <h1 className="text-2xl font-bold text-gray-900">
-                  Billet de {event.title}
-                </h1>
-              ) : (
-                <>
-                  <div className="flex items-center gap-2">
-                    <Icon size={20} style={{ color: colors.hexPrimary }} />
-                    <span className="text-sm font-semibold" style={{ color: colors.hexPrimary }}>
-                      {invitationTitle}
-                    </span>
-                  </div>
-                  <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700">
-                    {peopleIcon === Users ? <Users size={14} /> : <User size={14} />}
-                    {peopleLabel}
-                  </span>
-                </>
-              )}
-            </div>
-
-            <p className="text-base sm:text-lg text-gray-600 mt-2">
-              Bonjour <span className="font-semibold text-gray-900">{fullName}</span>
-              {guestLevel && (
-                <span className="ml-2 inline-block text-xs px-2 py-1 rounded-full bg-primary-100 text-primary-700 font-medium">
-                  {guestLevel}
-                </span>
-              )}
+            <p className="text-gray-800 italic text-base sm:text-lg leading-relaxed">
+              {event.invitationText}
             </p>
-
-            {event.invitationNumber && (
-              <div className="mt-3 p-3 bg-gray-50 rounded-xl">
-                <span className="font-medium text-gray-700">
-                  <span style={{ color: colors.hexPrimary }} className="font-bold">#</span> {event.invitationNumber}
-                </span>
-              </div>
-            )}
-
-            {event.type === "SOUTENANCE" && event.thesisTitle && (
-              <div className="mt-4 p-4 bg-purple-50 rounded-xl">
-                <p className="text-sm text-gray-700">
-                  <span className="font-semibold">Sujet de thèse :</span> {event.thesisTitle}
-                </p>
-              </div>
-            )}
           </div>
+        )}
 
-          {/* Texte d'invitation */}
-          {event.invitationText && (
-            <div
-              className={`p-5 rounded-xl ${fadeInUp} ${
-                detailsInView ? fadeInUpVisible : fadeInUpHidden
-              }`}
-              style={{ backgroundColor: colors.hexBackground || '#f8fafc' }}
+        {/* Image d'invitation */}
+        {event.invitationImageUrl && (
+          <div ref={textRef} className={`rounded-xl overflow-hidden shadow-sm ${fadeInUp} ${textInView ? fadeInUpVisible : fadeInUpHidden}`}>
+            <img
+              src={event.invitationImageUrl}
+              alt="Invitation"
+              className="w-full h-auto aspect-video object-cover"
+            />
+          </div>
+        )}
+
+        {/* Détails (date, heure, lieu) */}
+        <div
+          ref={detailsRef}
+          className={`grid grid-cols-1 sm:grid-cols-3 gap-4 ${fadeInUp} ${
+            detailsInView ? fadeInUpVisible : fadeInUpHidden
+          }`}
+        >
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50">
+            <Calendar size={20} style={{ color: colors.hexPrimary }} className="flex-shrink-0" />
+            <span className="text-sm text-gray-700">
+              {new Date(event.date).toLocaleDateString('fr-FR', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+              })}
+            </span>
+          </div>
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50">
+            <Clock size={20} style={{ color: colors.hexPrimary }} className="flex-shrink-0" />
+            <span className="text-sm text-gray-700">{event.time}</span>
+          </div>
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50">
+            <MapPin size={20} style={{ color: colors.hexPrimary }} className="flex-shrink-0" />
+            <span className="text-sm text-gray-700">{event.location}</span>
+          </div>
+        </div>
+
+        {/* Programme */}
+        {event.program && (
+          <div
+            ref={programRef}
+            className={`p-5 rounded-xl ${fadeInUp} ${programInView ? fadeInUpVisible : fadeInUpHidden}`}
+            style={{ backgroundColor: colors.hexBackground || '#f8fafc' }}
+          >
+            <h3
+              className="font-semibold mb-3 inline-block px-3 py-1 rounded-lg text-white"
+              style={{ backgroundColor: colors.hexPrimary }}
             >
-              <p className="text-gray-800 italic text-base sm:text-lg leading-relaxed">
-                {event.invitationText}
-              </p>
-            </div>
-          )}
-
-          {/* Image d'invitation */}
-          {event.invitationImageUrl && (
-            <div className="rounded-xl overflow-hidden shadow-sm">
-              <img
-                src={event.invitationImageUrl}
-                alt="Invitation"
-                className="w-full h-auto aspect-video object-cover"
-              />
-            </div>
-          )}
-
-          {/* Détails (date, heure, lieu) */}
-          <div
-            className={`grid grid-cols-1 sm:grid-cols-3 gap-4 ${fadeInUp} ${
-              detailsInView ? fadeInUpVisible : fadeInUpHidden
-            }`}
-          >
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50">
-              <Calendar size={20} style={{ color: colors.hexPrimary }} className="flex-shrink-0" />
-              <span className="text-sm text-gray-700">
-                {new Date(event.date).toLocaleDateString('fr-FR', {
-                  weekday: 'long',
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric'
-                })}
-              </span>
-            </div>
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50">
-              <Clock size={20} style={{ color: colors.hexPrimary }} className="flex-shrink-0" />
-              <span className="text-sm text-gray-700">{event.time}</span>
-            </div>
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50">
-              <MapPin size={20} style={{ color: colors.hexPrimary }} className="flex-shrink-0" />
-              <span className="text-sm text-gray-700">{event.location}</span>
+              Programme de la journée
+            </h3>
+            <div className="text-gray-700 whitespace-pre-line text-sm sm:text-base">
+              {event.program}
             </div>
           </div>
+        )}
 
-          {/* Programme */}
-          {event.program && (
-            <div className="p-5 bg-gray-50 rounded-xl">
-              <h3 className="font-semibold mb-3 inline-block px-3 py-1 rounded-lg" style={{ backgroundColor: colors.hexPrimary, color: '#fff' }}>
-                Programme de la journée
-              </h3>
-              <div className="text-gray-700 whitespace-pre-line text-sm sm:text-base">
-                {event.program}
-              </div>
-            </div>
-          )}
-
-          {/* QR Code - pleine largeur avec fond distinct */}
-          <div
-            ref={qrRefObserver}
-            className={`w-full -mx-4 sm:-mx-6 md:-mx-8 px-4 sm:px-6 md:px-8 py-6 bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 ${fadeInUp} ${
-              qrInView ? fadeInUpVisible : fadeInUpHidden
-            }`}
-          >
-            <div ref={qrRef} className="flex flex-col items-center bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg max-w-xs mx-auto">
-              <QRCode value={invitationLink} size={160} />
-              <p className="text-center text-sm text-gray-600 mt-3 font-medium">
-                Scannez pour accéder à l'invitation
-              </p>
-            </div>
+        {/* QR Code - fond distinct */}
+        <div
+          ref={qrRefObserver}
+          className={`w-full -mx-4 sm:-mx-6 md:-mx-8 px-4 sm:px-6 md:px-8 py-6 ${fadeInUp} ${
+            qrInView ? fadeInUpVisible : fadeInUpHidden
+          }`}
+          style={{ background: `linear-gradient(to right, ${colors.hexPrimary}15, ${colors.hexSecondary}25)` }}
+        >
+          <div ref={qrRef} className="flex flex-col items-center bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-lg max-w-xs mx-auto">
+            <QRCode value={invitationLink} size={160} />
+            <p className="text-center text-sm text-gray-600 mt-3 font-medium">
+              Scannez pour accéder à l'invitation
+            </p>
           </div>
         </div>
       </div>
 
-      {/* BOUTONS D'ACTION - EN DEHORS DE LA CARTE */}
+      {/* Boutons d'action (en dehors de la capture) */}
       <div className="p-4 sm:p-6 md:p-8 pt-0 space-y-4 bg-white rounded-b-2xl">
-        {/* Ligne de téléchargements */}
         <div className="flex flex-col sm:flex-row gap-3">
           <button
             onClick={downloadInvitation}
@@ -472,7 +469,6 @@ export default function InvitationCard({
           </button>
         </div>
 
-        {/* Boutons de statut (présent/absent) */}
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <button
             onClick={() => handleAttendance("attending")}
