@@ -209,7 +209,6 @@ export default function InvitationCard({
 
   // Marquer le QR comme prêt après rendu
   useEffect(() => {
-    // Le QR est généré immédiatement, mais on attend un tick pour être sûr
     const timer = setTimeout(() => setQrReady(true), 100);
     return () => clearTimeout(timer);
   }, []);
@@ -251,7 +250,6 @@ export default function InvitationCard({
     }
     setIsDownloading(true);
     try {
-      // captureElement avec fond blanc forcé
       const canvas = await captureElement(cardRef.current, { backgroundColor: '#ffffff' });
       const link = document.createElement("a");
       link.download = `invitation-${event.slug}.png`;
@@ -359,7 +357,7 @@ export default function InvitationCard({
           </p>
 
           {event.invitationNumber && (
-            <div className="mt-3 p-3 bg-gray-50 rounded-xl">
+            <div className="mt-3 p-3 rounded-xl" style={{ backgroundColor: '#f9fafb' }}>
               <span className="font-medium text-gray-700">
                 <span style={{ color: colors.hexPrimary }} className="font-bold">#</span> {event.invitationNumber}
               </span>
@@ -367,7 +365,7 @@ export default function InvitationCard({
           )}
 
           {event.type === "SOUTENANCE" && event.thesisTitle && (
-            <div className="mt-4 p-4 bg-purple-50 rounded-xl">
+            <div className="mt-4 p-4 rounded-xl" style={{ backgroundColor: '#f3e8ff' }}>
               <p className="text-sm text-gray-700">
                 <span className="font-semibold">Sujet de thèse :</span> {event.thesisTitle}
               </p>
@@ -406,7 +404,7 @@ export default function InvitationCard({
             detailsInView ? fadeInUpVisible : fadeInUpHidden
           }`}
         >
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50">
+          <div className="flex items-center gap-3 p-3 rounded-xl" style={{ backgroundColor: '#f9fafb' }}>
             <Calendar size={20} style={{ color: colors.hexPrimary }} className="flex-shrink-0" />
             <span className="text-sm text-gray-700">
               {new Date(event.date).toLocaleDateString('fr-FR', {
@@ -417,11 +415,11 @@ export default function InvitationCard({
               })}
             </span>
           </div>
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50">
+          <div className="flex items-center gap-3 p-3 rounded-xl" style={{ backgroundColor: '#f9fafb' }}>
             <Clock size={20} style={{ color: colors.hexPrimary }} className="flex-shrink-0" />
             <span className="text-sm text-gray-700">{event.time}</span>
           </div>
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50">
+          <div className="flex items-center gap-3 p-3 rounded-xl" style={{ backgroundColor: '#f9fafb' }}>
             <MapPin size={20} style={{ color: colors.hexPrimary }} className="flex-shrink-0" />
             <span className="text-sm text-gray-700">{event.location}</span>
           </div>
