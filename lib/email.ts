@@ -73,7 +73,7 @@ export async function sendWelcomeEmail(to: string, name: string) {
   const html = `
     <h1>Bienvenue sur Octavia Event !</h1>
     <p>Bonjour ${name},</p>
-    <p>Merci bienvenue sur Octavia Event. Nous sommes ravis de vous accueillir.</p>
+    <p>Merci de vous être inscrit sur Octavia Event. Nous sommes ravis de vous accueillir.</p>
     <p>Vous pouvez dès maintenant créer vos événements et inviter vos proches.</p>
     <p>Pour commencer, veuillez vérifier votre adresse email en cliquant sur le lien que vous avez reçu dans un autre email.</p>
     <p>À très bientôt,<br/>L'équipe Octavia Event</p>

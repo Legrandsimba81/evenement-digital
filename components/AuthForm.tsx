@@ -16,6 +16,7 @@ export default function AuthForm({ initialMode = "signin" }: AuthFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [warning, setWarning] = useState("");
   const [signinForm, setSigninForm] = useState({ email: "", password: "" });
   const [registerForm, setRegisterForm] = useState({
     name: "",
@@ -43,6 +44,7 @@ export default function AuthForm({ initialMode = "signin" }: AuthFormProps) {
     setLoading(true);
     setError("");
     setSuccess("");
+    setWarning("");
 
     const res = await signIn("credentials", {
       email: signinForm.email,
@@ -64,6 +66,7 @@ export default function AuthForm({ initialMode = "signin" }: AuthFormProps) {
     setLoading(true);
     setError("");
     setSuccess("");
+    setWarning("");
 
     if (!acceptTerms) {
       setError("Vous devez accepter les conditions d'utilisation et la politique de confidentialité.");
@@ -81,9 +84,10 @@ export default function AuthForm({ initialMode = "signin" }: AuthFormProps) {
     if (result?.error) {
       setError(result.error);
     } else {
-      setSuccess(
-        "Compte créé avec succès ! Un email de vérification vous a été envoyé. Veuillez vérifier votre boîte mail."
-      );
+      if (result?.warning) {
+        setWarning(result.warning);
+      }
+      setSuccess("Compte créé avec succès !");
       setMode("signin");
       setSigninForm({ email: registerForm.email, password: "" });
       setAcceptTerms(false);
@@ -144,6 +148,7 @@ export default function AuthForm({ initialMode = "signin" }: AuthFormProps) {
               setMode("signin");
               setError("");
               setSuccess("");
+              setWarning("");
             }}
             className={`flex-1 rounded-full px-4 py-2 text-sm font-semibold transition ${
               mode === "signin"
@@ -159,6 +164,7 @@ export default function AuthForm({ initialMode = "signin" }: AuthFormProps) {
               setMode("register");
               setError("");
               setSuccess("");
+              setWarning("");
             }}
             className={`flex-1 rounded-full px-4 py-2 text-sm font-semibold transition ${
               mode === "register"
@@ -189,6 +195,16 @@ export default function AuthForm({ initialMode = "signin" }: AuthFormProps) {
         {success && (
           <div className="mb-4 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 dark:border-green-900/50 dark:bg-green-950/40 dark:text-green-300">
             {success}
+            {warning && (
+              <div className="mt-2 border-t border-green-300 pt-2 text-yellow-700 dark:border-green-700 dark:text-yellow-300">
+                ⚠️ {warning}
+              </div>
+            )}
+          </div>
+        )}
+        {!success && warning && (
+          <div className="mb-4 rounded-xl border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-700 dark:border-yellow-900/50 dark:bg-yellow-950/40 dark:text-yellow-300">
+            ⚠️ {warning}
           </div>
         )}
 
