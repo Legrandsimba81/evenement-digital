@@ -22,7 +22,9 @@ import {
   Edit,
   AlertTriangle,
   Trash2,
+  CheckCircle,
 } from "lucide-react";
+import { resendVerificationEmail } from "@/actions/email-verification";
 
 type Transaction = {
   id: string;
@@ -60,6 +62,7 @@ type User = {
   role: string;
   balance: number;
   createdAt: Date;
+  emailVerified: Date | null;
   events: Event[];
   transactions: Transaction[];
 };
@@ -77,6 +80,7 @@ export default function ProfileClient({ user }: ProfileClientProps) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
 
   // Formatage
   const formatDate = (date: Date) => {
@@ -140,6 +144,19 @@ export default function ProfileClient({ user }: ProfileClientProps) {
     }
   };
 
+  // Renvoyer l'email de vérification
+  const handleResendVerification = async () => {
+    setResendLoading(true);
+    try {
+      await resendVerificationEmail();
+      alert("Un nouvel email de vérification a été envoyé.");
+    } catch (err: any) {
+      alert(err.message || "Erreur lors de l'envoi.");
+    } finally {
+      setResendLoading(false);
+    }
+  };
+
   // Marquer une notification comme lue
   const markAsRead = async (id: string) => {
     try {
@@ -170,7 +187,6 @@ export default function ProfileClient({ user }: ProfileClientProps) {
       });
       if (res.ok) {
         setNotifications((prev) => prev.filter((n) => n.id !== id));
-        // Recalculer le compteur non lues
         setUnreadCount((prev) => {
           const removed = notifications.find((n) => n.id === id);
           return removed && !removed.read ? prev - 1 : prev;
@@ -197,6 +213,8 @@ export default function ProfileClient({ user }: ProfileClientProps) {
       console.error("Erreur marquage tout lu:", error);
     }
   };
+
+  const isEmailVerified = !!user.emailVerified;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-950 dark:to-gray-900 py-8 px-4 sm:px-6 lg:px-8">
@@ -268,6 +286,28 @@ export default function ProfileClient({ user }: ProfileClientProps) {
                   </div>
                 </div>
               </div>
+
+              {/* Vérification email */}
+              <div className="mt-4 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {isEmailVerified ? (
+                      <span className="text-green-600">✅ Email vérifié</span>
+                    ) : (
+                      <span className="text-yellow-600">⚠️ Email non vérifié</span>
+                    )}
+                  </div>
+                  {!isEmailVerified && (
+                    <button
+                      onClick={handleResendVerification}
+                      disabled={resendLoading}
+                      className="text-sm text-blue-600 hover:underline disabled:opacity-50"
+                    >
+                      {resendLoading ? "Envoi..." : "Renvoyer l'email de vérification"}
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* Derniers événements */}
@@ -308,26 +348,33 @@ export default function ProfileClient({ user }: ProfileClientProps) {
               )}
             </div>
 
-            {/* Guide d'utilisation */}
+            {/* Liens juridiques */}
             <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50 dark:border-gray-800/50">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-xl bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
-                    <BookOpen size={20} />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Guide d'utilisation</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Découvrez toutes les fonctionnalités de la plateforme.</p>
-                  </div>
-                </div>
-                <Link
-                  href="/guide-utilisation"
-                  className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium text-sm"
-                >
-                  Lire le guide
-                  <ChevronRight size={16} />
-                </Link>
-              </div>
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider">
+                Informations légales
+              </h3>
+              <ul className="mt-4 space-y-2">
+                <li>
+                  <Link href="/mentions-legales" className="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition">
+                    Mentions légales
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/politique-confidentialite" className="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition">
+                    Politique de confidentialité
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/cgu" className="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition">
+                    Conditions Générales d'Utilisation
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/guide-utilisation" className="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition">
+                    Guide d'utilisation
+                  </Link>
+                </li>
+              </ul>
             </div>
           </div>
 
@@ -489,7 +536,7 @@ export default function ProfileClient({ user }: ProfileClientProps) {
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+243 XXX XXX XXX"
+                  placeholder="0 XXX XXX XXX"
                   required
                   className="mt-1 w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
@@ -517,7 +564,7 @@ export default function ProfileClient({ user }: ProfileClientProps) {
 }
 
 // Composant local pour CheckCircle (ou importer de lucide-react)
-const CheckCircle = ({ size = 16, className = "" }) => (
+const CheckCircleIcon = ({ size = 16, className = "" }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width={size}
