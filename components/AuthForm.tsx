@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
-import { ArrowRight, BadgeCheck, Lock, Mail, Phone, Sparkles, UserRound } from "lucide-react";
+import { ArrowRight, BadgeCheck, Lock, Mail, Phone, Sparkles, UserRound, X } from "lucide-react";
 import { useState } from "react";
-import { registerUser } from "@/actions/auth-actions";
+import { registerUser, requestPasswordReset } from "@/actions/auth-actions";
 
 type AuthFormProps = {
   initialMode?: "signin" | "register";
@@ -23,11 +23,17 @@ export default function AuthForm({ initialMode = "signin" }: AuthFormProps) {
     password: "",
     phone: "",
   });
+  const [acceptTerms, setAcceptTerms] = useState(false);
+
+  // Gestion du modal de réinitialisation
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetMessage, setResetMessage] = useState("");
+  const [resetError, setResetError] = useState("");
+  const [resetLoading, setResetLoading] = useState(false);
 
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
-
-  // ✅ Sécuriser le callbackUrl pour éviter les boucles de redirection
   const safeCallbackUrl = ["/login", "/register", "/auth/signin", "/"].includes(callbackUrl)
     ? "/dashboard"
     : callbackUrl;
@@ -49,11 +55,8 @@ export default function AuthForm({ initialMode = "signin" }: AuthFormProps) {
       setError("Identifiants invalides. Veuillez réessayer.");
       setLoading(false);
     } else {
-      // 🔥 Remplacement de router.push par un rechargement complet
       window.location.href = safeCallbackUrl;
     }
-
-    setLoading(false);
   };
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -62,6 +65,12 @@ export default function AuthForm({ initialMode = "signin" }: AuthFormProps) {
     setError("");
     setSuccess("");
 
+    if (!acceptTerms) {
+      setError("Vous devez accepter les conditions d'utilisation et la politique de confidentialité.");
+      setLoading(false);
+      return;
+    }
+
     const formData = new FormData();
     formData.append("name", registerForm.name);
     formData.append("email", registerForm.email);
@@ -69,16 +78,32 @@ export default function AuthForm({ initialMode = "signin" }: AuthFormProps) {
     formData.append("phone", registerForm.phone);
 
     const result = await registerUser(formData);
-
     if (result?.error) {
       setError(result.error);
     } else {
-      setSuccess("Compte créé avec succès. Vous pouvez maintenant vous connecter.");
+      setSuccess(
+        "Compte créé avec succès ! Un email de vérification vous a été envoyé. Veuillez vérifier votre boîte mail."
+      );
       setMode("signin");
       setSigninForm({ email: registerForm.email, password: "" });
+      setAcceptTerms(false);
     }
-
     setLoading(false);
+  };
+
+  const handleResetSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setResetLoading(true);
+    setResetError("");
+    setResetMessage("");
+    const result = await requestPasswordReset(resetEmail);
+    if (result.error) {
+      setResetError(result.error);
+    } else {
+      setResetMessage("Un email de réinitialisation vous a été envoyé.");
+      setTimeout(() => setShowResetModal(false), 3000);
+    }
+    setResetLoading(false);
   };
 
   return (
@@ -199,6 +224,16 @@ export default function AuthForm({ initialMode = "signin" }: AuthFormProps) {
               </div>
             </label>
 
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setShowResetModal(true)}
+                className="text-sm text-blue-600 hover:underline dark:text-blue-400"
+              >
+                Mot de passe oublié ?
+              </button>
+            </div>
+
             <button
               type="submit"
               disabled={loading}
@@ -256,7 +291,7 @@ export default function AuthForm({ initialMode = "signin" }: AuthFormProps) {
             </label>
 
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
-              <span className="mb-2 block">Téléphone (optionnel)</span>
+              <span className="mb-2 block">Téléphone <span className="text-red-500">*</span></span>
               <div className="flex items-center rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2.5 focus-within:border-primary focus-within:bg-white dark:border-gray-800 dark:bg-gray-900 dark:focus-within:bg-gray-950">
                 <Phone size={16} className="mr-2 text-gray-400" />
                 <input
@@ -264,10 +299,37 @@ export default function AuthForm({ initialMode = "signin" }: AuthFormProps) {
                   value={registerForm.phone}
                   onChange={(e) => setRegisterForm({ ...registerForm, phone: e.target.value })}
                   className="w-full border-none bg-transparent outline-none"
-                  placeholder="Ex: 0827733286"
+                  placeholder="0827733286"
+                  required
+                  pattern="^0\d{9}$"
+                  title="10 chiffres commençant par 0"
                 />
               </div>
+              <p className="mt-1 text-xs text-gray-500">10 chiffres, commençant par 0 (ex: 0827733286)</p>
             </label>
+
+            {/* Case à cocher pour accepter les conditions */}
+            <div className="flex items-start gap-2">
+              <input
+                type="checkbox"
+                id="acceptTerms"
+                checked={acceptTerms}
+                onChange={(e) => setAcceptTerms(e.target.checked)}
+                className="mt-1"
+                required
+              />
+              <label htmlFor="acceptTerms" className="text-sm text-gray-600 dark:text-gray-300">
+                J'accepte les{" "}
+                <Link href="/cgu" target="_blank" className="text-blue-600 hover:underline">
+                  conditions générales d'utilisation
+                </Link>{" "}
+                et la{" "}
+                <Link href="/politique-confidentialite" target="_blank" className="text-blue-600 hover:underline">
+                  politique de confidentialité
+                </Link>
+                .
+              </label>
+            </div>
 
             <button
               type="submit"
@@ -301,6 +363,46 @@ export default function AuthForm({ initialMode = "signin" }: AuthFormProps) {
           </Link>
         </p>
       </div>
+
+      {/* Modal de réinitialisation */}
+      {showResetModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl max-w-md w-full p-6 shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                Mot de passe oublié
+              </h3>
+              <button
+                onClick={() => setShowResetModal(false)}
+                className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+              >
+                <X size={24} className="text-gray-500 dark:text-gray-400" />
+              </button>
+            </div>
+            <form onSubmit={handleResetSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+                <input
+                  type="email"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  required
+                  className="mt-1 w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              {resetError && <p className="text-red-600 text-sm">{resetError}</p>}
+              {resetMessage && <p className="text-green-600 text-sm">{resetMessage}</p>}
+              <button
+                type="submit"
+                disabled={resetLoading}
+                className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {resetLoading ? "Envoi..." : "Envoyer le lien"}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
