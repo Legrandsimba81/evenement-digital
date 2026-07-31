@@ -1,37 +1,30 @@
 // lib/email.ts
 import nodemailer from "nodemailer";
 
-// 1. Vérification des variables d’environnement
 if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS || !process.env.EMAIL_FROM) {
-  console.error(
-    "❌ Variables d'environnement EMAIL_USER, EMAIL_PASS ou EMAIL_FROM manquantes. Les emails ne fonctionneront pas."
-  );
+  console.error("❌ Variables EMAIL_USER, EMAIL_PASS ou EMAIL_FROM manquantes.");
 }
 
-// 2. Création du transporteur avec configuration explicite (Gmail)
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
   port: 587,
-  secure: false, // true pour port 465
+  secure: false,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
-  // Active les logs pour voir ce qui se passe
   debug: true,
   logger: true,
 });
 
-// 3. Vérification de la connexion au démarrage (facultatif, mais utile)
 transporter.verify((error, success) => {
   if (error) {
-    console.error("❌ Échec de la connexion au serveur SMTP :", error);
+    console.error("❌ Erreur de connexion SMTP :", error);
   } else {
-    console.log("✅ Serveur SMTP prêt à envoyer des emails.");
+    console.log("✅ SMTP prêt");
   }
 });
 
-// 4. Fonction générique d’envoi (avec gestion d’erreurs)
 async function sendEmail({
   to,
   subject,
@@ -50,14 +43,12 @@ async function sendEmail({
     });
     console.log(`📧 Email envoyé à ${to} : ${info.messageId}`);
     return { success: true, info };
-  } catch (error: any) {
-    console.error("❌ Erreur lors de l'envoi de l'email :", error);
-    // On relance l'erreur pour que l'appelant puisse la traiter
-    throw new Error(error.message || "Erreur d'envoi d'email");
+  } catch (error) {
+    console.error("❌ Erreur d'envoi email :", error);
+    throw new Error("Impossible d'envoyer l'email.");
   }
 }
 
-// 5. Fonctions spécifiques
 export async function sendPasswordResetEmail(to: string, resetLink: string) {
   const html = `
     <h1>Réinitialisation de votre mot de passe</h1>
@@ -76,4 +67,16 @@ export async function sendVerificationEmail(to: string, verifyLink: string) {
     <p>Ce lien est valable 24h.</p>
   `;
   return sendEmail({ to, subject: "Vérifiez votre email", html });
+}
+
+export async function sendWelcomeEmail(to: string, name: string) {
+  const html = `
+    <h1>Bienvenue sur Octavia Event !</h1>
+    <p>Bonjour ${name},</p>
+    <p>Merci bienvenue sur Octavia Event. Nous sommes ravis de vous accueillir.</p>
+    <p>Vous pouvez dès maintenant créer vos événements et inviter vos proches.</p>
+    <p>Pour commencer, veuillez vérifier votre adresse email en cliquant sur le lien que vous avez reçu dans un autre email.</p>
+    <p>À très bientôt,<br/>L'équipe Octavia Event</p>
+  `;
+  return sendEmail({ to, subject: "Bienvenue sur Octavia Event", html });
 }

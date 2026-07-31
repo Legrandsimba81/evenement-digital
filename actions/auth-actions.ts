@@ -1,10 +1,9 @@
-// actions/auth-actions.ts
 "use server";
 
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { randomBytes } from "crypto";
-import { sendPasswordResetEmail } from "@/lib/email";
+import { sendPasswordResetEmail, sendVerificationEmail, sendWelcomeEmail } from "@/lib/email";
 
 export async function registerUser(formData: FormData) {
   const name = formData.get("name") as string;
@@ -16,7 +15,7 @@ export async function registerUser(formData: FormData) {
     return { error: "Tous les champs sont obligatoires." };
   }
 
-  // Validation du téléphone : 10 chiffres, commence par 0
+  // Validation du téléphone
   if (!/^0\d{9}$/.test(phone)) {
     return { error: "Le numéro de téléphone doit contenir 10 chiffres et commencer par 0." };
   }
@@ -32,7 +31,7 @@ export async function registerUser(formData: FormData) {
   }
 
   const hashed = await bcrypt.hash(password, 10);
-  await prisma.user.create({
+  const newUser = await prisma.user.create({
     data: {
       name,
       email,
@@ -42,6 +41,24 @@ export async function registerUser(formData: FormData) {
     },
   });
 
+  // Envoyer l'email de bienvenue
+  await sendWelcomeEmail(email, name || "Utilisateur");
+
+  // Générer un token de vérification d'email
+  const token = randomBytes(32).toString("hex");
+  const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24); // 24h
+
+  await prisma.emailVerification.create({
+    data: {
+      token,
+      userId: newUser.id,
+      expiresAt,
+    },
+  });
+
+  const verifyLink = `${process.env.NEXT_PUBLIC_BASE_URL}/verify-email/${token}`;
+  await sendVerificationEmail(email, verifyLink);
+
   return { success: true };
 }
 
@@ -49,6 +66,11 @@ export async function requestPasswordReset(email: string) {
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) {
     return { error: "Aucun compte avec cet email." };
+  }
+
+  // Si l'utilisateur n'a pas de mot de passe (compte Google)
+  if (!user.password) {
+    return { error: "Cet utilisateur utilise Google pour se connecter. Veuillez vous connecter avec Google." };
   }
 
   // Supprimer les anciens tokens non utilisés
