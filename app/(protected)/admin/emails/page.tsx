@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Send, Loader2, CheckCircle, XCircle, Users, User } from "lucide-react";
+import RichTextEditor from "@/components/admin/RichTextEditor";
 
 export default function AdminEmailsPage() {
   const [subject, setSubject] = useState("");
@@ -13,13 +14,24 @@ export default function AdminEmailsPage() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
   const [count, setCount] = useState(0);
+  const [loadingUsers, setLoadingUsers] = useState(false);
 
   useEffect(() => {
-    // Charger la liste des utilisateurs pour le sélecteur
-    fetch("/api/admin/users?limit=all")
-      .then((res) => res.json())
-      .then((data) => setUsers(data))
-      .catch(console.error);
+    const fetchUsers = async () => {
+      setLoadingUsers(true);
+      try {
+        const res = await fetch("/api/admin/users");
+        if (!res.ok) throw new Error("Erreur lors du chargement des utilisateurs");
+        const data = await res.json();
+        setUsers(data);
+      } catch (err: any) {
+        console.error(err);
+        setError("Impossible de charger la liste des utilisateurs.");
+      } finally {
+        setLoadingUsers(false);
+      }
+    };
+    fetchUsers();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -51,6 +63,7 @@ export default function AdminEmailsPage() {
       setSubject("");
       setContent("");
       setSelectedUsers([]);
+      setTimeout(() => setSuccess(false), 5000);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -64,6 +77,14 @@ export default function AdminEmailsPage() {
     );
   };
 
+  const selectAll = () => {
+    setSelectedUsers(users.map((u) => u.id));
+  };
+
+  const deselectAll = () => {
+    setSelectedUsers([]);
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -75,7 +96,7 @@ export default function AdminEmailsPage() {
         {/* Destinataires */}
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Destinataires</label>
-          <div className="flex gap-4">
+          <div className="flex flex-wrap gap-4">
             <label className="flex items-center gap-2">
               <input
                 type="radio"
@@ -99,24 +120,38 @@ export default function AdminEmailsPage() {
 
         {target === "specific" && (
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Sélectionnez les utilisateurs
-            </label>
-            <div className="max-h-48 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg p-2 space-y-1">
-              {users.map((user) => (
-                <label key={user.id} className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={selectedUsers.includes(user.id)}
-                    onChange={() => toggleUser(user.id)}
-                  />
-                  <span>{user.name || "Anonyme"} ({user.email})</span>
-                </label>
-              ))}
+            <div className="flex justify-between items-center mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Sélectionnez les utilisateurs
+              </label>
+              <div className="flex gap-2">
+                <button type="button" onClick={selectAll} className="text-xs text-blue-600 hover:underline">Tout sélectionner</button>
+                <button type="button" onClick={deselectAll} className="text-xs text-blue-600 hover:underline">Tout désélectionner</button>
+              </div>
             </div>
-            <p className="text-xs text-gray-500 mt-1">
-              {selectedUsers.length} utilisateur(s) sélectionné(s)
-            </p>
+            {loadingUsers ? (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 size={24} className="animate-spin text-blue-500" />
+              </div>
+            ) : (
+              <>
+                <div className="max-h-48 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg p-2 space-y-1">
+                  {users.map((user) => (
+                    <label key={user.id} className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={selectedUsers.includes(user.id)}
+                        onChange={() => toggleUser(user.id)}
+                      />
+                      <span>{user.name || "Anonyme"} ({user.email})</span>
+                    </label>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  {selectedUsers.length} utilisateur(s) sélectionné(s)
+                </p>
+              </>
+            )}
           </div>
         )}
 
@@ -133,18 +168,10 @@ export default function AdminEmailsPage() {
           />
         </div>
 
-        {/* Contenu */}
+        {/* Contenu avec éditeur riche */}
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Contenu (HTML)</label>
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            required
-            rows={10}
-            className="w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 font-mono text-sm"
-            placeholder="<p>Bonjour,</p><p>...</p>"
-          />
-          <p className="text-xs text-gray-500 mt-1">Vous pouvez utiliser du HTML pour personnaliser l'email.</p>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Contenu</label>
+          <RichTextEditor value={content} onChange={setContent} placeholder="Saisissez votre message ici..." />
         </div>
 
         {/* Bouton */}
