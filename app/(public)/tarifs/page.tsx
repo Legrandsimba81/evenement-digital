@@ -219,7 +219,7 @@ const plans = [
 
 const colorClasses = {
   emerald: {
-    bg: "bg-emerald-50",
+    bg: "bg-emerald-50 dark:bg-emerald-950/40",
     border: "border-emerald-200",
     text: "text-emerald-700",
     hover: "hover:bg-emerald-100",
@@ -228,7 +228,7 @@ const colorClasses = {
     btn: "bg-emerald-600 hover:bg-emerald-700",
   },
   pink: {
-    bg: "bg-pink-50",
+    bg: "bg-pink-50 dark:bg-emerald-950/40",
     border: "border-pink-200",
     text: "text-pink-700",
     hover: "hover:bg-pink-100",
@@ -237,7 +237,7 @@ const colorClasses = {
     btn: "bg-pink-600 hover:bg-pink-700",
   },
   purple: {
-    bg: "bg-purple-50",
+    bg: "bg-purple-50 dark:bg-emerald-950/40",
     border: "border-purple-200",
     text: "text-purple-700",
     hover: "hover:bg-purple-100",
@@ -246,7 +246,7 @@ const colorClasses = {
     btn: "bg-purple-600 hover:bg-purple-700",
   },
   rose: {
-    bg: "bg-rose-50",
+    bg: "bg-rose-50 dark:bg-emerald-950/40",
     border: "border-rose-200",
     text: "text-rose-700",
     hover: "hover:bg-rose-100",
@@ -255,7 +255,7 @@ const colorClasses = {
     btn: "bg-rose-600 hover:bg-rose-700",
   },
   orange: {
-    bg: "bg-orange-50",
+    bg: "bg-orange-50 dark:bg-emerald-950/40",
     border: "border-orange-200",
     text: "text-orange-700",
     hover: "hover:bg-orange-100",
@@ -264,7 +264,7 @@ const colorClasses = {
     btn: "bg-orange-600 hover:bg-orange-700",
   },
   blue: {
-    bg: "bg-blue-50",
+    bg: "bg-blue-50 dark:bg-emerald-950/40",
     border: "border-blue-200",
     text: "text-blue-700",
     hover: "hover:bg-blue-100",
@@ -273,7 +273,7 @@ const colorClasses = {
     btn: "bg-blue-600 hover:bg-blue-700",
   },
   gold: {
-    bg: "bg-yellow-50",
+    bg: "bg-yellow-50 dark:bg-emerald-950/40",
     border: "border-yellow-200",
     text: "text-yellow-700",
     hover: "hover:bg-yellow-100",
@@ -449,7 +449,7 @@ export default function PricingPage() {
             <Star className="w-5 h-5 text-rose-500" />
             Événements premium
           </h2>
-          <div className="dark:bg-gray-950 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {groupedPlans.premium.map((plan) => {
               const Icon = plan.icon;
               const colors = colorClasses[plan.color as keyof typeof colorClasses];
