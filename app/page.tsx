@@ -287,9 +287,9 @@ export default function HomePage() {
       {/* Section Tarifs simplifiée */}
       <section className="py-20 bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-950 dark:to-gray-900">
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center">
-          <div className="inline-flex items-center justify-center p-3 bg-primary-100 dark:bg-primary-900/30 rounded-full mb-4">
+          {/* <div className="inline-flex items-center justify-center p-3 bg-primary-100 dark:bg-primary-900/30 rounded-full mb-4">
             <Euro className="w-6 h-6 text-primary-600 dark:text-primary-400" />
-          </div>
+          </div> */}
           <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Des tarifs adaptés à vos besoins</h2>
           <p className="mt-4 text-lg text-gray-600 dark:text-gray-300">
             Découvrez nos offres et choisissez celle qui vous convient le mieux.

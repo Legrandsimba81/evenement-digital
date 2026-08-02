@@ -336,7 +336,7 @@ export default function InvitationCard({
                   <Icon size={18} style={{ color: colors.hexPrimary }} />
                   {invitationTitle}
                 </span>
-                <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700">
+                <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-800">
                   {peopleIcon === Users ? <Users size={14} /> : <User size={14} />}
                   {peopleLabel}
                 </span>

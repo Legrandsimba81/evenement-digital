@@ -182,7 +182,7 @@ export default function EventDetailsClient({ event }: { event: Event }) {
                     </Link>
                     <Link
                         href={`/dashboard/${event.slug}/logs`}
-                        className="inline-flex items-center gap-1 bg-gray-500 hover:bg-gray-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition"
+                        className="inline-flex items-center gap-1 bg-gray-500 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition"
                     >
                         <Clock size={14} />
                         Historique

@@ -2,7 +2,7 @@
 import nodemailer from "nodemailer";
 
 if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS || !process.env.EMAIL_FROM) {
-  console.error("❌ Variables EMAIL_USER, EMAIL_PASS ou EMAIL_FROM manquantes.");
+  console.error("Variables EMAIL_USER, EMAIL_PASS ou EMAIL_FROM manquantes.");
 }
 
 const transporter = nodemailer.createTransport({
@@ -19,9 +19,9 @@ const transporter = nodemailer.createTransport({
 
 transporter.verify((error, success) => {
   if (error) {
-    console.error("❌ Erreur de connexion SMTP :", error);
+    console.error("Erreur de connexion SMTP :", error);
   } else {
-    console.log("✅ SMTP prêt");
+    console.log("SMTP prêt");
   }
 });
 
@@ -41,10 +41,10 @@ async function sendEmail({
       subject,
       html,
     });
-    console.log(`📧 Email envoyé à ${to} : ${info.messageId}`);
+    console.log(`Email envoyé à ${to} : ${info.messageId}`);
     return { success: true, info };
   } catch (error) {
-    console.error("❌ Erreur d'envoi email :", error);
+    console.error("Erreur d'envoi email :", error);
     throw new Error("Impossible d'envoyer l'email.");
   }
 }
