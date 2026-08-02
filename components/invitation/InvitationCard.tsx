@@ -332,7 +332,7 @@ export default function InvitationCard({
                 {event.title}
               </h1>
               <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600">
-                <span className="flex items-center gap-1">
+                <span className="flex items-center gap-1 text-gray-800 font-medium">
                   <Icon size={18} style={{ color: colors.hexPrimary }} />
                   {invitationTitle}
                 </span>
@@ -347,7 +347,7 @@ export default function InvitationCard({
 
         {/* Salutation + niveau + numéro */}
         <div ref={textRef} className={`${fadeInUp} ${textInView ? fadeInUpVisible : fadeInUpHidden}`}>
-          <p className="text-base sm:text-lg text-gray-600">
+          <p className="text-base sm:text-lg text-gray-800">
             Bonjour <span className="font-semibold text-gray-900">{fullName}</span>
             {guestLevel && (
               <span className="ml-2 inline-block text-xs px-2 py-1 rounded-full bg-primary-100 text-primary-700 font-medium">
