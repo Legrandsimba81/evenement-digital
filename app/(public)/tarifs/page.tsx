@@ -449,7 +449,7 @@ export default function PricingPage() {
             <Star className="w-5 h-5 text-rose-500" />
             Événements premium
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="dark:bg-gray-950 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {groupedPlans.premium.map((plan) => {
               const Icon = plan.icon;
               const colors = colorClasses[plan.color as keyof typeof colorClasses];
@@ -504,7 +504,7 @@ export default function PricingPage() {
             <Calendar className="w-5 h-5 text-yellow-500" />
             Abonnement flexible
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {groupedPlans.abonnement.map((plan) => {
               const Icon = plan.icon;
               const colors = colorClasses[plan.color as keyof typeof colorClasses];
