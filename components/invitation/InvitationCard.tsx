@@ -358,7 +358,7 @@ export default function InvitationCard({
 
           {event.invitationNumber && (
             <div className="mt-3 p-3 rounded-xl" style={{ backgroundColor: '#f9fafb' }}>
-              <span className="font-medium text-gray-700">
+              <span className="font-medium text-gray-800">
                 <span style={{ color: colors.hexPrimary }} className="font-bold">#</span> {event.invitationNumber}
               </span>
             </div>
@@ -366,7 +366,7 @@ export default function InvitationCard({
 
           {event.type === "SOUTENANCE" && event.thesisTitle && (
             <div className="mt-4 p-4 rounded-xl" style={{ backgroundColor: '#f3e8ff' }}>
-              <p className="text-sm text-gray-700">
+              <p className="text-sm text-gray-800">
                 <span className="font-semibold">Sujet de thèse :</span> {event.thesisTitle}
               </p>
             </div>
@@ -406,7 +406,7 @@ export default function InvitationCard({
         >
           <div className="flex items-center gap-3 p-3 rounded-xl" style={{ backgroundColor: '#f9fafb' }}>
             <Calendar size={20} style={{ color: colors.hexPrimary }} className="flex-shrink-0" />
-            <span className="text-sm text-gray-700">
+            <span className="text-sm text-gray-800">
               {new Date(event.date).toLocaleDateString('fr-FR', {
                 weekday: 'long',
                 day: 'numeric',
@@ -417,11 +417,11 @@ export default function InvitationCard({
           </div>
           <div className="flex items-center gap-3 p-3 rounded-xl" style={{ backgroundColor: '#f9fafb' }}>
             <Clock size={20} style={{ color: colors.hexPrimary }} className="flex-shrink-0" />
-            <span className="text-sm text-gray-700">{event.time}</span>
+            <span className="text-sm text-gray-800">{event.time}</span>
           </div>
           <div className="flex items-center gap-3 p-3 rounded-xl" style={{ backgroundColor: '#f9fafb' }}>
             <MapPin size={20} style={{ color: colors.hexPrimary }} className="flex-shrink-0" />
-            <span className="text-sm text-gray-700">{event.location}</span>
+            <span className="text-sm text-gray-800">{event.location}</span>
           </div>
         </div>
 
@@ -438,7 +438,7 @@ export default function InvitationCard({
             >
               Programme de la journée
             </h3>
-            <div className="text-gray-700 whitespace-pre-line text-sm sm:text-base">
+            <div className="text-gray-800 whitespace-pre-line text-sm sm:text-base">
               {event.program}
             </div>
           </div>
@@ -496,7 +496,7 @@ export default function InvitationCard({
             className={`flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl border-2 transition text-sm sm:text-base font-medium ${
               status === "attending"
                 ? "bg-green-500 text-white border-green-500"
-                : "bg-white text-gray-700 border-gray-300 hover:border-green-500 hover:bg-green-50"
+                : "bg-white text-gray-800 border-gray-300 hover:border-green-500 hover:bg-green-50"
             }`}
           >
             <Check size={18} />
@@ -508,7 +508,7 @@ export default function InvitationCard({
             className={`flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl border-2 transition text-sm sm:text-base font-medium ${
               status === "annule"
                 ? "bg-red-500 text-white border-red-500"
-                : "bg-white text-gray-700 border-gray-300 hover:border-red-500 hover:bg-red-50"
+                : "bg-white text-gray-800 border-gray-300 hover:border-red-500 hover:bg-red-50"
             }`}
           >
             <X size={18} />
