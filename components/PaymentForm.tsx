@@ -32,7 +32,7 @@ const operators = [
 
 const depositNumbers = {
   mpesa: {
-    CD: "+243 999 999 999",
+    CD: "+243 827 733 286",
     KE: "+254 700 000 000",
     UG: "+256 700 000 000",
     TZ: "+255 700 000 000",
@@ -40,7 +40,7 @@ const depositNumbers = {
     BI: "+257 700 000 000",
   },
   airtel: {
-    CD: "+243 888 888 888",
+    CD: "+243 992 598 826",
     KE: "+254 800 000 000",
     UG: "+256 800 000 000",
     TZ: "+255 800 000 000",
@@ -223,7 +223,7 @@ export default function PaymentForm({ plan, onSuccess }: PaymentFormProps) {
         <input
           type="tel"
           name="phoneNumber"
-          placeholder="+243 XXX XXX XXX"
+          placeholder="+ XXX XXX XXX XXX"
           value={formData.phoneNumber}
           onChange={handleChange}
           required

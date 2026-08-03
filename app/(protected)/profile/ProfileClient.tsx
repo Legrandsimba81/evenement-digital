@@ -292,9 +292,9 @@ export default function ProfileClient({ user }: ProfileClientProps) {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     {isEmailVerified ? (
-                      <span className="text-green-600">✅ Email vérifié</span>
+                      <span className="text-green-600">Email vérifié</span>
                     ) : (
-                      <span className="text-yellow-600">⚠️ Email non vérifié</span>
+                      <span className="text-yellow-600">Email non vérifié</span>
                     )}
                   </div>
                   {!isEmailVerified && (

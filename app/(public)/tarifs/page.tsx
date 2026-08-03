@@ -228,7 +228,7 @@ const colorClasses = {
     btn: "bg-emerald-600 hover:bg-emerald-700",
   },
   pink: {
-    bg: "bg-pink-50 dark:bg-emerald-950/40",
+    bg: "bg-pink-50 dark:bg-pink-950/40",
     border: "border-pink-200",
     text: "text-pink-700",
     hover: "hover:bg-pink-100",
@@ -237,7 +237,7 @@ const colorClasses = {
     btn: "bg-pink-600 hover:bg-pink-700",
   },
   purple: {
-    bg: "bg-purple-50 dark:bg-emerald-950/40",
+    bg: "bg-purple-50 dark:bg-purple-950/40",
     border: "border-purple-200",
     text: "text-purple-700",
     hover: "hover:bg-purple-100",
@@ -246,7 +246,7 @@ const colorClasses = {
     btn: "bg-purple-600 hover:bg-purple-700",
   },
   rose: {
-    bg: "bg-rose-50 dark:bg-emerald-950/40",
+    bg: "bg-rose-50 dark:bg-rose-950/40",
     border: "border-rose-200",
     text: "text-rose-700",
     hover: "hover:bg-rose-100",
@@ -255,7 +255,7 @@ const colorClasses = {
     btn: "bg-rose-600 hover:bg-rose-700",
   },
   orange: {
-    bg: "bg-orange-50 dark:bg-emerald-950/40",
+    bg: "bg-orange-50 dark:bg-orange-950/40",
     border: "border-orange-200",
     text: "text-orange-700",
     hover: "hover:bg-orange-100",
@@ -264,7 +264,7 @@ const colorClasses = {
     btn: "bg-orange-600 hover:bg-orange-700",
   },
   blue: {
-    bg: "bg-blue-50 dark:bg-emerald-950/40",
+    bg: "bg-blue-50 dark:bg-blue-950/40",
     border: "border-blue-200",
     text: "text-blue-700",
     hover: "hover:bg-blue-100",
@@ -273,7 +273,7 @@ const colorClasses = {
     btn: "bg-blue-600 hover:bg-blue-700",
   },
   gold: {
-    bg: "bg-yellow-50 dark:bg-emerald-950/40",
+    bg: "bg-yellow-50 dark:bg-yellow-950/40",
     border: "border-yellow-200",
     text: "text-yellow-700",
     hover: "hover:bg-yellow-100",
@@ -328,9 +328,9 @@ export default function PricingPage() {
       <div className="max-w-7xl mx-auto">
         {/* En-tête */}
         <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full mb-4">
+          {/* <div className="inline-flex items-center justify-center p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full mb-4">
             <Sparkles className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-          </div>
+          </div> */}
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-3">
             Nos tarifs
           </h1>
@@ -339,54 +339,7 @@ export default function PricingPage() {
           </p>
         </div>
 
-        {/* Offre gratuite */}
-        <div className="mb-12">
-          <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-            <Gift className="w-5 h-5 text-emerald-500" />
-            Offre découverte
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
-            {groupedPlans.gratuit.map((plan) => {
-              const Icon = plan.icon;
-              const colors = colorClasses[plan.color as keyof typeof colorClasses];
-              return (
-                <div
-                  key={plan.id}
-                  className={`bg-white dark:bg-gray-900 rounded-2xl shadow-lg border ${colors.border} overflow-hidden transition hover:shadow-xl`}
-                >
-                  <div className={`p-6 ${colors.bg} ${colors.border} border-b`}>
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className={`p-2 rounded-full ${colors.iconBg} ${colors.iconText}`}>
-                        <Icon size={24} />
-                      </div>
-                      <h3 className={`text-lg font-bold ${colors.text}`}>{plan.name}</h3>
-                    </div>
-                    <div className="flex items-baseline">
-                      <span className="text-3xl font-bold text-gray-900 dark:text-white">Gratuit</span>
-                    </div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">{plan.description}</p>
-                  </div>
-                  <div className="p-6">
-                    <ul className="space-y-2">
-                      {plan.features.map((feature, idx) => (
-                        <li key={idx} className="flex items-start gap-2">
-                          <Check size={16} className="text-emerald-500 mt-1 flex-shrink-0" />
-                          <span className="text-sm text-gray-700 dark:text-gray-300">{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                    <button
-                      onClick={() => handleChoosePlan(plan)}
-                      className="w-full mt-4 py-2 px-4 rounded-xl text-white font-medium bg-emerald-600 hover:bg-emerald-700 transition"
-                    >
-                      Commencer
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        
 
         {/* Classique */}
         <div className="mb-12">
@@ -555,6 +508,55 @@ export default function PricingPage() {
           </div>
         </div>
 
+        {/* Offre gratuite */}
+        <div className="mb-12">
+          <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+            <Gift className="w-5 h-5 text-emerald-500" />
+            Offre découverte
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+            {groupedPlans.gratuit.map((plan) => {
+              const Icon = plan.icon;
+              const colors = colorClasses[plan.color as keyof typeof colorClasses];
+              return (
+                <div
+                  key={plan.id}
+                  className={`bg-white dark:bg-gray-900 rounded-2xl shadow-lg border ${colors.border} overflow-hidden transition hover:shadow-xl`}
+                >
+                  <div className={`p-6 ${colors.bg} ${colors.border} border-b`}>
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className={`p-2 rounded-full ${colors.iconBg} ${colors.iconText}`}>
+                        <Icon size={24} />
+                      </div>
+                      <h3 className={`text-lg font-bold ${colors.text}`}>{plan.name}</h3>
+                    </div>
+                    <div className="flex items-baseline">
+                      <span className="text-3xl font-bold text-gray-900 dark:text-white">Gratuit</span>
+                    </div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">{plan.description}</p>
+                  </div>
+                  <div className="p-6">
+                    <ul className="space-y-2">
+                      {plan.features.map((feature, idx) => (
+                        <li key={idx} className="flex items-start gap-2">
+                          <Check size={16} className="text-emerald-500 mt-1 flex-shrink-0" />
+                          <span className="text-sm text-gray-700 dark:text-gray-300">{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <button
+                      onClick={() => handleChoosePlan(plan)}
+                      className="w-full mt-4 py-2 px-4 rounded-xl text-white font-medium bg-emerald-600 hover:bg-emerald-700 transition"
+                    >
+                      Commencer
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Contact */}
         <div className="mt-16 text-center">
           <p className="text-gray-600 dark:text-gray-400">
@@ -566,7 +568,7 @@ export default function PricingPage() {
             className="inline-flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-xl transition text-sm font-medium mt-4"
           >
             <SiWhatsapp size={20} />
-            Contacter le support
+            Contacter sur Whatsapp
           </a>
         </div>
       </div>
