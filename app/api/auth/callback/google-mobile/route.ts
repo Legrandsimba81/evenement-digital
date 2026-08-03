@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 const client = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
-  process.env.NEXTAUTH_URL + "/api/auth/callback/google"
+  "octavia-app://auth" // ⬅️ URI de redirection exacte
 );
 
 export async function GET(request: Request) {
@@ -19,53 +19,42 @@ export async function GET(request: Request) {
     const { tokens } = await client.getToken(code);
     const idToken = tokens.id_token;
     if (!idToken) throw new Error("No id_token");
+
     const ticket = await client.verifyIdToken({
       idToken,
       audience: process.env.GOOGLE_CLIENT_ID,
     });
     const payload = ticket.getPayload();
     if (!payload) throw new Error("Invalid token");
+
     const email = payload.email;
-    if (!email) {
-      throw new Error("Email not provided by Google");
-    }
+    if (!email) throw new Error("Email missing");
+
     const name = payload.name || "Utilisateur Google";
     const picture = payload.picture || null;
 
     let user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
       user = await prisma.user.create({
-        data: {
-          email,
-          name,
-          image: picture,
-          password: null,
-          role: "USER",
-        },
+        data: { email, name, image: picture, password: null, role: "USER" },
       });
-    } else {
-      if (!user.image && picture) {
-        user = await prisma.user.update({
-          where: { id: user.id },
-          data: { image: picture },
-        });
-      }
+    } else if (!user.image && picture) {
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: { image: picture },
+      });
     }
 
     const token = jwt.sign(
-      {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-        isSuperAdmin: user.isSuperAdmin,
-      },
+      { id: user.id, email: user.email, role: user.role, isSuperAdmin: user.isSuperAdmin },
       process.env.NEXTAUTH_SECRET!,
       { expiresIn: "7d" }
     );
 
+    // Rediriger vers l'URI de l'app avec le token
     return NextResponse.redirect(`octavia-app://auth?token=${token}`);
   } catch (error) {
-    console.error("Erreur callback Google:", error);
+    console.error(error);
     return NextResponse.redirect(`octavia-app://auth?error=oauth_failed`);
   }
 }
