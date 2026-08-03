@@ -1,13 +1,14 @@
+// app/api/auth/callback/google-mobile/route.ts
 import { NextResponse } from "next/server";
 import { OAuth2Client } from "google-auth-library";
 import jwt from "jsonwebtoken";
 import { prisma } from "@/lib/prisma";
 
-const client = new OAuth2Client(
-  process.env.GOOGLE_CLIENT_ID,
-  process.env.GOOGLE_CLIENT_SECRET,
-  "octavia-app://auth" // ⬅️ URI de redirection exacte
-);
+const CLIENT_ID = process.env.GOOGLE_CLIENT_ID!;
+const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET!;
+const REDIRECT_URI = process.env.NEXTAUTH_URL + "/api/auth/callback/google-mobile";
+
+const client = new OAuth2Client(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -16,13 +17,18 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Missing code" }, { status: 400 });
   }
   try {
-    const { tokens } = await client.getToken(code);
+    // Échange du code contre les tokens
+    const { tokens } = await client.getToken({
+      code,
+      redirect_uri: REDIRECT_URI, // ✅ obligatoire ici aussi
+    });
     const idToken = tokens.id_token;
     if (!idToken) throw new Error("No id_token");
 
+    // Vérification du token
     const ticket = await client.verifyIdToken({
       idToken,
-      audience: process.env.GOOGLE_CLIENT_ID,
+      audience: CLIENT_ID,
     });
     const payload = ticket.getPayload();
     if (!payload) throw new Error("Invalid token");
@@ -33,6 +39,7 @@ export async function GET(request: Request) {
     const name = payload.name || "Utilisateur Google";
     const picture = payload.picture || null;
 
+    // Trouver ou créer l'utilisateur
     let user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
       user = await prisma.user.create({
@@ -45,16 +52,17 @@ export async function GET(request: Request) {
       });
     }
 
+    // Générer le JWT pour l'app
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role, isSuperAdmin: user.isSuperAdmin },
       process.env.NEXTAUTH_SECRET!,
       { expiresIn: "7d" }
     );
 
-    // Rediriger vers l'URI de l'app avec le token
+    // Redirection vers l'app avec le token
     return NextResponse.redirect(`octavia-app://auth?token=${token}`);
   } catch (error) {
-    console.error(error);
+    console.error("Erreur callback Google mobile:", error);
     return NextResponse.redirect(`octavia-app://auth?error=oauth_failed`);
   }
 }
