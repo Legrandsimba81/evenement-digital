@@ -86,7 +86,7 @@ export default function HomePage() {
   return (
     <main className="min-h-screen">
       {/* Hero Section - Dégradé original conservé */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-primary-500 via-primary-600 to-secondary-500 dark:from-primary-800 dark:via-primary-900 dark:to-secondary-900 py-20 text-white">        <div className="absolute inset-0 bg-[url('/hero-pattern.svg')] opacity-10" />
+      <section className="relative overflow-hidden bg-gradient-to-br from-primary-500 via-primary-600 to-secondary-500 dark:from-primary-800 dark:via-primary-900 dark:to-secondary-900 py-20 text-white">       
         {/* Motif / image de fond */}
         <div
           className="absolute inset-0 bg-[url('/hero-pattern.jpg')] bg-cover bg-center opacity-10 dark:opacity-30"
