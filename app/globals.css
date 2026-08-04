@@ -12,7 +12,7 @@
   --color-primary-700: #3e41b5;
   --color-primary-800: #2d2f8a;
   --color-primary: var(--color-primary-500);
-  
+
   /* Secondary */
   --color-secondary-200: #eaf8f4;
   --color-secondary-300: #bfe9de;
@@ -22,16 +22,20 @@
   --color-secondary-700: #1e7d62;
   --color-secondary-800: #165a46;
   --color-secondary: var(--color-secondary-500);
-  
-  /* Gray */
-  --color-gray-100: #fafafa;
-  --color-gray-200: #f2f2f2;
-  --color-gray-300: #e5e5e5;
-  --color-gray-400: #b2b2b2;
-  --color-gray-500: #808080;
-  --color-gray-800: #333333;
-  --color-gray: #181818;
-  
+
+  /* VRAIS GRIS NEUTRES & NOIR PUR */
+  --color-gray-100: #f5f5f5;
+  --color-gray-200: #e5e5e5;
+  --color-gray-300: #d4d4d4;
+  --color-gray-400: #a3a3a3;
+  --color-gray-500: #737373;
+  --color-gray-600: #525252;
+  --color-gray-700: #404040;
+  --color-gray-800: #262626;
+  --color-gray-900: #171717;
+  --color-gray-950: #0a0a0a;
+  --color-gray: #000000; /* Vrai noir pur */
+
   /* Alert */
   --color-alert-danger: #FF4E4E;
   --color-alert-success: #90DA1F;
@@ -47,40 +51,45 @@
   --color-primary-700: var(--color-primary-700);
   --color-primary-800: var(--color-primary-800);
   --color-primary: var(--color-primary);
-  
+
   --color-secondary-200: var(--color-secondary-200);
   --color-secondary-300: var(--color-secondary-300);
   --color-secondary-400: var(--color-secondary-400);
   --color-secondary-500: var(--color-secondary-500);
   --color-secondary-600: var(--color-secondary-600);
   --color-secondary: var(--color-secondary);
-  
+
+  /* Écrase le gris de Tailwind par vos vrais gris */
+  --color-gray-100: var(--color-gray-100);
+  --color-gray-200: var(--color-gray-200);
   --color-gray-300: var(--color-gray-300);
   --color-gray-400: var(--color-gray-400);
   --color-gray-500: var(--color-gray-500);
   --color-gray-600: var(--color-gray-600);
   --color-gray-700: var(--color-gray-700);
   --color-gray-800: var(--color-gray-800);
+  --color-gray-900: var(--color-gray-900);
+  --color-gray-950: var(--color-gray-950);
   --color-gray: var(--color-gray);
-  
+
   --color-alert-danger: var(--color-alert-danger);
   --color-alert-success: var(--color-alert-success);
   --color-alert-warning: var(--color-alert-warning);
 }
 
 body {
-  background-color: var(--color-gray-300);
-  color: var(--color-gray-800);
+  background-color: var(--color-gray-100);
+  color: var(--color-gray-900);
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 html.dark body {
-  background-color: #111827;
-  color: #f9fafb;
+  background-color: var(--color-gray-950); /* Fond sombre neutre très profond */
+  color: var(--color-gray-100);
 }
 
 .input {
-  @apply w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500;
+  @apply w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 bg-white text-gray-900;
 }
 
 html.dark .input {
@@ -92,32 +101,21 @@ html.dark .input {
 }
 
 .btn-google {
-  @apply flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50;
+  @apply flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-800 bg-white hover:bg-gray-100;
 }
 
 html.dark .btn-google {
-  @apply border-gray-700 bg-gray-900 text-gray-100 hover:bg-gray-800;
+  @apply border-gray-700 bg-gray-800 text-gray-100 hover:bg-gray-700;
 }
 
-/* Empêcher le zoom automatique sur iPhone */
-input,
-select,
-textarea {
+/* Éviter le zoom automatique sur iPhone */
+input, select, textarea {
   font-size: 16px !important;
 }
+
 /* Couleurs pour les suggestions */
-.bg-accent-100 {
-  background-color: #e0f2fe;
-}
-.text-accent-700 {
-  color: #0369a1;
-}
-.hover\:bg-accent-200:hover {
-  background-color: #bae6fd;
-}
-.dark .dark\:bg-accent-900\/30 {
-  background-color: rgba(8, 47, 73, 0.3);
-}
-.dark .dark\:text-accent-300 {
-  color: #7dd3fc;
-}
+.bg-accent-100 { background-color: #e0f2fe; }
+.text-accent-700 { color: #0369a1; }
+.hover\:bg-accent-200:hover { background-color: #bae6fd; }
+.dark .dark\:bg-accent-900\/30 { background-color: rgba(8, 47, 73, 0.3); }
+.dark .dark\:text-accent-300 { color: #7dd3fc; }

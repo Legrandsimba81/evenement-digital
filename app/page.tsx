@@ -86,7 +86,7 @@ export default function HomePage() {
   return (
     <main className="min-h-screen">
       {/* Hero Section - Dégradé original conservé */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-primary-500 via-primary-600 to-secondary-500 py-20 text-white">
+      <section className="relative overflow-hidden bg-gradient-to-br from-primary-500 via-primary-600 to-secondary-500 dark:from-primary-800 dark:via-primary-950 dark:to-secondary-800 py-20 text-white">
         <div className="absolute inset-0 bg-[url('/hero-pattern.svg')] opacity-10" />
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col items-center text-center">
@@ -307,7 +307,7 @@ export default function HomePage() {
       </section>
 
       {/* CTA Section - Dégradé original conservé */}
-      <section className="w-full bg-gradient-to-r from-primary-600 to-secondary-600 py-16 px-4 text-center text-white">
+      <section className="w-full bg-gradient-to-br from-primary-500 via-primary-600 to-secondary-500 dark:from-primary-800 dark:via-primary-950 dark:to-secondary-800 py-16 px-4 text-center text-white">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-3xl font-bold">Prêt à créer votre prochain événement ?</h2>
           <p className="mt-4 text-lg text-white/90">
