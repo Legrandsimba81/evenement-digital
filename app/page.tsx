@@ -86,7 +86,7 @@ export default function HomePage() {
   return (
     <main className="min-h-screen">
       {/* Hero Section - Dégradé original conservé */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-primary-500 via-primary-600 to-secondary-500 dark:from-primary-800 dark:via-primary-950 dark:to-secondary-800 py-20 text-white">
+      <section className="relative overflow-hidden bg-gradient-to-br from-primary-500 via-primary-600 to-secondary-500 dark:bg-gradient-to-br dark:from-primary-800 dark:via-primary-950 dark:to-secondary-800 py-20 text-white">
         <div className="absolute inset-0 bg-[url('/hero-pattern.svg')] opacity-10" />
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col items-center text-center">
@@ -96,7 +96,7 @@ export default function HomePage() {
             </div>
             <h1 className="mt-6 text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
               Octavia Event
-              <span className="block text-secondary-200">L'invitation numérique nouvelle génération</span>
+              {/* <span className="block text-secondary-200">L'invitation numérique nouvelle génération</span> */}
             </h1>
             <p className="mt-6 max-w-2xl text-lg text-white/80">
               Créez, gérez et partagez vos invitations en quelques clics. Plus besoin d'imprimer
@@ -129,7 +129,7 @@ export default function HomePage() {
                 </>
               )}
             </div>
-            <p className="mt-4 text-sm text-white/60">Aucune carte bancaire requise pour commencer</p>
+            {/* <p className="mt-4 text-sm text-white/60">Aucune carte bancaire requise pour commencer</p> */}
           </div>
         </div>
       </section>
@@ -276,7 +276,7 @@ export default function HomePage() {
                   <span className="mt-4 font-semibold text-gray-900 dark:text-white group-hover:text-primary-500 transition-colors">
                     {type.label}
                   </span>
-                  <span className="mt-1 text-xs text-gray-400 dark:text-gray-500">Créer</span>
+                  <span className="mt-1 text-xs text-gray-400 dark:text-gray-500">Cliquer pour créer</span>
                 </Link>
               );
             })}
@@ -307,7 +307,7 @@ export default function HomePage() {
       </section>
 
       {/* CTA Section - Dégradé original conservé */}
-      <section className="w-full bg-gradient-to-br from-primary-500 via-primary-600 to-secondary-500 dark:from-primary-800 dark:via-primary-950 dark:to-secondary-800 py-16 px-4 text-center text-white">
+      <section className="w-full bg-gradient-to-br from-primary-500 via-primary-600 to-secondary-500 dark:bg-gradient-to-br dark:from-primary-800 dark:via-primary-950 dark:to-secondary-800 py-16 px-4 text-center text-white">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-3xl font-bold">Prêt à créer votre prochain événement ?</h2>
           <p className="mt-4 text-lg text-white/90">
