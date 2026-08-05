@@ -79,28 +79,28 @@ export const metadata: Metadata = {
   applicationName: "Octavia",
   icons: {
     icons: {
-    icon: "/icon.png",
+      icon: "/icon.png",
     },
-
     apple: [
       { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
     ],
     shortcut: [{ url: "/icon.png" }],
   },
   manifest: "/manifest.json",
-  themeColor: "#5F62E2",
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 5,
-    userScalable: true,
-  },
   formatDetection: {
     email: true,
     address: true,
     telephone: true,
   },
   category: "technology",
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  themeColor: "#5F62E2",
 };
 
 export default function RootLayout({
