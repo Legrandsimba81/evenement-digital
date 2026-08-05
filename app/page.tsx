@@ -139,6 +139,48 @@ export default function HomePage() {
         </div>
       </section>
 
+            {/* Promotional Section with Video */}
+      <section className="py-16 bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-950 dark:to-gray-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-12">
+            {/* Texte à gauche */}
+            <div className="flex-1 text-center lg:text-left">
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+                Organisez vos événements en toute simplicité
+              </h2>
+              <p className="mt-4 text-lg text-gray-600 dark:text-gray-300">
+                Découvrez comment Octavia Event révolutionne la gestion d'invitations.
+                Vidéo de présentation de notre plateforme.
+              </p>
+              <div className="mt-6">
+                <Link
+                  href="/dashboard"
+                  className="inline-flex items-center gap-2 rounded-full bg-primary-600 px-6 py-3 font-semibold text-white transition hover:bg-primary-700"
+                >
+                  En savoir plus
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+            </div>
+
+            {/* Vidéo à droite (portrait) */}
+            <div className="flex-1 flex justify-center lg:justify-end">
+              <div className="relative w-64 md:w-72 lg:w-80 aspect-[9/16] rounded-2xl overflow-hidden shadow-xl bg-black/5 dark:bg-black/20">
+                <video
+                  src="/images/promo-video.mp4"   // ⚠️ Remplacez par le bon chemin
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  controls={false}
+                  className="w-full h-full object-cover pointer-events-none"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Mes événements */}
       {session && (
         <section className="py-16 bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-950 dark:to-gray-900">
