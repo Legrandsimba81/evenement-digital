@@ -1,18 +1,26 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Users, Calendar, CreditCard, Bell, Shield, Home, Mail } from "lucide-react";
+import { Users, Calendar, CreditCard, Bell, Shield, Home, Mail, FileText } from "lucide-react";
+// / app/layout.tsx (ou dans un middleware)
+import { cookies } from "next/headers";
+import { randomUUID } from "crypto";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
   if (!session?.user || session.user.role !== "ADMIN") {
     redirect("/dashboard");
   }
-
+// Dans le layout racine, avant le rendu
+const cookieStore = cookies();
+if (!cookieStore.get("sessionId")) {
+  cookieStore.set("sessionId", randomUUID(), { maxAge: 60 * 60 * 24 * 365 }); // 1 an
+}
   const navItems = [
     { icon: Home, label: "Dashboard", href: "/admin" },
     { icon: Users, label: "Utilisateurs", href: "/admin/users" },
     { icon: Calendar, label: "Événements", href: "/admin/events" },
+    { icon: FileText, label: "Articles", href: "/admin/posts" },
     { icon: CreditCard, label: "Transactions", href: "/admin/transactions" },
     { icon: Mail, label: "Emails", href: "/admin/emails" },
     { icon: Bell, label: "Notifications", href: "/admin/notifications" },
