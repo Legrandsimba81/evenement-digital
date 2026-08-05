@@ -1,4 +1,3 @@
-// components/blog/ShareModal.tsx
 "use client";
 
 import { useState } from "react";
