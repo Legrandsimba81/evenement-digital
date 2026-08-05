@@ -10,9 +10,10 @@ import { cookies } from "next/headers";
 
 export const dynamic = "force-dynamic";
 
-export async function generateMetadata({ params }: { params: { slug: string } }) {
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   try {
-    const post = await fetchPost(params.slug);
+    const { slug } = await params;
+    const post = await fetchPost(slug);
     if (!post) return { title: "Article introuvable" };
     return {
       title: post.title || "Sans titre",
@@ -28,12 +29,13 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   }
 }
 
-export default async function BlogPostPage({ params }: { params: { slug: string } }) {
+export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
   try {
-    const post = await getBlogPost(params.slug);
+    const { slug } = await params;
+    const post = await getBlogPost(slug);
     if (!post) return notFound();
 
-    const recentPosts = await getRecentPosts(params.slug, 3);
+    const recentPosts = await getRecentPosts(slug, 3);
     const cookieStore = await cookies();
     const sessionId = cookieStore.get("sessionId")?.value || "anonymous";
 
@@ -75,11 +77,11 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
           )}
 
           <div className="flex items-center gap-4 mt-8 border-t border-gray-200 dark:border-gray-700 pt-6">
-            <LikeButton postSlug={post.slug} initialLikes={post.likes || 0} sessionId={sessionId} />
-            <ShareModal postSlug={post.slug} title={post.title || "Article"} />
+            <LikeButton postSlug={slug} initialLikes={post.likes || 0} sessionId={sessionId} />
+            <ShareModal postSlug={slug} title={post.title || "Article"} />
           </div>
 
-          <CommentSection postSlug={post.slug} comments={comments} />
+          <CommentSection postSlug={slug} comments={comments} />
 
           {secondaryImages.length > 0 && (
             <div className="mt-12">

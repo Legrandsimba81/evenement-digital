@@ -104,21 +104,52 @@ export async function deleteBlogPost(slug: string) {
 
 export async function getBlogPost(slug: string) {
   try {
-    const post = await prisma.blogPost.findUnique({
+    const post = await prisma.blogPost.findFirst({
       where: { slug },
-      include: {
-        comments: { orderBy: { createdAt: "desc" } },
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        content: true,
+        excerpt: true,
+        imageUrl: true,
+        metaTitle: true,
+        metaDesc: true,
+        tags: true,
+        imageOrientation: true,
+        images: true,
+        published: true,
+        publishedAt: true,
+        views: true,
+        likes: true,
+        authorId: true,
+        createdAt: true,
+        updatedAt: true,
       },
     });
 
     if (!post) return null;
+
+    const comments = await prisma.blogComment.findMany({
+      where: { postId: post.id },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        content: true,
+        authorName: true,
+        createdAt: true,
+      },
+    });
 
     await prisma.blogPost.update({
       where: { id: post.id },
       data: { views: { increment: 1 } },
     });
 
-    return post;
+    return {
+      ...post,
+      comments,
+    };
   } catch (error) {
     console.error("Erreur getBlogPost:", error);
     return null;
@@ -134,8 +165,17 @@ export async function getRecentPosts(excludeSlug?: string, limit = 3) {
       },
       orderBy: { publishedAt: "desc" },
       take: limit,
-      include: {
-        comments: { select: { id: true } },
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        excerpt: true,
+        imageUrl: true,
+        publishedAt: true,
+        views: true,
+        likes: true,
+        createdAt: true,
+        updatedAt: true,
       },
     });
   } catch (error) {
