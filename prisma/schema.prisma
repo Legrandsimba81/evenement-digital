@@ -221,6 +221,8 @@ model BlogPost {
   metaTitle   String?
   metaDesc    String?
   tags        String[] // stocké comme tableau de texte
+  imageOrientation String? @default("landscape") // "landscape" ou "portrait"
+  images Json? // stockera un tableau d'URLs d'images secondaires
   published   Boolean  @default(false)
   publishedAt DateTime?
   views       Int      @default(0)

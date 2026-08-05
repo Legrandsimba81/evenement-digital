@@ -4,7 +4,6 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
-import { useState } from "react";
 import { Bold, Italic, List, ListOrdered, Quote, Link as LinkIcon, Image as ImageIcon, Undo, Redo } from "lucide-react";
 
 interface BlogEditorProps {
@@ -26,16 +25,12 @@ export default function BlogEditor({ initialContent = "", onChange }: BlogEditor
 
   const addImage = () => {
     const url = prompt("URL de l'image :");
-    if (url) {
-      editor.chain().focus().setImage({ src: url }).run();
-    }
+    if (url) editor.chain().focus().setImage({ src: url }).run();
   };
 
   const setLink = () => {
     const url = prompt("URL du lien :");
-    if (url) {
-      editor.chain().focus().setLink({ href: url }).run();
-    }
+    if (url) editor.chain().focus().setLink({ href: url }).run();
   };
 
   return (
@@ -105,7 +100,7 @@ export default function BlogEditor({ initialContent = "", onChange }: BlogEditor
           <Redo size={16} />
         </button>
       </div>
-      <EditorContent editor={editor} className="p-4 prose prose-sm sm:prose dark:prose-invert max-w-none" />
+      <EditorContent editor={editor} className="p-4 prose prose-sm sm:prose dark:prose-invert max-w-none min-h-[400px]" />
     </div>
   );
 }

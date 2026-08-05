@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { updateBlogPost, getBlogPost } from "@/actions/blog-actions";
 import BlogEditor from "@/components/editor/BlogEditor";
+import ImageUpload from "@/components/ui/ImageUpload";
+import ImageGalleryUpload from "@/components/ui/ImageGalleryUpload";
 import { Loader2 } from "lucide-react";
 
 export default function EditPostPage() {
@@ -16,8 +18,8 @@ export default function EditPostPage() {
   const [excerpt, setExcerpt] = useState("");
   const [content, setContent] = useState("");
   const [imageUrl, setImageUrl] = useState("");
-  const [metaTitle, setMetaTitle] = useState("");
-  const [metaDesc, setMetaDesc] = useState("");
+  const [imageOrientation, setImageOrientation] = useState<"landscape" | "portrait">("landscape");
+  const [images, setImages] = useState<string[]>([]);
   const [tags, setTags] = useState("");
   const [published, setPublished] = useState(false);
 
@@ -34,8 +36,11 @@ export default function EditPostPage() {
         setExcerpt(post.excerpt || "");
         setContent(post.content);
         setImageUrl(post.imageUrl || "");
-        setMetaTitle(post.metaTitle || "");
-        setMetaDesc(post.metaDesc || "");
+        // ✅ Correction : validation de l'orientation
+        setImageOrientation(
+          post.imageOrientation === "portrait" ? "portrait" : "landscape"
+        );
+        setImages(post.images as string[] || []);
         setTags((post.tags as string[] || []).join(", "));
         setPublished(post.published);
         setLoading(false);
@@ -62,8 +67,8 @@ export default function EditPostPage() {
         content,
         excerpt: excerpt.trim() || undefined,
         imageUrl: imageUrl.trim() || undefined,
-        metaTitle: metaTitle.trim() || undefined,
-        metaDesc: metaDesc.trim() || undefined,
+        imageOrientation,
+        images: images.length > 0 ? images : undefined,
         tags: tagsArray,
         published,
       });
@@ -88,10 +93,9 @@ export default function EditPostPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
+    <div className="max-w-5xl mx-auto p-6">
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Modifier l'article</h1>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Mêmes champs que new, avec les valeurs pré-remplies */}
+      <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Titre *</label>
           <input
@@ -101,6 +105,7 @@ export default function EditPostPage() {
             className="mt-1 w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
           />
         </div>
+
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Extrait</label>
           <textarea
@@ -110,37 +115,32 @@ export default function EditPostPage() {
             className="mt-1 w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
           />
         </div>
+
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Contenu *</label>
           <BlogEditor initialContent={content} onChange={setContent} />
         </div>
+
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">URL de l'image</label>
-          <input
-            type="url"
-            value={imageUrl}
-            onChange={(e) => setImageUrl(e.target.value)}
-            className="mt-1 w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-          />
+          <ImageUpload value={imageUrl} onChange={setImageUrl} label="Image principale" />
         </div>
+
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Meta title</label>
-          <input
-            type="text"
-            value={metaTitle}
-            onChange={(e) => setMetaTitle(e.target.value)}
-            className="mt-1 w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-          />
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Orientation de l'image</label>
+          <select
+            value={imageOrientation}
+            onChange={(e) => setImageOrientation(e.target.value as "landscape" | "portrait")}
+            className="mt-1 w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+          >
+            <option value="landscape">Paysage</option>
+            <option value="portrait">Portrait</option>
+          </select>
         </div>
+
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Meta description</label>
-          <textarea
-            value={metaDesc}
-            onChange={(e) => setMetaDesc(e.target.value)}
-            rows={2}
-            className="mt-1 w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-          />
+          <ImageGalleryUpload images={images} onChange={setImages} label="Images secondaires" maxImages={6} />
         </div>
+
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Tags (séparés par des virgules)</label>
           <input
@@ -150,6 +150,7 @@ export default function EditPostPage() {
             className="mt-1 w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
           />
         </div>
+
         <div className="flex items-center gap-4">
           <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
             <input
@@ -161,7 +162,9 @@ export default function EditPostPage() {
             Publié
           </label>
         </div>
+
         {error && <p className="text-red-600 text-sm">{error}</p>}
+
         <div className="flex gap-3">
           <button
             type="submit"

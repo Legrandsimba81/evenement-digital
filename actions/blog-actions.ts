@@ -10,8 +10,8 @@ export async function createBlogPost(data: {
   content: string;
   excerpt?: string;
   imageUrl?: string;
-  metaTitle?: string;
-  metaDesc?: string;
+  imageOrientation?: "landscape" | "portrait";
+  images?: string[];
   tags?: string[];
   published?: boolean;
 }) {
@@ -21,16 +21,11 @@ export async function createBlogPost(data: {
   }
 
   const userId = session.user.id;
-  if (!userId) {
-    throw new Error("ID utilisateur manquant");
-  }
+  if (!userId) throw new Error("ID utilisateur manquant");
 
   const slug = generateSlug(data.title);
-  // Vérifier si le slug existe déjà
   const existing = await prisma.blogPost.findUnique({ where: { slug } });
-  if (existing) {
-    throw new Error("Un article avec ce titre existe déjà.");
-  }
+  if (existing) throw new Error("Un article avec ce titre existe déjà.");
 
   const post = await prisma.blogPost.create({
     data: {
@@ -39,8 +34,8 @@ export async function createBlogPost(data: {
       content: data.content,
       excerpt: data.excerpt,
       imageUrl: data.imageUrl,
-      metaTitle: data.metaTitle,
-      metaDesc: data.metaDesc,
+      imageOrientation: data.imageOrientation || "landscape",
+      images: data.images || [],
       tags: data.tags || [],
       published: data.published || false,
       publishedAt: data.published ? new Date() : null,
@@ -57,8 +52,8 @@ export async function updateBlogPost(slug: string, data: {
   content: string;
   excerpt?: string;
   imageUrl?: string;
-  metaTitle?: string;
-  metaDesc?: string;
+  imageOrientation?: "landscape" | "portrait";
+  images?: string[];
   tags?: string[];
   published?: boolean;
 }) {
@@ -84,8 +79,8 @@ export async function updateBlogPost(slug: string, data: {
       content: data.content,
       excerpt: data.excerpt,
       imageUrl: data.imageUrl,
-      metaTitle: data.metaTitle,
-      metaDesc: data.metaDesc,
+      imageOrientation: data.imageOrientation || "landscape",
+      images: data.images || [],
       tags: data.tags || [],
       published: data.published || false,
       publishedAt: data.published ? new Date() : null,
@@ -116,7 +111,6 @@ export async function getBlogPost(slug: string) {
     },
   });
   if (!post) return null;
-  // Incrémenter les vues
   await prisma.blogPost.update({
     where: { id: post.id },
     data: { views: { increment: 1 } },
@@ -161,7 +155,6 @@ export async function toggleLike(slug: string, sessionId: string) {
   const post = await prisma.blogPost.findUnique({ where: { slug } });
   if (!post) throw new Error("Article introuvable");
 
-  // Vérifier si un like existe déjà pour cette session
   const existingLike = await prisma.blogLike.findFirst({
     where: {
       postId: post.id,
@@ -170,7 +163,6 @@ export async function toggleLike(slug: string, sessionId: string) {
   });
 
   if (existingLike) {
-    // Supprimer le like (toggle off)
     await prisma.blogLike.delete({ where: { id: existingLike.id } });
     const updated = await prisma.blogPost.update({
       where: { id: post.id },
@@ -178,7 +170,6 @@ export async function toggleLike(slug: string, sessionId: string) {
     });
     return { liked: false, likes: updated.likes };
   } else {
-    // Ajouter un like
     await prisma.blogLike.create({
       data: {
         postId: post.id,

@@ -2,18 +2,17 @@ import { getBlogPost, getRecentPosts, getBlogPost as fetchPost } from "@/actions
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Calendar, User, Eye } from "lucide-react";
-import LikeButton from "@/components/admin/blog/LikeButton";
-import CommentSection from "@/components/admin/blog/CommentSection";
-import ShareModal from "@/components/admin/blog/ShareModal";
+import LikeButton from "@/components/blog/LikeButton";
+import CommentSection from "@/components/blog/CommentSection";
+import ShareModal from "@/components/blog/ShareModal";
 import { cookies } from "next/headers";
 
-// Métadonnées dynamiques
 export async function generateMetadata({ params }: { params: { slug: string } }) {
   const post = await fetchPost(params.slug);
   if (!post) return { title: "Article introuvable" };
   return {
-    title: post.metaTitle || post.title,
-    description: post.metaDesc || post.excerpt || post.content.substring(0, 160),
+    title: post.title,
+    description: post.excerpt || post.content.substring(0, 160),
     openGraph: {
       title: post.title,
       description: post.excerpt || post.content.substring(0, 160),
@@ -27,14 +26,19 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
   if (!post) return notFound();
 
   const recentPosts = await getRecentPosts(params.slug, 3);
-  const cookieStore = await cookies(); // ✅ ajout de await
+  const cookieStore = await cookies();
   const sessionId = cookieStore.get("sessionId")?.value || "anonymous";
+
+  const imageContainerClass = post.imageOrientation === "portrait" ? "aspect-[3/4]" : "aspect-[16/9]";
+
+  // Récupérer les images secondaires
+  const secondaryImages = post.images as string[] || [];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-950 dark:to-gray-900 py-12 px-4 md:py-16 md:px-8">
       <article className="max-w-4xl mx-auto">
         {post.imageUrl && (
-          <div className="aspect-[16/9] rounded-2xl overflow-hidden mb-8 shadow-lg">
+          <div className={`${imageContainerClass} rounded-2xl overflow-hidden mb-8 shadow-lg`}>
             <img src={post.imageUrl} alt={post.title} className="w-full h-full object-cover" />
           </div>
         )}
@@ -60,6 +64,19 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
         </div>
 
         <CommentSection postSlug={post.slug} comments={post.comments} />
+
+        {secondaryImages.length > 0 && (
+          <div className="mt-12">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Galerie d'images</h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {secondaryImages.map((imgUrl: string, idx: number) => (
+                <div key={idx} className="rounded-xl overflow-hidden shadow-md">
+                  <img src={imgUrl} alt={`Image ${idx + 1}`} className="w-full h-48 object-cover" />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {recentPosts.length > 0 && (
           <div className="mt-12 border-t border-gray-200 dark:border-gray-700 pt-8">
