@@ -53,7 +53,7 @@ export default function Navbar() {
     { href: "/", label: "Accueil", icon: Home },
     { href: "/dashboard", label: "Mes événements", icon: LayoutGrid },
     { href: "/dashboard/event/new", label: "Créer", icon: PlusCircle },
-    { href: "/blog", label: "Blog", icon: Newspaper }, // ✅ Ajout du lien vers le blog
+    { href: "/blog", label: "Blog", icon: Newspaper },
   ];
 
   const handleSignOut = async () => {
@@ -194,19 +194,19 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile navigation */}
+      {/* Mobile navigation - tous les liens sur une ligne avec icônes et texte réduit */}
       <div className="border-t border-gray-100 bg-white/90 dark:border-gray-900 dark:bg-gray-950 md:hidden">
-        <nav className="mx-auto flex max-w-7xl gap-2 overflow-x-auto px-4 py-3 sm:px-6">
+        <nav className="mx-auto flex max-w-7xl justify-around gap-1 px-2 py-2 sm:px-4">
           {navLinks.map((link) => {
             const Icon = link.icon;
             return (
               <Link
                 key={link.href}
                 href={link.href}
-                className="flex min-w-max items-center gap-2 rounded-full border border-transparent px-3 py-2 text-sm font-normal text-gray-700 transition hover:border-gray-200 hover:bg-gray-50 hover:text-primary dark:text-gray-400 dark:hover:border-gray-800 dark:hover:bg-gray-900 dark:hover:text-white"
+                className="flex flex-col items-center gap-0.5 rounded-full px-2 py-1 text-xs font-normal text-gray-700 transition hover:bg-gray-50 hover:text-primary dark:text-gray-400 dark:hover:bg-gray-900 dark:hover:text-white"
               >
-                <Icon size={16} />
-                <span>{link.label}</span>
+                <Icon size={18} />
+                <span className="text-[10px] leading-tight">{link.label}</span>
               </Link>
             );
           })}

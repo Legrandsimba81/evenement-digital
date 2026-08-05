@@ -11,87 +11,102 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   const post = await fetchPost(params.slug);
   if (!post) return { title: "Article introuvable" };
   return {
-    title: post.title,
-    description: post.excerpt || post.content.substring(0, 160),
+    title: post.title || "Sans titre",
+    description: post.excerpt || post.content?.substring(0, 160) || "",
     openGraph: {
-      title: post.title,
-      description: post.excerpt || post.content.substring(0, 160),
+      title: post.title || "Sans titre",
+      description: post.excerpt || post.content?.substring(0, 160) || "",
       images: post.imageUrl ? [{ url: post.imageUrl }] : [],
     },
   };
 }
 
 export default async function BlogPostPage({ params }: { params: { slug: string } }) {
-  const post = await getBlogPost(params.slug);
-  if (!post) return notFound();
+  try {
+    const post = await getBlogPost(params.slug);
+    if (!post) return notFound();
 
-  const recentPosts = await getRecentPosts(params.slug, 3);
-  const cookieStore = await cookies();
-  const sessionId = cookieStore.get("sessionId")?.value || "anonymous";
+    const recentPosts = await getRecentPosts(params.slug, 3);
+    const cookieStore = await cookies();
+    const sessionId = cookieStore.get("sessionId")?.value || "anonymous";
 
-  const imageContainerClass = post.imageOrientation === "portrait" ? "aspect-[3/4]" : "aspect-[16/9]";
+    // ✅ Sécurisation des données
+    const orientation = post.imageOrientation === "portrait" ? "portrait" : "landscape";
+    const imageContainerClass = orientation === "portrait" ? "aspect-[3/4]" : "aspect-[16/9]";
 
-  // Récupérer les images secondaires
-  const secondaryImages = post.images as string[] || [];
+    // ✅ Filtrage des images secondaires pour garantir qu'elles sont des chaînes
+    const secondaryImages = Array.isArray(post.images) 
+      ? post.images.filter((img): img is string => typeof img === "string")
+      : [];
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-950 dark:to-gray-900 py-12 px-4 md:py-16 md:px-8">
-      <article className="max-w-4xl mx-auto">
-        {post.imageUrl && (
-          <div className={`${imageContainerClass} rounded-2xl overflow-hidden mb-8 shadow-lg`}>
-            <img src={post.imageUrl} alt={post.title} className="w-full h-full object-cover" />
+    const authorName = post.author?.name || "Admin";
+    const publishedDate = post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('fr-FR') : "Date inconnue";
+    const views = post.views || 0;
+    const content = post.content || "";
+    const tags = Array.isArray(post.tags) ? post.tags : [];
+
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-950 dark:to-gray-900 py-12 px-4 md:py-16 md:px-8">
+        <article className="max-w-4xl mx-auto">
+          {post.imageUrl && (
+            <div className={`${imageContainerClass} rounded-2xl overflow-hidden mb-8 shadow-lg`}>
+              <img src={post.imageUrl} alt={post.title || "Article"} className="w-full h-full object-cover" />
+            </div>
+          )}
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">{post.title || "Sans titre"}</h1>
+          <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 dark:text-gray-400 mt-4">
+            <span className="flex items-center gap-1"><User size={16} /> {authorName}</span>
+            <span className="flex items-center gap-1"><Calendar size={16} /> {publishedDate}</span>
+            <span className="flex items-center gap-1"><Eye size={16} /> {views} vues</span>
           </div>
-        )}
-        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">{post.title}</h1>
-        <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 dark:text-gray-400 mt-4">
-          <span className="flex items-center gap-1"><User size={16} /> {post.author?.name || "Admin"}</span>
-          <span className="flex items-center gap-1"><Calendar size={16} /> {post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('fr-FR') : "Date inconnue"}</span>
-          <span className="flex items-center gap-1"><Eye size={16} /> {post.views} vues</span>
-        </div>
-        <div className="mt-6 prose prose-lg dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: post.content }} />
+          <div className="mt-6 prose prose-lg dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: content }} />
 
-        {post.tags && post.tags.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-6">
-            {post.tags.map((tag) => (
-              <span key={tag} className="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded-full text-xs text-gray-700 dark:text-gray-300">#{tag}</span>
-            ))}
-          </div>
-        )}
-
-        <div className="flex items-center gap-4 mt-8 border-t border-gray-200 dark:border-gray-700 pt-6">
-          <LikeButton postSlug={post.slug} initialLikes={post.likes} sessionId={sessionId} />
-          <ShareModal postSlug={post.slug} title={post.title} />
-        </div>
-
-        <CommentSection postSlug={post.slug} comments={post.comments} />
-
-        {secondaryImages.length > 0 && (
-          <div className="mt-12">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Galerie d'images</h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {secondaryImages.map((imgUrl: string, idx: number) => (
-                <div key={idx} className="rounded-xl overflow-hidden shadow-md">
-                  <img src={imgUrl} alt={`Image ${idx + 1}`} className="w-full h-48 object-cover" />
-                </div>
+          {tags.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-6">
+              {tags.map((tag) => (
+                <span key={tag} className="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded-full text-xs text-gray-700 dark:text-gray-300">#{tag}</span>
               ))}
             </div>
-          </div>
-        )}
+          )}
 
-        {recentPosts.length > 0 && (
-          <div className="mt-12 border-t border-gray-200 dark:border-gray-700 pt-8">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Articles récents</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {recentPosts.map((recent) => (
-                <Link key={recent.id} href={`/blog/${recent.slug}`} className="bg-white dark:bg-gray-900 rounded-xl shadow-md hover:shadow-lg transition p-4">
-                  {recent.imageUrl && <img src={recent.imageUrl} alt={recent.title} className="w-full h-32 object-cover rounded-lg mb-3" />}
-                  <h3 className="font-semibold text-gray-900 dark:text-white line-clamp-2">{recent.title}</h3>
-                </Link>
-              ))}
-            </div>
+          <div className="flex items-center gap-4 mt-8 border-t border-gray-200 dark:border-gray-700 pt-6">
+            <LikeButton postSlug={post.slug} initialLikes={post.likes || 0} sessionId={sessionId} />
+            <ShareModal postSlug={post.slug} title={post.title || "Article"} />
           </div>
-        )}
-      </article>
-    </div>
-  );
+
+          <CommentSection postSlug={post.slug} comments={post.comments || []} />
+
+          {secondaryImages.length > 0 && (
+            <div className="mt-12">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Galerie d'images</h2>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {secondaryImages.map((imgUrl, idx) => (
+                  <div key={idx} className="rounded-xl overflow-hidden shadow-md">
+                    <img src={imgUrl} alt={`Image ${idx + 1}`} className="w-full h-48 object-cover" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {recentPosts.length > 0 && (
+            <div className="mt-12 border-t border-gray-200 dark:border-gray-700 pt-8">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Articles récents</h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {recentPosts.map((recent) => (
+                  <Link key={recent.id} href={`/blog/${recent.slug}`} className="bg-white dark:bg-gray-900 rounded-xl shadow-md hover:shadow-lg transition p-4">
+                    {recent.imageUrl && <img src={recent.imageUrl} alt={recent.title} className="w-full h-32 object-cover rounded-lg mb-3" />}
+                    <h3 className="font-semibold text-gray-900 dark:text-white line-clamp-2">{recent.title}</h3>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+        </article>
+      </div>
+    );
+  } catch (error) {
+    console.error("Erreur sur la page article:", error);
+    return <div className="min-h-screen flex items-center justify-center">Une erreur est survenue lors du chargement de l'article.</div>;
+  }
 }
