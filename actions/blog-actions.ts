@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { generateSlug } from "@/lib/blog";
 
 export async function createBlogPost(data: {
@@ -104,6 +105,9 @@ export async function deleteBlogPost(slug: string) {
 
 export async function getBlogPost(slug: string) {
   try {
+    const session = await auth();
+    const userId = session?.user?.id;
+
     const post = await prisma.blogPost.findFirst({
       where: { slug },
       select: {
@@ -137,9 +141,14 @@ export async function getBlogPost(slug: string) {
         id: true,
         content: true,
         authorName: true,
+        authorId: true,
         createdAt: true,
       },
     });
+
+    const likedByCurrentUser = userId
+      ? Boolean(await prisma.blogLike.findFirst({ where: { postId: post.id, userId } }))
+      : false;
 
     await prisma.blogPost.update({
       where: { id: post.id },
@@ -149,6 +158,7 @@ export async function getBlogPost(slug: string) {
     return {
       ...post,
       comments,
+      likedByCurrentUser,
     };
   } catch (error) {
     console.error("Erreur getBlogPost:", error);
@@ -206,14 +216,20 @@ export async function getBlogPosts(page = 1, limit = 9) {
   }
 }
 
-export async function toggleLike(slug: string, sessionId: string) {
+export async function toggleLike(slug: string) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    redirect("/login");
+  }
+
+  const userId = session.user.id;
   const post = await prisma.blogPost.findUnique({ where: { slug } });
   if (!post) throw new Error("Article introuvable");
 
   const existingLike = await prisma.blogLike.findFirst({
     where: {
       postId: post.id,
-      sessionId,
+      userId,
     },
   });
 
@@ -223,18 +239,20 @@ export async function toggleLike(slug: string, sessionId: string) {
       where: { id: post.id },
       data: { likes: { decrement: 1 } },
     });
+    revalidatePath(`/blog/${slug}`);
     return { liked: false, likes: updated.likes };
   } else {
     await prisma.blogLike.create({
       data: {
         postId: post.id,
-        sessionId,
+        userId,
       },
     });
     const updated = await prisma.blogPost.update({
       where: { id: post.id },
       data: { likes: { increment: 1 } },
     });
+    revalidatePath(`/blog/${slug}`);
     return { liked: true, likes: updated.likes };
   }
 }
@@ -254,12 +272,55 @@ export async function addComment(slug: string, authorName: string, content: stri
   return comment;
 }
 
-export async function getAllPostsAdmin() {
+export async function updateComment(commentId: string, content: string) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    throw new Error("Connexion requise pour modifier un commentaire.");
+  }
+
+  const existingComment = await prisma.blogComment.findUnique({
+    where: { id: commentId },
+    select: {
+      id: true,
+      authorId: true,
+      post: { select: { slug: true } },
+    },
+  });
+
+  if (!existingComment) throw new Error("Commentaire introuvable.");
+  if (existingComment.authorId !== session.user.id) {
+    throw new Error("Vous ne pouvez modifier que votre propre commentaire.");
+  }
+
+  const updated = await prisma.blogComment.update({
+    where: { id: commentId },
+    data: { content },
+  });
+
+  revalidatePath(`/blog/${existingComment.post.slug}`);
+  return updated;
+}
+
+export async function getAllPostsAdmin(search = "") {
   const session = await auth();
   if (!session?.user || session.user.role !== "ADMIN") {
     throw new Error("Non autorisé");
   }
+
+  const normalizedSearch = search.trim();
+
   return prisma.blogPost.findMany({
+    where: normalizedSearch
+      ? {
+          OR: [
+            { title: { contains: normalizedSearch, mode: "insensitive" } },
+            { excerpt: { contains: normalizedSearch, mode: "insensitive" } },
+            { content: { contains: normalizedSearch, mode: "insensitive" } },
+            { tags: { hasSome: [normalizedSearch] } },
+            { author: { name: { contains: normalizedSearch, mode: "insensitive" } } },
+          ],
+        }
+      : undefined,
     orderBy: { createdAt: "desc" },
     include: {
       author: { select: { name: true } },

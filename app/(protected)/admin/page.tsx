@@ -61,77 +61,86 @@ export default async function AdminDashboardPage() {
   ];
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Tableau de bord</h1>
-        <p className="text-gray-500 dark:text-gray-400">Vue d'ensemble de la plateforme</p>
-      </div>
+    <div className="space-y-5">
+      <header className="rounded-3xl border border-white/10 bg-linear-to-r from-sky-500/10 via-slate-800 to-violet-500/10 p-5 md:p-6">
+        <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-sky-300">Vue d’ensemble</p>
+            <h1 className="mt-2 text-2xl font-bold text-white md:text-3xl">Tableau de bord</h1>
+            <p className="mt-1 text-sm text-slate-300">Suivi rapide de l’activité, des utilisateurs et des événements.</p>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3 text-sm text-slate-200">
+            <span className="block text-xs uppercase tracking-[0.22em] text-slate-400">Admin connecté</span>
+            <span className="font-semibold text-white">{session.user.name || session.user.email}</span>
+          </div>
+        </div>
+      </header>
 
-      {/* Statistiques */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
         {stats.map((stat) => {
           const Icon = stat.icon;
           return (
             <Link
               key={stat.label}
               href={stat.href}
-              className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-4 flex items-center gap-4 hover:shadow-md transition group"
+              className="group min-w-0 rounded-2xl border border-white/10 bg-slate-800/80 p-4 shadow-lg shadow-slate-950/25 transition duration-200 hover:-translate-y-0.5 hover:border-sky-400/50 hover:bg-slate-800"
             >
-              <div
-                className={`h-12 w-12 rounded-full bg-gradient-to-br ${stat.color} bg-opacity-10 flex items-center justify-center text-white`}
-              >
-                <Icon size={20} />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{stat.label}</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">{stat.value}</p>
+              <div className="flex items-start gap-3">
+                <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-linear-to-br ${stat.color} text-white shadow-lg`}>
+                  <Icon size={20} />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-medium uppercase tracking-[0.2em] text-slate-400">{stat.label}</p>
+                  <p className="mt-1 break-all text-2xl font-bold text-white">{stat.value}</p>
+                </div>
               </div>
             </Link>
           );
         })}
-      </div>
+      </section>
 
-      {/* Derniers utilisateurs et événements */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-4">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Derniers utilisateurs</h2>
-            <Link href="/admin/users" className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 flex items-center gap-1">
+      <section className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+        <div className="rounded-3xl border border-white/10 bg-slate-800/80 p-4 shadow-lg shadow-slate-950/20">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h2 className="text-lg font-semibold text-white">Derniers utilisateurs</h2>
+            <Link href="/admin/users" className="inline-flex items-center gap-1 text-sm font-medium text-sky-300 hover:text-sky-200">
               Voir tous <ArrowRight size={14} />
             </Link>
           </div>
+
           {recentUsers.length === 0 ? (
-            <p className="text-gray-500 text-sm">Aucun utilisateur</p>
+            <p className="text-sm text-slate-400">Aucun utilisateur</p>
           ) : (
-            <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+            <ul className="space-y-3">
               {recentUsers.map((user) => (
-                <li key={user.id} className="py-2 flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-gray-900 dark:text-white">{user.name || "Anonyme"}</p>
-                    <p className="text-sm text-gray-500">{user.email}</p>
+                <li key={user.id} className="flex items-center justify-between gap-3 rounded-2xl bg-slate-900/70 px-3 py-3">
+                  <div className="min-w-0">
+                    <p className="truncate font-medium text-white">{user.name || "Anonyme"}</p>
+                    <p className="truncate text-sm text-slate-400">{user.email}</p>
                   </div>
-                  <span className="text-xs text-gray-400">{formatDate(user.createdAt)}</span>
+                  <span className="shrink-0 text-xs text-slate-400">{formatDate(user.createdAt)}</span>
                 </li>
               ))}
             </ul>
           )}
         </div>
 
-        <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-4">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Derniers événements</h2>
-            <Link href="/admin/events" className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 flex items-center gap-1">
+        <div className="rounded-3xl border border-white/10 bg-slate-800/80 p-4 shadow-lg shadow-slate-950/20">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h2 className="text-lg font-semibold text-white">Derniers événements</h2>
+            <Link href="/admin/events" className="inline-flex items-center gap-1 text-sm font-medium text-sky-300 hover:text-sky-200">
               Voir tous <ArrowRight size={14} />
             </Link>
           </div>
+
           {recentEvents.length === 0 ? (
-            <p className="text-gray-500 text-sm">Aucun événement</p>
+            <p className="text-sm text-slate-400">Aucun événement</p>
           ) : (
-            <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+            <ul className="space-y-3">
               {recentEvents.map((event) => (
-                <li key={event.id} className="py-2">
-                  <p className="font-medium text-gray-900 dark:text-white">{event.title}</p>
-                  <p className="text-sm text-gray-500">
+                <li key={event.id} className="rounded-2xl bg-slate-900/70 px-3 py-3">
+                  <p className="truncate font-medium text-white">{event.title}</p>
+                  <p className="mt-1 text-sm text-slate-400">
                     {event.user.name || "Anonyme"} • {formatDate(event.createdAt)}
                   </p>
                 </li>
@@ -139,7 +148,7 @@ export default async function AdminDashboardPage() {
             </ul>
           )}
         </div>
-      </div>
+      </section>
     </div>
   );
 }

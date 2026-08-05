@@ -52,6 +52,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     const content = post.content || "";
     const tags = Array.isArray(post.tags) ? post.tags : [];
     const comments = Array.isArray(post.comments) ? post.comments : [];
+    const description = post.excerpt || post.content?.replace(/<[^>]*>/g, "").slice(0, 160) || "";
 
     return (
       <div className="min-h-screen bg-linear-to-br from-slate-50 to-blue-50 dark:from-gray-950 dark:to-gray-900 py-10 px-4 md:py-16 md:px-6">
@@ -76,6 +77,9 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
                 <span className="flex items-center gap-1"><Calendar size={16} /> {publishedDate}</span>
                 <span className="flex items-center gap-1"><Eye size={16} /> {views} vues</span>
               </div>
+              {description && (
+                <p className="mt-4 text-base md:text-lg text-gray-600 dark:text-gray-300">{description}</p>
+              )}
             </header>
 
             <div className="mt-6 prose prose-lg prose-img:rounded-2xl dark:prose-invert max-w-none prose-headings:scroll-mt-24" dangerouslySetInnerHTML={{ __html: content }} />
@@ -89,7 +93,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             )}
 
             <div className="flex flex-wrap items-center gap-4 mt-8 border-t border-gray-200 dark:border-gray-700 pt-6">
-              <LikeButton postSlug={slug} initialLikes={post.likes || 0} sessionId={sessionId} />
+              <LikeButton postSlug={slug} initialLikes={post.likes || 0} likedByCurrentUser={post.likedByCurrentUser || false} />
               <ShareModal postSlug={slug} title={post.title || "Article"} />
             </div>
 

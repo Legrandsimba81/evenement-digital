@@ -8,7 +8,7 @@ export default function PostForm({ initialData }: { initialData?: any }) {
   const router = useRouter();
   const [title, setTitle] = useState(initialData?.title || "");
   const [content, setContent] = useState(initialData?.content || "");
-  const [excerpt, setExcerpt] = useState(initialData?.excerpt || "");
+  const [description, setDescription] = useState(initialData?.excerpt || "");
   const [imageUrl, setImageUrl] = useState(initialData?.imageUrl || "");
   const [published, setPublished] = useState(initialData?.published ?? true);
   const [loading, setLoading] = useState(false);
@@ -18,9 +18,9 @@ export default function PostForm({ initialData }: { initialData?: any }) {
     setLoading(true);
     try {
       if (initialData) {
-        await updateBlogPost(initialData.id, { title, content, excerpt, imageUrl, published });
+        await updateBlogPost(initialData.id, { title, content, excerpt: description, imageUrl, published });
       } else {
-        await createBlogPost({ title, content, excerpt, imageUrl });
+        await createBlogPost({ title, content, excerpt: description, imageUrl });
       }
       router.push("/admin/posts");
       router.refresh();
@@ -55,11 +55,11 @@ export default function PostForm({ initialData }: { initialData?: any }) {
         <p className="text-xs text-gray-500 mt-1">Vous pouvez utiliser du HTML (balises, images, etc.)</p>
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Résumé (optionnel)</label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
         <input
           type="text"
-          value={excerpt}
-          onChange={(e) => setExcerpt(e.target.value)}
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
           className="mt-1 w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500"
         />
       </div>

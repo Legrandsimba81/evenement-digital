@@ -8,6 +8,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
   }
 
+  const currentUserIsSuperAdmin = session.user.isSuperAdmin === true;
   const { userId, role, canCreateEvents } = await request.json();
 
   if (!userId) {
@@ -15,6 +16,27 @@ export async function POST(request: Request) {
   }
 
   try {
+    const targetUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        role: true,
+        isSuperAdmin: true,
+        canCreateEvents: true,
+      },
+    });
+
+    if (!targetUser) {
+      return NextResponse.json({ error: "Utilisateur non trouvé" }, { status: 404 });
+    }
+
+    if (!currentUserIsSuperAdmin && (targetUser.role === "ADMIN" || targetUser.isSuperAdmin)) {
+      return NextResponse.json(
+        { error: "Vous ne pouvez pas modifier un administrateur sans le statut de super admin" },
+        { status: 403 },
+      );
+    }
+
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: {
@@ -27,8 +49,10 @@ export async function POST(request: Request) {
         email: true,
         role: true,
         canCreateEvents: true,
+        isSuperAdmin: true,
       },
     });
+
     return NextResponse.json(updatedUser, { status: 200 });
   } catch (error) {
     console.error(error);

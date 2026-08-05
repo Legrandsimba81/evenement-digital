@@ -15,7 +15,7 @@ export default function EditPostPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [title, setTitle] = useState("");
-  const [excerpt, setExcerpt] = useState("");
+  const [description, setDescription] = useState("");
   const [content, setContent] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [imageOrientation, setImageOrientation] = useState<"landscape" | "portrait">("landscape");
@@ -37,7 +37,7 @@ export default function EditPostPage() {
       await updateBlogPost(slug, {
         title: title.trim(),
         content,
-        excerpt: excerpt.trim() || undefined,
+        excerpt: description.trim() || undefined,
         imageUrl: imageUrl.trim() || undefined,
         imageOrientation,
         images: images.length > 0 ? images : undefined,
@@ -62,7 +62,7 @@ export default function EditPostPage() {
           return;
         }
         setTitle(post.title);
-        setExcerpt(post.excerpt || "");
+        setDescription(post.excerpt || "");
         setContent(post.content);
         setImageUrl(post.imageUrl || "");
         // ✅ Correction : validation de l'orientation
@@ -113,10 +113,10 @@ export default function EditPostPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Extrait</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
           <textarea
-            value={excerpt}
-            onChange={(e) => setExcerpt(e.target.value)}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
             rows={3}
             className="mt-1 w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
           />
