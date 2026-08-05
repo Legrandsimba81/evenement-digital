@@ -78,7 +78,7 @@ export default function Navbar() {
         <Link href="/" className="flex items-center gap-2">
         <div className="flex h-10 w-10 items-center justify-center rounded-full">
         <Image 
-          src="/icon.png" 
+          src="/logo-octavia-png.png" 
           alt="Logo OctaviaEvent" 
           width={40} 
           height={40}
