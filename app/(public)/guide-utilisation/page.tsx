@@ -77,9 +77,9 @@ export default function GuideUtilisationPage() {
       <div className="max-w-6xl mx-auto">
         {/* En-tête */}
         <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full mb-4">
+          {/* <div className="inline-flex items-center justify-center p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full mb-4">
             <Sparkles className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-          </div>
+          </div> */}
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-3">
             Guide d'utilisation
           </h1>

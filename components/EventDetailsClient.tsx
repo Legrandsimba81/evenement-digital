@@ -187,10 +187,10 @@ export default function EventDetailsClient({ event }: { event: Event }) {
             <Clock size={14} /> Historique
           </Link>
           <Link
-            href="/guide-utilisation"
+            href="/guide-dashboard"
             className="inline-flex items-center gap-1.5 bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50 px-3 py-1.5 rounded-full text-xs font-medium transition"
           >
-            <BookOpen size={14} /> Guide
+            <BookOpen size={14} /> Lire le guide "Comment utiliser le tableau de bord ?" 
           </Link>
         </div>
       </div>
