@@ -30,7 +30,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Vous ne pouvez pas vous supprimer vous-même" }, { status: 403 });
     }
 
-    if (!currentUserIsSuperAdmin && (targetUser.role === "ADMIN" || targetUser.isSuperAdmin)) {
+    if (!currentUserIsSuperAdmin && targetUser.role === "ADMIN") {
       return NextResponse.json(
         { error: "Seuls les super admins peuvent supprimer un administrateur" },
         { status: 403 },

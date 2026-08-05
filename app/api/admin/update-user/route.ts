@@ -30,7 +30,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Utilisateur non trouvé" }, { status: 404 });
     }
 
-    if (!currentUserIsSuperAdmin && (targetUser.role === "ADMIN" || targetUser.isSuperAdmin)) {
+    if (!currentUserIsSuperAdmin && targetUser.role === "ADMIN") {
       return NextResponse.json(
         { error: "Vous ne pouvez pas modifier un administrateur sans le statut de super admin" },
         { status: 403 },

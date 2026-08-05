@@ -1,4 +1,3 @@
-// app/(protected)/admin/page.tsx
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
@@ -62,36 +61,50 @@ export default async function AdminDashboardPage() {
 
   return (
     <div className="space-y-5">
-      <header className="rounded-3xl border border-white/10 bg-linear-to-r from-sky-500/10 via-slate-800 to-violet-500/10 p-5 md:p-6">
+      <header className="rounded-3xl border border-slate-200 bg-slate-100 p-5 shadow-sm shadow-slate-200/50 dark:border-white/10 dark:bg-linear-to-r dark:from-sky-500/10 dark:via-slate-800 dark:to-violet-500/10 dark:shadow-slate-950/25 md:p-6">
         <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-sky-300">Vue d’ensemble</p>
-            <h1 className="mt-2 text-2xl font-bold text-white md:text-3xl">Tableau de bord</h1>
-            <p className="mt-1 text-sm text-slate-300">Suivi rapide de l’activité, des utilisateurs et des événements.</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-sky-600 dark:text-sky-300">
+              Vue d’ensemble
+            </p>
+            <h1 className="mt-2 text-2xl font-bold text-slate-900 dark:text-white md:text-3xl">
+              Tableau de bord
+            </h1>
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+              Suivi rapide de l’activité, des utilisateurs et des événements.
+            </p>
           </div>
-          <div className="rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3 text-sm text-slate-200">
-            <span className="block text-xs uppercase tracking-[0.22em] text-slate-400">Admin connecté</span>
-            <span className="font-semibold text-white">{session.user.name || session.user.email}</span>
+          <div className="rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 text-sm text-slate-700 shadow-sm dark:border-white/10 dark:bg-slate-950/40 dark:text-slate-200">
+            <span className="block text-xs uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">
+              Admin connecté
+            </span>
+            <span className="font-semibold text-slate-900 dark:text-white">
+              {session.user.name || session.user.email}
+            </span>
           </div>
         </div>
       </header>
 
-      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {stats.map((stat) => {
           const Icon = stat.icon;
           return (
             <Link
               key={stat.label}
               href={stat.href}
-              className="group min-w-0 rounded-2xl border border-white/10 bg-slate-800/80 p-4 shadow-lg shadow-slate-950/25 transition duration-200 hover:-translate-y-0.5 hover:border-sky-400/50 hover:bg-slate-800"
+              className="group min-w-0 rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm shadow-slate-200/50 transition duration-200 hover:-translate-y-0.5 hover:border-sky-400/50 hover:bg-slate-100 dark:border-white/10 dark:bg-slate-800/80 dark:shadow-slate-950/25 dark:hover:border-sky-400/50 dark:hover:bg-slate-800"
             >
-              <div className="flex items-start gap-3">
+              <div className="flex flex-wrap items-start gap-3">
                 <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-linear-to-br ${stat.color} text-white shadow-lg`}>
                   <Icon size={20} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs font-medium uppercase tracking-[0.2em] text-slate-400">{stat.label}</p>
-                  <p className="mt-1 break-all text-2xl font-bold text-white">{stat.value}</p>
+                  <p className="text-xs font-medium uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+                    {stat.label}
+                  </p>
+                  <p className="mt-1 break-all text-2xl font-bold text-slate-900 dark:text-white">
+                    {stat.value}
+                  </p>
                 </div>
               </div>
             </Link>
@@ -100,47 +113,71 @@ export default async function AdminDashboardPage() {
       </section>
 
       <section className="grid grid-cols-1 gap-5 xl:grid-cols-2">
-        <div className="rounded-3xl border border-white/10 bg-slate-800/80 p-4 shadow-lg shadow-slate-950/20">
+        <div className="rounded-3xl border border-slate-200 bg-white/80 p-4 shadow-sm shadow-slate-200/50 dark:border-white/10 dark:bg-slate-800/80 dark:shadow-slate-950/20">
           <div className="mb-4 flex items-center justify-between gap-3">
-            <h2 className="text-lg font-semibold text-white">Derniers utilisateurs</h2>
-            <Link href="/admin/users" className="inline-flex items-center gap-1 text-sm font-medium text-sky-300 hover:text-sky-200">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+              Derniers utilisateurs
+            </h2>
+            <Link
+              href="/admin/users"
+              className="inline-flex items-center gap-1 text-sm font-medium text-sky-600 hover:text-sky-700 dark:text-sky-300 dark:hover:text-sky-200"
+            >
               Voir tous <ArrowRight size={14} />
             </Link>
           </div>
 
           {recentUsers.length === 0 ? (
-            <p className="text-sm text-slate-400">Aucun utilisateur</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Aucun utilisateur</p>
           ) : (
             <ul className="space-y-3">
               {recentUsers.map((user) => (
-                <li key={user.id} className="flex items-center justify-between gap-3 rounded-2xl bg-slate-900/70 px-3 py-3">
+                <li
+                  key={user.id}
+                  className="flex items-center justify-between gap-3 rounded-2xl bg-slate-100/70 px-3 py-3 dark:bg-slate-900/70"
+                >
                   <div className="min-w-0">
-                    <p className="truncate font-medium text-white">{user.name || "Anonyme"}</p>
-                    <p className="truncate text-sm text-slate-400">{user.email}</p>
+                    <p className="truncate font-medium text-slate-900 dark:text-white">
+                      {user.name || "Anonyme"}
+                    </p>
+                    <p className="truncate text-sm text-slate-600 dark:text-slate-400">
+                      {user.email}
+                    </p>
                   </div>
-                  <span className="shrink-0 text-xs text-slate-400">{formatDate(user.createdAt)}</span>
+                  <span className="shrink-0 text-xs text-slate-500 dark:text-slate-400">
+                    {formatDate(user.createdAt)}
+                  </span>
                 </li>
               ))}
             </ul>
           )}
         </div>
 
-        <div className="rounded-3xl border border-white/10 bg-slate-800/80 p-4 shadow-lg shadow-slate-950/20">
+        <div className="rounded-3xl border border-slate-200 bg-white/80 p-4 shadow-sm shadow-slate-200/50 dark:border-white/10 dark:bg-slate-800/80 dark:shadow-slate-950/20">
           <div className="mb-4 flex items-center justify-between gap-3">
-            <h2 className="text-lg font-semibold text-white">Derniers événements</h2>
-            <Link href="/admin/events" className="inline-flex items-center gap-1 text-sm font-medium text-sky-300 hover:text-sky-200">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+              Derniers événements
+            </h2>
+            <Link
+              href="/admin/events"
+              className="inline-flex items-center gap-1 text-sm font-medium text-sky-600 hover:text-sky-700 dark:text-sky-300 dark:hover:text-sky-200"
+            >
               Voir tous <ArrowRight size={14} />
             </Link>
           </div>
 
           {recentEvents.length === 0 ? (
-            <p className="text-sm text-slate-400">Aucun événement</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Aucun événement</p>
           ) : (
             <ul className="space-y-3">
               {recentEvents.map((event) => (
-                <li key={event.id} className="rounded-2xl bg-slate-900/70 px-3 py-3">
-                  <p className="truncate font-medium text-white">{event.title}</p>
-                  <p className="mt-1 text-sm text-slate-400">
+                <li
+                  key={event.id}
+                  className="rounded-2xl bg-slate-100/70 px-3 py-3 dark:bg-slate-900/70"
+                >
+                  <p className="truncate font-medium text-slate-900 dark:text-white">
+                    {event.title}
+                  </p>
+                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
                     {event.user.name || "Anonyme"} • {formatDate(event.createdAt)}
                   </p>
                 </li>
