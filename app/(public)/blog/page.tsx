@@ -1,25 +1,34 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import Image from "next/image";
-import { Calendar, User, Clock, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar, Clock } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
-export default async function BlogPage({ searchParams }: { searchParams: { page?: string } }) {
-  const page = parseInt(searchParams.page) || 1;
+export default async function BlogPage({ searchParams }: { searchParams?: { page?: string } }) {
+  const page = Number.parseInt(searchParams?.page || "1", 10) || 1;
   const limit = 9;
   const skip = (page - 1) * limit;
 
-  const [posts, total] = await Promise.all([
-    prisma.blogPost.findMany({
-      where: { published: true },
-      orderBy: { publishedAt: "desc" },
-      skip,
-      take: limit,
-      include: { author: { select: { name: true } }, comments: { select: { id: true } } },
-    }),
-    prisma.blogPost.count({ where: { published: true } }),
-  ]);
+  let posts: Awaited<ReturnType<typeof prisma.blogPost.findMany>> = [];
+  let total = 0;
+
+  try {
+    const queryResult = await Promise.all([
+      prisma.blogPost.findMany({
+        where: { published: true },
+        orderBy: { publishedAt: "desc" },
+        skip,
+        take: limit,
+        include: { comments: { select: { id: true } } },
+      }),
+      prisma.blogPost.count({ where: { published: true } }),
+    ]);
+
+    posts = queryResult[0];
+    total = queryResult[1];
+  } catch (error) {
+    console.error("Erreur chargement blog:", error);
+  }
 
   const totalPages = Math.ceil(total / limit);
 
@@ -47,9 +56,7 @@ export default async function BlogPage({ searchParams }: { searchParams: { page?
                     <h2 className="text-xl font-bold text-gray-900 dark:text-white group-hover:text-primary-500 transition">{post.title}</h2>
                     {post.excerpt && <p className="mt-2 text-sm text-gray-600 dark:text-gray-300 line-clamp-2">{post.excerpt}</p>}
                     <div className="mt-4 flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
-                      <span className="flex items-center gap-1"><User size={14} /> {post.author.name || "Anonyme"}</span>
-                      <span className="flex items-center gap-1"><Calendar size={14} /> {new Date(post.publishedAt!).toLocaleDateString('fr-FR')}</span>
-                      <span className="flex items-center gap-1"><Clock size={14} /> {post.comments.length} commentaires</span>
+                      <span className="flex items-center gap-1"><Calendar size={14} /> {post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('fr-FR') : 'Date inconnue'}</span>
                     </div>
                   </div>
                 </Link>

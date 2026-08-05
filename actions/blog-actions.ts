@@ -103,52 +103,67 @@ export async function deleteBlogPost(slug: string) {
 }
 
 export async function getBlogPost(slug: string) {
-  const post = await prisma.blogPost.findUnique({
-    where: { slug },
-    include: {
-      author: { select: { name: true, email: true } },
-      comments: { orderBy: { createdAt: "desc" } },
-    },
-  });
-  if (!post) return null;
-  await prisma.blogPost.update({
-    where: { id: post.id },
-    data: { views: { increment: 1 } },
-  });
-  return post;
+  try {
+    const post = await prisma.blogPost.findUnique({
+      where: { slug },
+      include: {
+        comments: { orderBy: { createdAt: "desc" } },
+      },
+    });
+
+    if (!post) return null;
+
+    await prisma.blogPost.update({
+      where: { id: post.id },
+      data: { views: { increment: 1 } },
+    });
+
+    return post;
+  } catch (error) {
+    console.error("Erreur getBlogPost:", error);
+    return null;
+  }
 }
 
 export async function getRecentPosts(excludeSlug?: string, limit = 3) {
-  return prisma.blogPost.findMany({
-    where: {
-      published: true,
-      ...(excludeSlug ? { slug: { not: excludeSlug } } : {}),
-    },
-    orderBy: { publishedAt: "desc" },
-    take: limit,
-    include: {
-      author: { select: { name: true } },
-      comments: { select: { id: true } },
-    },
-  });
+  try {
+    return await prisma.blogPost.findMany({
+      where: {
+        published: true,
+        ...(excludeSlug ? { slug: { not: excludeSlug } } : {}),
+      },
+      orderBy: { publishedAt: "desc" },
+      take: limit,
+      include: {
+        comments: { select: { id: true } },
+      },
+    });
+  } catch (error) {
+    console.error("Erreur getRecentPosts:", error);
+    return [];
+  }
 }
 
 export async function getBlogPosts(page = 1, limit = 9) {
-  const skip = (page - 1) * limit;
-  const [posts, total] = await Promise.all([
-    prisma.blogPost.findMany({
-      where: { published: true },
-      orderBy: { publishedAt: "desc" },
-      skip,
-      take: limit,
-      include: {
-        author: { select: { name: true } },
-        comments: { select: { id: true } },
-      },
-    }),
-    prisma.blogPost.count({ where: { published: true } }),
-  ]);
-  return { posts, total, page, limit };
+  try {
+    const skip = (page - 1) * limit;
+    const [posts, total] = await Promise.all([
+      prisma.blogPost.findMany({
+        where: { published: true },
+        orderBy: { publishedAt: "desc" },
+        skip,
+        take: limit,
+        include: {
+          comments: { select: { id: true } },
+        },
+      }),
+      prisma.blogPost.count({ where: { published: true } }),
+    ]);
+    return { posts, total, page, limit };
+  } catch (error) {
+    console.error("Erreur getBlogPosts:", error);
+    return { posts: [], total: 0, page, limit };
+  }
 }
 
 export async function toggleLike(slug: string, sessionId: string) {

@@ -2,11 +2,13 @@
 import { getBlogPost, getRecentPosts, getBlogPost as fetchPost } from "@/actions/blog-actions";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { Calendar, User, Eye } from "lucide-react";
+import { Calendar, Eye } from "lucide-react";
 import LikeButton from "@/components/blog/LikeButton";
 import CommentSection from "@/components/blog/CommentSection";
 import ShareModal from "@/components/blog/ShareModal";
 import { cookies } from "next/headers";
+
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: { slug: string } }) {
   try {
@@ -43,7 +45,6 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
       ? post.images.filter((img): img is string => typeof img === "string")
       : [];
 
-    const authorName = post.author?.name || "Admin";
     const publishedDate = post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('fr-FR') : "Date inconnue";
     const views = post.views || 0;
     const content = post.content || "";
@@ -60,7 +61,6 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
           )}
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">{post.title || "Sans titre"}</h1>
           <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 dark:text-gray-400 mt-4">
-            <span className="flex items-center gap-1"><User size={16} /> {authorName}</span>
             <span className="flex items-center gap-1"><Calendar size={16} /> {publishedDate}</span>
             <span className="flex items-center gap-1"><Eye size={16} /> {views} vues</span>
           </div>
