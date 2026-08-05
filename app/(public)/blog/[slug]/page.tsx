@@ -1,3 +1,4 @@
+// app/(public)/blog/[slug]/page.tsx
 import { getBlogPost, getRecentPosts, getBlogPost as fetchPost } from "@/actions/blog-actions";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -8,17 +9,21 @@ import ShareModal from "@/components/blog/ShareModal";
 import { cookies } from "next/headers";
 
 export async function generateMetadata({ params }: { params: { slug: string } }) {
-  const post = await fetchPost(params.slug);
-  if (!post) return { title: "Article introuvable" };
-  return {
-    title: post.title || "Sans titre",
-    description: post.excerpt || post.content?.substring(0, 160) || "",
-    openGraph: {
+  try {
+    const post = await fetchPost(params.slug);
+    if (!post) return { title: "Article introuvable" };
+    return {
       title: post.title || "Sans titre",
       description: post.excerpt || post.content?.substring(0, 160) || "",
-      images: post.imageUrl ? [{ url: post.imageUrl }] : [],
-    },
-  };
+      openGraph: {
+        title: post.title || "Sans titre",
+        description: post.excerpt || post.content?.substring(0, 160) || "",
+        images: post.imageUrl ? [{ url: post.imageUrl }] : [],
+      },
+    };
+  } catch {
+    return { title: "Article introuvable" };
+  }
 }
 
 export default async function BlogPostPage({ params }: { params: { slug: string } }) {
@@ -30,11 +35,10 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
     const cookieStore = await cookies();
     const sessionId = cookieStore.get("sessionId")?.value || "anonymous";
 
-    // ✅ Sécurisation des données
+    // Sécurisation des données
     const orientation = post.imageOrientation === "portrait" ? "portrait" : "landscape";
     const imageContainerClass = orientation === "portrait" ? "aspect-[3/4]" : "aspect-[16/9]";
 
-    // ✅ Filtrage des images secondaires pour garantir qu'elles sont des chaînes
     const secondaryImages = Array.isArray(post.images) 
       ? post.images.filter((img): img is string => typeof img === "string")
       : [];
@@ -44,6 +48,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
     const views = post.views || 0;
     const content = post.content || "";
     const tags = Array.isArray(post.tags) ? post.tags : [];
+    const comments = Array.isArray(post.comments) ? post.comments : [];
 
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-950 dark:to-gray-900 py-12 px-4 md:py-16 md:px-8">
@@ -74,7 +79,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
             <ShareModal postSlug={post.slug} title={post.title || "Article"} />
           </div>
 
-          <CommentSection postSlug={post.slug} comments={post.comments || []} />
+          <CommentSection postSlug={post.slug} comments={comments} />
 
           {secondaryImages.length > 0 && (
             <div className="mt-12">
@@ -107,6 +112,13 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
     );
   } catch (error) {
     console.error("Erreur sur la page article:", error);
-    return <div className="min-h-screen flex items-center justify-center">Une erreur est survenue lors du chargement de l'article.</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center text-center p-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Une erreur est survenue</h1>
+          <p className="text-gray-600 dark:text-gray-400">Impossible de charger cet article. Veuillez réessayer plus tard.</p>
+        </div>
+      </div>
+    );
   }
 }
