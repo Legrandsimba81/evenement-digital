@@ -56,7 +56,7 @@ export default function ShareModal({ postSlug, title }: { postSlug: string; titl
             </button>
           </div>
 
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid md:grid-cols-2 gap-2">
             <button type="button" onClick={() => shareTo("whatsapp")} className="p-3 bg-[#25D366] text-white rounded-xl flex items-center justify-center gap-2 text-sm">
               <SiWhatsapp size={18} /> WhatsApp
             </button>

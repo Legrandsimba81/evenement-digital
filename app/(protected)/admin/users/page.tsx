@@ -87,7 +87,7 @@ export default async function AdminUsersPage({
       </div>
 
       {/* Barre de recherche */}
-      <form method="GET" className="mb-4">
+      <form method="GET" className="mb-4 space-y-3">
         <div className="relative">
           <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
@@ -98,11 +98,22 @@ export default async function AdminUsersPage({
             className="w-full pl-10 pr-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
           />
         </div>
+        <div className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-950/60 dark:text-gray-300 md:flex-row md:items-center md:justify-between">
+          <div>
+            {search ? `Recherche active : “${search}”` : "Aucune recherche active"}
+          </div>
+          <button
+            type="submit"
+            className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition hover:bg-blue-700"
+          >
+            Rechercher
+          </button>
+        </div>
       </form>
 
       {/* Tableau */}
       <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden">
-        <div className="overflow-x-auto overflow-y-auto max-h-[600px]">
+        <div className="overflow-x-auto overflow-y-auto max-h-150">
           {users.length === 0 ? (
             <p className="text-gray-500 dark:text-gray-400 text-center py-8">Aucun utilisateur trouvé</p>
           ) : (

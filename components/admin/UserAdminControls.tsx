@@ -28,8 +28,8 @@ export default function UserAdminControls({
   const isTargetSuperAdmin = isSuperAdmin;
   const isTargetAdmin = currentRole === "ADMIN";
 
-  // Si la cible est super admin et l'utilisateur courant n'est pas super admin, on affiche un badge
-  if (isTargetSuperAdmin && !currentUserIsSuperAdmin) {
+  // Un super admin ne peut pas modifier un autre super admin.
+  if (isTargetSuperAdmin) {
     return (
       <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300">
         <Shield size={14} /> Super Admin
@@ -38,7 +38,7 @@ export default function UserAdminControls({
   }
 
   // Déterminer si l'utilisateur courant peut modifier la cible
-  const canModify = currentUserIsSuperAdmin || (!isTargetAdmin && !isTargetSuperAdmin);
+  const canModify = !isTargetAdmin && (currentUserIsSuperAdmin || !isTargetAdmin);
 
   const updateUser = async (data: { role?: string; canCreateEvents?: boolean }) => {
     const res = await fetch("/api/admin/update-user", {

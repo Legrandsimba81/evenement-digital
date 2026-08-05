@@ -66,49 +66,63 @@ export default function AdminTransactionsClient({
   return (
     <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden">
       {/* Barre de recherche et filtres */}
-      <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex flex-wrap items-center gap-3">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Rechercher un utilisateur, téléphone..."
-            value={localSearch}
-            onChange={(e) => setLocalSearch(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && applyFilters(statusFilter, operatorFilter, localSearch)}
-            className="w-full pl-10 pr-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
+      <div className="p-4 border-b border-gray-200 dark:border-gray-800 space-y-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="relative flex-1 min-w-55">
+            <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Rechercher un utilisateur, téléphone..."
+              value={localSearch}
+              onChange={(e) => setLocalSearch(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && applyFilters(statusFilter, operatorFilter, localSearch)}
+              className="w-full pl-10 pr-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          <select
+            value={statusFilter}
+            onChange={(e) => applyFilters(e.target.value, operatorFilter, localSearch)}
+            className="px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="all">Tous les statuts</option>
+            <option value="pending">En attente</option>
+            <option value="completed">Validées</option>
+            <option value="failed">Rejetées</option>
+          </select>
+
+          <select
+            value={operatorFilter}
+            onChange={(e) => applyFilters(statusFilter, e.target.value, localSearch)}
+            className="px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="all">Tous les opérateurs</option>
+            <option value="mpesa">M-Pesa</option>
+            <option value="airtel">Airtel Money</option>
+          </select>
+
+          <button
+            type="button"
+            onClick={() => applyFilters(statusFilter, operatorFilter, localSearch)}
+            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
+          >
+            <Search size={16} /> Rechercher
+          </button>
+
+          <button
+            onClick={() => {
+              setLocalSearch("");
+              applyFilters("all", "all", "");
+            }}
+            className="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+          >
+            <X size={18} />
+          </button>
         </div>
 
-        <select
-          value={statusFilter}
-          onChange={(e) => applyFilters(e.target.value, operatorFilter, localSearch)}
-          className="px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="all">Tous les statuts</option>
-          <option value="pending">En attente</option>
-          <option value="completed">Validées</option>
-          <option value="failed">Rejetées</option>
-        </select>
-
-        <select
-          value={operatorFilter}
-          onChange={(e) => applyFilters(statusFilter, e.target.value, localSearch)}
-          className="px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="all">Tous les opérateurs</option>
-          <option value="mpesa">M-Pesa</option>
-          <option value="airtel">Airtel Money</option>
-        </select>
-
-        <button
-          onClick={() => {
-            setLocalSearch("");
-            applyFilters("all", "all", "");
-          }}
-          className="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-        >
-          <X size={18} />
-        </button>
+        <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-950/60 dark:text-gray-300">
+          {searchQuery ? `Recherche active : “${searchQuery}”` : "Aucune recherche active"}
+        </div>
       </div>
 
       {/* Tableau */}
