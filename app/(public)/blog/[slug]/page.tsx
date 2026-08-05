@@ -1,10 +1,10 @@
-import { getBlogPost, getRecentPosts, toggleLike, addComment, getBlogPost as fetchPost } from "@/actions/blog-actions";
+import { getBlogPost, getRecentPosts, getBlogPost as fetchPost } from "@/actions/blog-actions";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { Calendar, User, Eye, MessageSquare, Heart, Share2, Copy, Check, Twitter, Facebook, Linkedin } from "lucide-react";
-import LikeButton from "@/components/blog/LikeButton";
-import CommentSection from "@/components/blog/CommentSection";
-import ShareModal from "@/components/blog/ShareModal";
+import { Calendar, User, Eye } from "lucide-react";
+import LikeButton from "@/components/admin/blog/LikeButton";
+import CommentSection from "@/components/admin/blog/CommentSection";
+import ShareModal from "@/components/admin/blog/ShareModal";
 import { cookies } from "next/headers";
 
 // Métadonnées dynamiques
@@ -27,7 +27,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
   if (!post) return notFound();
 
   const recentPosts = await getRecentPosts(params.slug, 3);
-  const cookieStore = cookies();
+  const cookieStore = await cookies(); // ✅ ajout de await
   const sessionId = cookieStore.get("sessionId")?.value || "anonymous";
 
   return (
@@ -46,7 +46,6 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
         </div>
         <div className="mt-6 prose prose-lg dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: post.content }} />
 
-        {/* Tags */}
         {post.tags && post.tags.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-6">
             {post.tags.map((tag) => (
@@ -55,16 +54,13 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
           </div>
         )}
 
-        {/* Actions : likes, partage */}
         <div className="flex items-center gap-4 mt-8 border-t border-gray-200 dark:border-gray-700 pt-6">
           <LikeButton postSlug={post.slug} initialLikes={post.likes} sessionId={sessionId} />
           <ShareModal postSlug={post.slug} title={post.title} />
         </div>
 
-        {/* Commentaires */}
         <CommentSection postSlug={post.slug} comments={post.comments} />
 
-        {/* Articles récents */}
         {recentPosts.length > 0 && (
           <div className="mt-12 border-t border-gray-200 dark:border-gray-700 pt-8">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Articles récents</h2>
