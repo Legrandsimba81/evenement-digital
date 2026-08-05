@@ -23,6 +23,35 @@ export default function EditPostPage() {
   const [tags, setTags] = useState("");
   const [published, setPublished] = useState(false);
 
+  const handleSave = async (nextPublished: boolean) => {
+    if (!title.trim() || !content.trim()) {
+      setError("Le titre et le contenu sont obligatoires.");
+      return;
+    }
+
+    setSaving(true);
+    setError("");
+
+    try {
+      const tagsArray = tags.split(",").map((t) => t.trim()).filter(Boolean);
+      await updateBlogPost(slug, {
+        title: title.trim(),
+        content,
+        excerpt: excerpt.trim() || undefined,
+        imageUrl: imageUrl.trim() || undefined,
+        imageOrientation,
+        images: images.length > 0 ? images : undefined,
+        tags: tagsArray,
+        published: nextPublished,
+      });
+      router.push("/admin/posts");
+    } catch (err: any) {
+      setError(err.message || "Erreur lors de la mise à jour.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   useEffect(() => {
     const fetchPost = async () => {
       try {
@@ -54,30 +83,7 @@ export default function EditPostPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !content.trim()) {
-      setError("Le titre et le contenu sont obligatoires.");
-      return;
-    }
-    setSaving(true);
-    setError("");
-    try {
-      const tagsArray = tags.split(",").map((t) => t.trim()).filter(Boolean);
-      await updateBlogPost(slug, {
-        title: title.trim(),
-        content,
-        excerpt: excerpt.trim() || undefined,
-        imageUrl: imageUrl.trim() || undefined,
-        imageOrientation,
-        images: images.length > 0 ? images : undefined,
-        tags: tagsArray,
-        published,
-      });
-      router.push("/admin/posts");
-    } catch (err: any) {
-      setError(err.message || "Erreur lors de la mise à jour.");
-    } finally {
-      setSaving(false);
-    }
+    await handleSave(published);
   };
 
   if (loading) {
@@ -159,20 +165,29 @@ export default function EditPostPage() {
               onChange={(e) => setPublished(e.target.checked)}
               className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
             />
-            Publié
+            Déjà publié / à publier
           </label>
         </div>
 
         {error && <p className="text-red-600 text-sm">{error}</p>}
 
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
           <button
             type="submit"
             disabled={saving}
             className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-xl transition disabled:opacity-50"
           >
             {saving && <Loader2 size={18} className="animate-spin" />}
-            {saving ? "Enregistrement..." : "Mettre à jour"}
+            {saving ? "Enregistrement..." : "Enregistrer les modifications"}
+          </button>
+          <button
+            type="button"
+            disabled={saving}
+            onClick={() => handleSave(true)}
+            className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-xl transition disabled:opacity-50"
+          >
+            {saving ? <Loader2 size={18} className="animate-spin" /> : null}
+            Publier maintenant
           </button>
           <button
             type="button"
