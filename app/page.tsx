@@ -24,6 +24,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import type { EventWithGuests } from "@/types";
+import Image from "next/image";
 
 const typeIcons: Record<string, any> = {
   ANNIVERSAIRE: Gift,
