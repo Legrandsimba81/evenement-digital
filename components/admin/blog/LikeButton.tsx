@@ -6,7 +6,7 @@ import { toggleLike } from "@/actions/blog-actions";
 
 export default function LikeButton({ postSlug, initialLikes, sessionId }: { postSlug: string; initialLikes: number; sessionId: string }) {
   const [likes, setLikes] = useState(initialLikes);
-  const [liked, setLiked] = useState(false); // pour simplifier, on ne stocke pas l'état initial (on pourrait le récupérer côté serveur)
+  const [liked, setLiked] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleLike = async () => {

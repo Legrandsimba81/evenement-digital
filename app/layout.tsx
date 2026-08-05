@@ -6,7 +6,10 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BackButtonFloating from "@/components/ui/BackButtonFloating";
 
+
 const inter = Inter({ subsets: ["latin"] });
+
+
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://evenement-digital.vercel.app"),

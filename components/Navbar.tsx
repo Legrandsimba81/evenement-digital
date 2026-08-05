@@ -10,6 +10,7 @@ import {
   LayoutGrid,
   LogOut,
   Moon,
+  Newspaper,
   PlusCircle,
   ShieldCheck,
   Sparkles,
@@ -52,6 +53,7 @@ export default function Navbar() {
     { href: "/", label: "Accueil", icon: Home },
     { href: "/dashboard", label: "Mes événements", icon: LayoutGrid },
     { href: "/dashboard/event/new", label: "Créer", icon: PlusCircle },
+    { href: "/blog", label: "Blog", icon: Newspaper }, // ✅ Ajout du lien vers le blog
   ];
 
   const handleSignOut = async () => {

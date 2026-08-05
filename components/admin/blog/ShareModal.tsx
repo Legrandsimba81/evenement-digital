@@ -1,13 +1,14 @@
+// components/blog/ShareModal.tsx
 "use client";
 
 import { useState } from "react";
 import { Share2, Copy, Check, X } from "lucide-react";
-import { SiWhatsapp, SiTwitter, SiFacebook, SiLinkedin } from "react-icons/si";
+import { SiWhatsapp, SiFacebook } from "react-icons/si";
 
 export default function ShareModal({ postSlug, title }: { postSlug: string; title: string }) {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
-  const url = `${process.env.NEXT_PUBLIC_BASE_URL}/blog/${postSlug}`;
+  const url = `${process.env.NEXT_PUBLIC_BASE_URL || "https://evenement-digital.vercel.app"}/blog/${postSlug}`;
 
   const copyLink = async () => {
     await navigator.clipboard.writeText(url);
@@ -18,9 +19,7 @@ export default function ShareModal({ postSlug, title }: { postSlug: string; titl
   const shareTo = (platform: string) => {
     const shareUrls: Record<string, string> = {
       whatsapp: `https://wa.me/?text=${encodeURIComponent(`${title} - ${url}`)}`,
-      twitter: `https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`,
       facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
-      linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`,
     };
     window.open(shareUrls[platform], "_blank");
   };
@@ -40,10 +39,12 @@ export default function ShareModal({ postSlug, title }: { postSlug: string; titl
               </button>
             </div>
             <div className="flex flex-wrap gap-3">
-              <button onClick={() => shareTo("whatsapp")} className="flex-1 p-3 bg-[#25D366] text-white rounded-xl flex items-center justify-center gap-2"><SiWhatsapp size={20} /> WhatsApp</button>
-              <button onClick={() => shareTo("twitter")} className="flex-1 p-3 bg-[#1DA1F2] text-white rounded-xl flex items-center justify-center gap-2"><SiTwitter size={20} /> Twitter</button>
-              <button onClick={() => shareTo("facebook")} className="flex-1 p-3 bg-[#1877F2] text-white rounded-xl flex items-center justify-center gap-2"><SiFacebook size={20} /> Facebook</button>
-              <button onClick={() => shareTo("linkedin")} className="flex-1 p-3 bg-[#0A66C2] text-white rounded-xl flex items-center justify-center gap-2"><SiLinkedin size={20} /> LinkedIn</button>
+              <button onClick={() => shareTo("whatsapp")} className="flex-1 p-3 bg-[#25D366] text-white rounded-xl flex items-center justify-center gap-2">
+                <SiWhatsapp size={20} /> WhatsApp
+              </button>
+              <button onClick={() => shareTo("facebook")} className="flex-1 p-3 bg-[#1877F2] text-white rounded-xl flex items-center justify-center gap-2">
+                <SiFacebook size={20} /> Facebook
+              </button>
             </div>
             <div className="mt-4 flex items-center gap-2">
               <input readOnly value={url} className="flex-1 px-4 py-2 border rounded-xl bg-gray-50 dark:bg-gray-800 text-sm" />
