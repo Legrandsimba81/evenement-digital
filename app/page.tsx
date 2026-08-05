@@ -96,7 +96,7 @@ export default function HomePage() {
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col items-center text-center">
             <div className="flex items-center gap-2 rounded-full bg-white/20 px-4 py-2 text-sm font-medium backdrop-blur">
-              <Sparkles className="h-4 w-4" />
+              {/* <Sparkles className="h-4 w-4" /> */}
               <span>Gérez vos événements comme un pro</span>
             </div>
             <h1 className="mt-6 text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
