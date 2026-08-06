@@ -87,7 +87,7 @@ export default function HomePage() {
   return (
     <main className="min-h-screen">
       {/* Hero Section - Dégradé original conservé */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-primary-500 via-primary-600 to-secondary-500 dark:from-primary-800 dark:via-primary-900 dark:to-secondary-900 py-20 text-white">       
+      <section className="relative overflow-hidden bg-gradient-to-br from-primary-500 via-primary-600 to-secondary-500 dark:from-primary-800 dark:via-primary-900 dark:to-secondary-900 py-20 text-white">
         {/* Motif / image de fond */}
         <div
           className="absolute inset-0 bg-[url('/hero-pattern.jpg')] bg-cover bg-center opacity-10 dark:opacity-30"
@@ -139,46 +139,66 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
-            {/* Promotional Section with Video */}
-            {/* Promotional Section with 2 videos & grid of images */}
+      {/* Promotional Section with 2 videos & grid of images */}
       <section className="py-16 bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-950 dark:to-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-
-          {/* Deux vidéos en flex (la seconde cachée sur mobile) */}
+          {/* Ligne principale : texte à gauche, vidéos à droite */}
           <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12">
-            {/* Vidéo 1 toujours visible */}
-            <div className="flex-1 flex justify-center">
-              <div className="relative w-64 md:w-72 lg:w-80 aspect-[9/16] rounded-2xl overflow-hidden shadow-xl bg-black/5 dark:bg-black/20">
-                <video
-                  src="/images/promo-video.mp4"
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                  controls={false}
-                  className="w-full h-full object-cover pointer-events-none"
-                />
+            {/* Texte à gauche */}
+            <div className="flex-1 text-center lg:text-left">
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+                Organisez vos événements en toute simplicité
+              </h2>
+              <p className="mt-4 text-lg text-gray-600 dark:text-gray-300">
+                Découvrez comment Octavia Event révolutionne la gestion d'invitations.
+                Vidéo de présentation de notre plateforme.
+              </p>
+              <div className="mt-6">
+                <Link
+                  href="/dashboard"
+                  className="inline-flex items-center gap-2 rounded-full bg-primary-600 px-6 py-3 font-semibold text-white transition hover:bg-primary-700"
+                >
+                  En savoir plus
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
               </div>
             </div>
 
-            {/* Vidéo 2 cachée sur mobile hidden md:flex flex-1  */}
-            <div className="justify-center">
-              <div className="relative w-64 md:w-72 lg:w-80 aspect-[9/16] rounded-2xl overflow-hidden shadow-xl bg-black/5 dark:bg-black/20">
-                <video
-                  src="/images/promo-video-2.mp4"
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                  controls={false}
-                  className="w-full h-full object-cover pointer-events-none"
-                />
+            {/* Vidéos à droite : côte à côte sur desktop, empilées sur mobile (une seule visible) */}
+            <div className="flex-1 flex flex-col md:flex-row items-center gap-6 md:gap-8">
+              {/* Vidéo 1 toujours visible */}
+              <div className="flex justify-center w-full md:w-auto">
+                <div className="relative w-64 md:w-72 lg:w-80 aspect-[9/16] rounded-2xl overflow-hidden shadow-xl bg-black/5 dark:bg-black/20">
+                  <video
+                    src="https://res.cloudinary.com/dkirkitrw/video/upload/v1786045644/promo-video_ptn5ve.mov"
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    controls={false}
+                    className="w-full h-full object-cover pointer-events-none"
+                  />
+                </div>
+              </div>
+
+              {/* Vidéo 2 : cachée sur mobile, visible sur md+ */}
+              <div className="hidden md:flex justify-center w-full md:w-auto">
+                <div className="relative w-64 md:w-72 lg:w-80 aspect-[9/16] rounded-2xl overflow-hidden shadow-xl bg-black/5 dark:bg-black/20">
+                  <video
+                    src="https://res.cloudinary.com/dkirkitrw/video/upload/v1786046091/promo-video-2_b45tmj.mov"
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    controls={false}
+                    className="w-full h-full object-cover pointer-events-none"
+                  />
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Grille d'images carrées */}
+          {/* Grille d'images carrées (inchangée) */}
           <div className="mt-16">
             <h3 className="text-2xl font-bold text-gray-900 dark:text-white text-center mb-8">
               Découvrez d’autres invitations
@@ -200,7 +220,6 @@ export default function HomePage() {
               ))}
             </div>
           </div>
-
         </div>
       </section>
 
