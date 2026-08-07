@@ -1,9 +1,7 @@
-// app/(protected)/profile/page.tsx
+// app/(protected)/profile/page.tsx (serveur)
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
-import { Calendar, Mail, User, Users, Wallet, ArrowDownRight, ArrowUpRight, CreditCard } from "lucide-react";
-import Link from "next/link";
 import ProfileClient from "./ProfileClient";
 
 export default async function ProfilePage() {
@@ -13,13 +11,11 @@ export default async function ProfilePage() {
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     include: {
-      events: {
+      events: { orderBy: { createdAt: "desc" }, take: 5 },
+      transactions: { orderBy: { createdAt: "desc" }, take: 10 },
+      shops: {
         orderBy: { createdAt: "desc" },
-        take: 5,
-      },
-      transactions: {
-        orderBy: { createdAt: "desc" },
-        take: 10,
+        include: { category: { select: { name: true } } },
       },
     },
   });
