@@ -62,6 +62,11 @@ export default function Footer() {
                   Mon profil
                 </Link>
               </li>
+              <li>
+                <Link href="/boutiques" className="text-sm text-gray-600 dark:text-gray-400 hover:text-primary-500 transition">
+                  Prestataires événementiels
+                </Link>
+              </li>
             </ul>
           </div>
 

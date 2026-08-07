@@ -15,6 +15,7 @@ import {
   PlusCircle,
   ShieldCheck,
   Sparkles,
+  Store,
   Sun,
   UserRound,
 } from "lucide-react";
@@ -54,6 +55,7 @@ export default function Navbar() {
     { href: "/", label: "Accueil", icon: Home },
     { href: "/dashboard", label: "Mes événements", icon: LayoutGrid },
     { href: "/dashboard/event/new", label: "Créer", icon: PlusCircle },
+    { href: "/boutiques", label: "Prestataires", icon: Store },
     { href: "/blog", label: "Blog", icon: Newspaper },
   ];
 
