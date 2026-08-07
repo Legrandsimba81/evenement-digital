@@ -27,6 +27,9 @@ model User {
   collaborators EventCollaborator[]
   notifications Notification[]
   posts         BlogPost[]
+  shops       Shop[]
+  reservations Reservation[]
+  reviews     Review[]
   comments      BlogComment[]
   likes         BlogLike[]
   logs          EventLog[] // ✅ relation inverse
@@ -169,6 +172,8 @@ model Transaction {
   amount      Float
   currency    String   @default("USD")
   description String?
+  provider    String?  // "pawapay"
+  reference   String?  // référence PawaPay
   proofImage  String?  // URL Cloudinary de la capture
   status      String   @default("pending") // pending, completed, failed
   createdAt   DateTime @default(now())
@@ -264,4 +269,92 @@ model BlogLike {
   @@unique([postId, sessionId]) // empêcher un même visiteur de liker plusieurs fois
   @@unique([postId, userId])
   @@index([postId])
+}
+
+// ===================== MARKETPLACE / BOUTIQUES =====================
+model ShopCategory {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  icon        String?  // nom d'icône (ex: 'music', 'camera', etc.)
+  shops       Shop[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Shop {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  logo        String?  // URL de l'image
+  coverImage  String?  // URL de la bannière
+  categoryId  String
+  category    ShopCategory @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  userId      String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isActive    Boolean     @default(true)
+  isVerified  Boolean     @default(false)
+  address     String?
+  city        String?
+  phone       String?
+  whatsapp    String?
+  website     String?
+  metadata    Json?       // horaires, réseaux sociaux, etc.
+  profile     ShopProfile? // relation 1-1
+  reservations Reservation[]
+  reviews     Review[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([slug])
+  @@index([categoryId])
+  @@index([userId])
+}
+
+model ShopProfile {
+  id          String   @id @default(cuid())
+  shopId      String   @unique
+  shop        Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  portfolio   String?  // URL ou description du portfolio (peut être un tableau d'images JSON)
+  priceRange  String?  // ex: "50-150$"
+  availability String? // JSON: jours/horaires, ou texte libre
+  experience  String?  // nombre d'années d'expérience, description
+  tags        String[] // mots-clés
+  socialLinks Json?    // { facebook: "...", instagram: "...", etc. }
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Reservation {
+  id          String   @id @default(cuid())
+  shopId      String
+  shop        Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date        DateTime // date de la réservation
+  message     String?
+  status      String   @default("pending") // pending, confirmed, cancelled, completed
+  metadata    Json?    // informations supplémentaires
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([shopId])
+  @@index([userId])
+}
+
+model Review {
+  id          String   @id @default(cuid())
+  shopId      String
+  shop        Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rating      Int      // 1-5 étoiles
+  comment     String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([shopId])
+  @@index([userId])
 }

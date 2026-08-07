@@ -1,75 +1,51 @@
+// components/PaymentForm.tsx
 "use client";
 
 import { useState, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Loader2, Upload, CheckCircle, AlertCircle } from "lucide-react";
+import { Loader2, Upload, CheckCircle, AlertCircle, Zap, CreditCard } from "lucide-react";
+import PawaPayPaymentForm from "./PawaPayPaymentForm";
+import { Plan } from "@/types";
 
 interface PaymentFormProps {
-  plan: {
-    id: string;
-    name: string;
-    price: number;
-    currency: string;
-    eventType?: string;
-  };
-  onSuccess: (plan: any) => void;
+  plan: Plan;
+  onSuccess: (plan: Plan) => void;
 }
 
-const countries = [
-  { code: "CD", name: "République Démocratique du Congo" },
-  { code: "KE", name: "Kenya" },
-  { code: "UG", name: "Ouganda" },
-  { code: "TZ", name: "Tanzanie" },
-  { code: "RW", name: "Rwanda" },
-  { code: "BI", name: "Burundi" },
+// Opérateurs pour la RDC uniquement
+const CONGO_OPERATORS = [
+  { id: "airtel", name: "Airtel Money", logo: "📱" },
+  { id: "orange", name: "Orange Money", logo: "📲" },
+  { id: "vodacom", name: "Vodacom M-Pesa", logo: "📶" },
 ];
 
-const operators = [
-  { id: "mpesa", name: "M-Pesa" },
-  { id: "airtel", name: "Airtel Money" },
-];
-
-const depositNumbers = {
-  mpesa: {
-    CD: "+243 827 733 286",
-    KE: "+254 700 000 000",
-    UG: "+256 700 000 000",
-    TZ: "+255 700 000 000",
-    RW: "+250 700 000 000",
-    BI: "+257 700 000 000",
-  },
-  airtel: {
-    CD: "+243 992 598 826",
-    KE: "+254 800 000 000",
-    UG: "+256 800 000 000",
-    TZ: "+255 800 000 000",
-    RW: "+250 800 000 000",
-    BI: "+257 800 000 000",
-  },
+const MANUAL_DEPOSIT_NUMBERS = {
+  airtel: "+243 992 598 826",
+  orange: "+243 827 733 286",
+  vodacom: "+243 828 123 456",
 };
 
 export default function PaymentForm({ plan, onSuccess }: PaymentFormProps) {
-  const { data: session } = useSession();
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
-  const [error, setError] = useState("");
+  const { data: session } = useSession();
+  const [paymentMode, setPaymentMode] = useState<"manual" | "auto">("auto");
+  const [isManualLoading, setIsManualLoading] = useState(false);
+  const [isManualSuccess, setIsManualSuccess] = useState(false);
+  const [manualError, setManualError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [formData, setFormData] = useState({
-    countryCode: "CD",
-    operator: "mpesa",
-    phoneNumber: "",
+  const [manualData, setManualData] = useState({
     fullName: session?.user?.name || "",
+    phoneNumber: "",
+    operator: "airtel",
   });
-
   const [proofImage, setProofImage] = useState<File | null>(null);
   const [proofPreview, setProofPreview] = useState<string | null>(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-    setError("");
+  const handleManualChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setManualData({ ...manualData, [e.target.name]: e.target.value });
+    setManualError("");
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -77,57 +53,46 @@ export default function PaymentForm({ plan, onSuccess }: PaymentFormProps) {
     if (file) {
       setProofImage(file);
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setProofPreview(reader.result as string);
-      };
+      reader.onloadend = () => setProofPreview(reader.result as string);
       reader.readAsDataURL(file);
     }
   };
 
   const uploadImage = async (file: File): Promise<string> => {
-    const uploadFormData = new FormData();
-    uploadFormData.append("file", file);
-
-    const res = await fetch("/api/upload", {
-      method: "POST",
-      body: uploadFormData,
-    });
-
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await fetch("/api/upload", { method: "POST", body: formData });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Erreur d'upload");
     return data.secure_url;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleManualSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!proofImage) {
-      setError("Veuillez ajouter une capture d'écran du dépôt.");
+      setManualError("Veuillez ajouter une capture d'écran du dépôt.");
       return;
     }
-
-    setIsLoading(true);
-    setError("");
+    setIsManualLoading(true);
+    setManualError("");
 
     try {
       const imageUrl = await uploadImage(proofImage);
-
       const res = await fetch("/api/payment/initiate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          plan: { ...plan, price: plan.price },
-          operator: formData.operator,
-          phoneNumber: formData.phoneNumber,
-          countryCode: formData.countryCode,
-          fullName: formData.fullName,
+          plan,
+          operator: manualData.operator,
+          phoneNumber: manualData.phoneNumber,
+          countryCode: "CD",
+          fullName: manualData.fullName,
           proofImage: imageUrl,
         }),
       });
-
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Erreur de paiement");
-
-      setIsSuccess(true);
+      setIsManualSuccess(true);
       setTimeout(() => {
         if (plan.eventType) {
           router.push(`/dashboard/event/new/${plan.eventType}?payment=pending`);
@@ -137,168 +102,153 @@ export default function PaymentForm({ plan, onSuccess }: PaymentFormProps) {
         onSuccess(plan);
       }, 2000);
     } catch (err: any) {
-      setError(err.message || "Une erreur est survenue.");
+      setManualError(err.message || "Une erreur est survenue.");
     } finally {
-      setIsLoading(false);
+      setIsManualLoading(false);
     }
   };
 
   const getDepositNumber = () => {
-    const operator = formData.operator as keyof typeof depositNumbers;
-    const country = formData.countryCode as keyof typeof depositNumbers.mpesa;
-    return depositNumbers[operator]?.[country] || "Numéro non disponible";
+    return MANUAL_DEPOSIT_NUMBERS[manualData.operator as keyof typeof MANUAL_DEPOSIT_NUMBERS] || "Numéro non disponible";
   };
 
-  if (isSuccess) {
-    return (
-      <div className="text-center py-8">
-        <div className="flex justify-center mb-4">
-          <CheckCircle size={64} className="text-green-500" />
-        </div>
-        <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Dépôt enregistré !</h3>
-        <p className="text-gray-600 dark:text-gray-400 mt-2">
-          Votre paiement est en attente de validation. Vous serez redirigé dans quelques instants.
-        </p>
-      </div>
-    );
-  }
+  const handleAutoSuccess = (plan: Plan) => {
+    onSuccess(plan);
+  };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Montant à payer</label>
-        <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 rounded-xl text-2xl font-bold text-gray-900 dark:text-white">
-          {plan.price} {plan.currency}
-        </div>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Pour {plan.name}</p>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Nom complet (titulaire du compte)</label>
-        <input
-          type="text"
-          name="fullName"
-          value={formData.fullName}
-          onChange={handleChange}
-          required
-          className="mt-1 w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        />
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Pays</label>
-          <select
-            name="countryCode"
-            value={formData.countryCode}
-            onChange={handleChange}
-            className="mt-1 w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            {countries.map((c) => (
-              <option key={c.code} value={c.code}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Opérateur</label>
-          <select
-            name="operator"
-            value={formData.operator}
-            onChange={handleChange}
-            className="mt-1 w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            {operators.map((op) => (
-              <option key={op.id} value={op.id}>
-                {op.name}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Votre numéro de téléphone</label>
-        <input
-          type="tel"
-          name="phoneNumber"
-          placeholder="+ XXX XXX XXX XXX"
-          value={formData.phoneNumber}
-          onChange={handleChange}
-          required
-          className="mt-1 w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        />
-      </div>
-
-      <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-800">
-        <p className="text-sm text-blue-700 dark:text-blue-300 font-medium">
-          Effectuez le dépôt vers le numéro suivant :
-        </p>
-        <p className="text-lg font-bold text-blue-800 dark:text-blue-200 mt-1">
-          {getDepositNumber()}
-        </p>
-        <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-          {operators.find(op => op.id === formData.operator)?.name} · {countries.find(c => c.code === formData.countryCode)?.name}
-        </p>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Capture d'écran du dépôt</label>
-        <div
-          onClick={() => fileInputRef.current?.click()}
-          className={`mt-1 flex flex-col items-center justify-center w-full p-6 border-2 border-dashed rounded-xl cursor-pointer transition ${
-            proofPreview
-              ? "border-green-500 bg-green-50 dark:bg-green-900/20"
-              : "border-gray-300 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400"
+    <div className="space-y-6">
+      <div className="flex rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <button
+          type="button"
+          onClick={() => setPaymentMode("auto")}
+          className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 text-sm font-medium transition ${
+            paymentMode === "auto"
+              ? "bg-blue-600 text-white"
+              : "bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
           }`}
         >
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileChange}
-            accept="image/*"
-            className="hidden"
-          />
-          {proofPreview ? (
-            <div className="w-full">
-              <img src={proofPreview} alt="Preuve" className="max-h-48 mx-auto rounded-lg" />
-              <p className="text-sm text-green-600 dark:text-green-400 mt-2 text-center">Capture téléchargée</p>
-            </div>
-          ) : (
-            <>
-              <Upload size={40} className="text-gray-400" />
-              <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Cliquez pour ajouter une capture</p>
-              <p className="text-xs text-gray-400">PNG, JPG, JPEG (max 5MB)</p>
-            </>
-          )}
-        </div>
+          <Zap size={18} /> Paiement automatique
+        </button>
+        <button
+          type="button"
+          onClick={() => setPaymentMode("manual")}
+          className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 text-sm font-medium transition ${
+            paymentMode === "manual"
+              ? "bg-blue-600 text-white"
+              : "bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+          }`}
+        >
+          <CreditCard size={18} /> Paiement manuel
+        </button>
       </div>
 
-      {error && (
-        <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-800 flex items-center gap-2 text-red-700 dark:text-red-300 text-sm">
-          <AlertCircle size={18} />
-          {error}
-        </div>
-      )}
+      {paymentMode === "auto" ? (
+        <PawaPayPaymentForm plan={plan} onSuccess={handleAutoSuccess} />
+      ) : (
+        <form onSubmit={handleManualSubmit} className="space-y-4">
+          {/* Contenu du formulaire manuel... (inchangé) */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Montant à payer</label>
+            <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 rounded-xl text-2xl font-bold text-gray-900 dark:text-white">
+              {plan.price} {plan.currency}
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Pour {plan.name}</p>
+          </div>
 
-      <button
-        type="submit"
-        disabled={isLoading}
-        className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {isLoading ? (
-          <>
-            <Loader2 size={20} className="animate-spin" />
-            Envoi en cours...
-          </>
-        ) : (
-          "Envoyer ma preuve de paiement"
-        )}
-      </button>
-      <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-2">
-        Votre paiement sera vérifié manuellement par notre équipe.
-      </p>
-    </form>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Nom complet (titulaire du compte)</label>
+            <input
+              type="text"
+              name="fullName"
+              value={manualData.fullName}
+              onChange={handleManualChange}
+              required
+              className="mt-1 w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Opérateur</label>
+            <select
+              name="operator"
+              value={manualData.operator}
+              onChange={handleManualChange}
+              className="mt-1 w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+            >
+              {CONGO_OPERATORS.map((op) => (
+                <option key={op.id} value={op.id}>{op.logo} {op.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Votre numéro de téléphone</label>
+            <input
+              type="tel"
+              name="phoneNumber"
+              placeholder="+243 82X XXX XXX"
+              value={manualData.phoneNumber}
+              onChange={handleManualChange}
+              required
+              className="mt-1 w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-800">
+            <p className="text-sm text-blue-700 dark:text-blue-300 font-medium">Effectuez le dépôt vers le numéro suivant :</p>
+            <p className="text-lg font-bold text-blue-800 dark:text-blue-200 mt-1">{getDepositNumber()}</p>
+            <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">{CONGO_OPERATORS.find(op => op.id === manualData.operator)?.name}</p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Capture d'écran du dépôt</label>
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className={`mt-1 flex flex-col items-center justify-center w-full p-6 border-2 border-dashed rounded-xl cursor-pointer transition ${
+                proofPreview
+                  ? "border-green-500 bg-green-50 dark:bg-green-900/20"
+                  : "border-gray-300 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400"
+              }`}
+            >
+              <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
+              {proofPreview ? (
+                <div className="w-full">
+                  <img src={proofPreview} alt="Preuve" className="max-h-48 mx-auto rounded-lg" />
+                  <p className="text-sm text-green-600 dark:text-green-400 mt-2 text-center">Capture téléchargée</p>
+                </div>
+              ) : (
+                <>
+                  <Upload size={40} className="text-gray-400" />
+                  <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Cliquez pour ajouter une capture</p>
+                  <p className="text-xs text-gray-400">PNG, JPG, JPEG (max 5MB)</p>
+                </>
+              )}
+            </div>
+          </div>
+
+          {manualError && (
+            <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-800 flex items-center gap-2 text-red-700 dark:text-red-300 text-sm">
+              <AlertCircle size={18} /> {manualError}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={isManualLoading}
+            className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-50"
+          >
+            {isManualLoading ? (
+              <>
+                <Loader2 size={20} className="animate-spin" /> Envoi en cours...
+              </>
+            ) : (
+              "Envoyer ma preuve de paiement"
+            )}
+          </button>
+          <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-2">Votre paiement sera vérifié manuellement par notre équipe.</p>
+        </form>
+      )}
+    </div>
   );
 }

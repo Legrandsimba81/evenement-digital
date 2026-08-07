@@ -5,9 +5,10 @@ import { Check, Gift, Heart, Trophy, Music, Sparkles, Calendar, Users, Star, X }
 import { SiWhatsapp } from "react-icons/si";
 import PaymentForm from "@/components/PaymentForm";
 import { useRouter } from "next/navigation";
+import type { Plan } from "@/types";
 
 // Définition des plans
-const plans = [
+const plans: Plan[] = [
   // Plans gratuits pour chaque type avec 5 invités
   {
     id: "anniv-gratuit",
@@ -285,10 +286,10 @@ const colorClasses = {
 
 export default function PricingPage() {
   const router = useRouter();
-  const [selectedPlan, setSelectedPlan] = useState<typeof plans[0] | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
-  const handleChoosePlan = (plan: typeof plans[0]) => {
+  const handleChoosePlan = (plan: Plan) => {
     // Si le plan est gratuit, rediriger directement vers la page de création de l'événement
     if (plan.price === 0 && plan.eventType && plan.eventType !== "ABONNEMENT") {
       router.push(`/dashboard/event/new/${plan.eventType}`);
@@ -305,7 +306,7 @@ export default function PricingPage() {
     setSelectedPlan(null);
   };
 
-  const handlePaymentSuccess = (plan: typeof plans[0]) => {
+  const handlePaymentSuccess = (plan: Plan) => {
     closePaymentModal();
     // Après paiement réussi, rediriger vers la page de création
     if (plan.eventType && plan.eventType !== "ABONNEMENT") {
