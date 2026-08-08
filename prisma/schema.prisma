@@ -279,6 +279,7 @@ model ShopCategory {
   description String?
   icon        String?  // nom d'icône (ex: 'music', 'camera', etc.)
   shops       Shop[]
+  tags        String[] // ✅ ajoutez ce champ pour stocker les tags par catégorie
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
