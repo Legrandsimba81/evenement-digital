@@ -137,7 +137,6 @@ export default function NewShopPage() {
     if (name === "availability" && value !== "Personnalisé") {
       setForm((prev) => ({ ...prev, availabilityCustom: "" }));
     }
-    // Effacer l'erreur lors de la saisie
     if (error) setError("");
   };
 
@@ -164,7 +163,6 @@ export default function NewShopPage() {
     setError("");
     setSuccessMessage("");
 
-    // Validations
     if (!form.name.trim()) {
       setError("Le nom de la boutique est obligatoire.");
       return;
@@ -209,6 +207,7 @@ export default function NewShopPage() {
         city: form.city,
         province: form.province,
         phone: form.phone.trim(),
+        whatsapp: form.phone.trim(), // ✅ ajouté pour correspondre à l'attendu
         website: form.website.trim() || undefined,
         portfolio: form.portfolio.trim() || undefined,
         priceRange: form.priceRange.trim() || undefined,
@@ -219,13 +218,12 @@ export default function NewShopPage() {
         coverImage: form.coverImage || undefined,
         socialLinks: {},
       });
-      setSuccessMessage(" Boutique créée avec succès ! Redirection...");
+      setSuccessMessage("✅ Boutique créée avec succès ! Redirection...");
       setTimeout(() => router.push("/dashboard/shops"), 1500);
     } catch (err: any) {
-      // Gestion spécifique si le nom existe déjà
       if (err.message.includes("Une boutique avec ce nom existe déjà")) {
         setError(
-          "Une boutique avec ce nom existe déjà. Si vous pensez qu'il s'agit d'une erreur, " +
+          "❌ Une boutique avec ce nom existe déjà. Si vous pensez qu'il s'agit d'une erreur, " +
           "contactez-nous sur WhatsApp au +243 992 598 826 ou par email à support@octavia-event.com."
         );
       } else {
@@ -275,7 +273,7 @@ export default function NewShopPage() {
               className="mt-1 w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
               required
             />
-            <p className="mt-1 text-xs text-gray-400">Le nom doit être unique, deux boutiques ne peuvent pas avoir le même nom.</p>
+            <p className="mt-1 text-xs text-gray-400">Le nom doit être unique.</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Catégorie *</label>

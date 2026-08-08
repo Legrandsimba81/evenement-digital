@@ -299,6 +299,7 @@ model Shop {
   isVerified  Boolean     @default(false)
   address     String?
   city        String?
+  province   String? // ajout
   phone       String?
   whatsapp    String?
   website     String?
