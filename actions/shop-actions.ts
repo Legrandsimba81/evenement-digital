@@ -14,6 +14,7 @@ export async function createShop(data: {
   categoryId: string;
   address?: string;
   city?: string;
+  province?: string;
   phone?: string;
   whatsapp?: string;
   website?: string;
@@ -26,7 +27,6 @@ export async function createShop(data: {
 }) {
   const session = await auth();
   if (!session?.user) throw new Error("Non authentifié");
-  
   const userId = session.user.id;
   if (!userId) throw new Error("ID utilisateur manquant");
 
@@ -45,6 +45,7 @@ export async function createShop(data: {
       userId,
       address: data.address,
       city: data.city,
+      province: data.province,
       phone: data.phone,
       whatsapp: data.whatsapp,
       website: data.website,
@@ -208,4 +209,57 @@ export async function addReview(shopId: string, rating: number, comment?: string
   });
   revalidatePath(`/boutique/${shopId}`);
   return review;
+}
+
+// ========== Gestion du portfolio ==========
+
+export async function addPortfolioImages(slug: string, imageUrls: string[]) {
+  const session = await auth();
+  if (!session?.user) throw new Error("Non authentifié");
+  const userId = session.user.id;
+  if (!userId) throw new Error("ID utilisateur manquant");
+
+  const shop = await prisma.shop.findUnique({
+    where: { slug },
+    include: { profile: true },
+  });
+  if (!shop) throw new Error("Boutique introuvable");
+  if (shop.userId !== userId && session.user.role !== "ADMIN")
+    throw new Error("Non autorisé");
+
+  const currentImages = (shop.profile?.images as string[]) || [];
+  const updatedImages = [...currentImages, ...imageUrls];
+  await prisma.shopProfile.upsert({
+    where: { shopId: shop.id },
+    update: { images: updatedImages },
+    create: { shopId: shop.id, images: updatedImages },
+  });
+  revalidatePath(`/boutique/${slug}`);
+  revalidatePath(`/dashboard/shops/${slug}/portfolio`);
+  return updatedImages;
+}
+
+export async function removePortfolioImage(slug: string, imageUrl: string) {
+  const session = await auth();
+  if (!session?.user) throw new Error("Non authentifié");
+  const userId = session.user.id;
+  if (!userId) throw new Error("ID utilisateur manquant");
+
+  const shop = await prisma.shop.findUnique({
+    where: { slug },
+    include: { profile: true },
+  });
+  if (!shop) throw new Error("Boutique introuvable");
+  if (shop.userId !== userId && session.user.role !== "ADMIN")
+    throw new Error("Non autorisé");
+
+  const currentImages = (shop.profile?.images as string[]) || [];
+  const updatedImages = currentImages.filter((url) => url !== imageUrl);
+  await prisma.shopProfile.update({
+    where: { shopId: shop.id },
+    data: { images: updatedImages },
+  });
+  revalidatePath(`/boutique/${slug}`);
+  revalidatePath(`/dashboard/shops/${slug}/portfolio`);
+  return updatedImages;
 }

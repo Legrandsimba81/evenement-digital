@@ -322,6 +322,7 @@ model ShopProfile {
   availability String? // JSON: jours/horaires, ou texte libre
   experience  String?  // nombre d'années d'expérience, description
   tags        String[] // mots-clés
+  images      Json?    // tableau d'URLs d'images du portfolio
   socialLinks Json?    // { facebook: "...", instagram: "...", etc. }
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
