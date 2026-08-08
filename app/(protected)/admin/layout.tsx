@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Users, Calendar, CreditCard, Bell, Shield, Home, Mail, FileText, ChevronRight } from "lucide-react";
+import { Users, Calendar, CreditCard, Bell, Shield, Home, Mail, FileText, ChevronRight, Store } from "lucide-react";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -17,6 +17,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     { icon: CreditCard, label: "Transactions", href: "/admin/transactions" },
     { icon: Mail, label: "Emails", href: "/admin/emails" },
     { icon: Bell, label: "Notifications", href: "/admin/notifications" },
+    { icon: Store, label: "Boutiques", href: "/admin/shops" }, // ✅ Ajout
   ];
 
   const adminName = session.user.name || session.user.email || "Administrateur";

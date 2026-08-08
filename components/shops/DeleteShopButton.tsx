@@ -8,15 +8,20 @@ export default function DeleteShopButton({ slug, name }: { slug: string; name: s
   const [isPending, startTransition] = useTransition();
 
   const handleDelete = () => {
-    if (!confirm(`Supprimer la boutique "${name}" ?`)) return;
+    if (!confirm(`Supprimer définitivement la boutique "${name}" ? Cette action est irréversible.`)) return;
     startTransition(async () => {
       await deleteShop(slug);
     });
   };
 
   return (
-    <button onClick={handleDelete} disabled={isPending} className="text-red-500 hover:text-red-700">
-      <Trash2 size={18} />
+    <button
+      onClick={handleDelete}
+      disabled={isPending}
+      className="p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition text-red-500 hover:text-red-700"
+      title="Supprimer"
+    >
+      <Trash2 size={16} />
     </button>
   );
 }

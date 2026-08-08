@@ -3,10 +3,10 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createShop } from "@/actions/shop-actions";
-import { Loader2, ArrowLeft } from "lucide-react";
+import { Loader2, ArrowLeft, AlertCircle } from "lucide-react";
 import ImageUpload from "@/components/ui/ImageUpload";
 
-// Liste des provinces de la RDC
+// Provinces et villes de la RDC
 const PROVINCES = [
   "Kinshasa",
   "Kongo Central",
@@ -36,7 +36,6 @@ const PROVINCES = [
   "Tshopo",
 ];
 
-// Villes principales (simplifiées)
 const CITIES_BY_PROVINCE: Record<string, string[]> = {
   Kinshasa: ["Kinshasa"],
   "Kongo Central": ["Matadi", "Boma", "Muanda"],
@@ -49,7 +48,7 @@ const CITIES_BY_PROVINCE: Record<string, string[]> = {
   "Kasaï-Oriental": ["Mbuji-Mayi", "Tshilenge"],
   "Maniema": ["Kindu", "Kasongo"],
   Ituri: ["Bunia", "Aru", "Mahagi"],
-  "Haut-Uele": ["Isiro", "Watsa"],
+  "Haut-Uele": ["Isiro", "Watsa", "Dungu", "Niangara", "Rungu", "Durba"],
   "Bas-Uele": ["Buta", "Aketi"],
   Tshopo: ["Kisangani", "Yangambi"],
   "Nord-Ubangi": ["Gbadolite", "Zongo"],
@@ -77,6 +76,7 @@ export default function NewShopPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const [categories, setCategories] = useState<{ id: string; name: string; tags?: string[] }[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
 
@@ -101,29 +101,31 @@ export default function NewShopPage() {
 
   const [availableTags, setAvailableTags] = useState<string[]>([]);
 
+  // Chargement des catégories
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         const res = await fetch("/api/shop-categories");
+        if (!res.ok) throw new Error("Erreur chargement catégories");
         const data = await res.json();
         setCategories(data);
-        setLoadingCategories(false);
       } catch {
+        setCategories([]);
+      } finally {
         setLoadingCategories(false);
       }
     };
     fetchCategories();
   }, []);
 
+  // Mise à jour des tags selon la catégorie
   useEffect(() => {
-    // Mettre à jour les tags disponibles quand la catégorie change
     const cat = categories.find((c) => c.id === form.categoryId);
     if (cat && cat.tags) {
       setAvailableTags(cat.tags);
     } else {
       setAvailableTags([]);
     }
-    // Réinitialiser les tags sélectionnés
     setForm((prev) => ({ ...prev, selectedTags: [] }));
   }, [form.categoryId, categories]);
 
@@ -135,6 +137,8 @@ export default function NewShopPage() {
     if (name === "availability" && value !== "Personnalisé") {
       setForm((prev) => ({ ...prev, availabilityCustom: "" }));
     }
+    // Effacer l'erreur lors de la saisie
+    if (error) setError("");
   };
 
   const handleTagToggle = (tag: string) => {
@@ -150,15 +154,47 @@ export default function NewShopPage() {
     setForm((prev) => ({ ...prev, [field]: url }));
   };
 
+  // Validation du téléphone (10 chiffres commençant par 0)
+  const validatePhone = (phone: string) => {
+    return /^0\d{9}$/.test(phone);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name || !form.categoryId || !form.province || !form.city || !form.address) {
-      setError("Le nom, la catégorie, la province, la ville et l'adresse sont obligatoires.");
+    setError("");
+    setSuccessMessage("");
+
+    // Validations
+    if (!form.name.trim()) {
+      setError("Le nom de la boutique est obligatoire.");
+      return;
+    }
+    if (!form.categoryId) {
+      setError("Veuillez sélectionner une catégorie.");
+      return;
+    }
+    if (!form.province) {
+      setError("Veuillez sélectionner une province.");
+      return;
+    }
+    if (!form.city) {
+      setError("Veuillez sélectionner une ville.");
+      return;
+    }
+    if (!form.address.trim()) {
+      setError("L'adresse détaillée est obligatoire.");
+      return;
+    }
+    if (!form.phone.trim()) {
+      setError("Le numéro de téléphone est obligatoire.");
+      return;
+    }
+    if (!validatePhone(form.phone)) {
+      setError("Le numéro de téléphone doit contenir 10 chiffres et commencer par 0 (ex: 0827733286).");
       return;
     }
 
     setLoading(true);
-    setError("");
     try {
       let availabilityValue = form.availability;
       if (form.availability === "Personnalisé" && form.availabilityCustom) {
@@ -166,26 +202,35 @@ export default function NewShopPage() {
       }
 
       await createShop({
-        name: form.name,
-        description: form.description,
+        name: form.name.trim(),
+        description: form.description.trim(),
         categoryId: form.categoryId,
-        address: form.address,
+        address: form.address.trim(),
         city: form.city,
         province: form.province,
-        phone: form.phone,
-        website: form.website,
-        portfolio: form.portfolio,
-        priceRange: form.priceRange,
-        availability: availabilityValue,
-        experience: form.experience,
+        phone: form.phone.trim(),
+        website: form.website.trim() || undefined,
+        portfolio: form.portfolio.trim() || undefined,
+        priceRange: form.priceRange.trim() || undefined,
+        availability: availabilityValue || undefined,
+        experience: form.experience.trim() || undefined,
         tags: form.selectedTags,
-        logo: form.logo,
-        coverImage: form.coverImage,
-        socialLinks: {}, // facultatif
+        logo: form.logo || undefined,
+        coverImage: form.coverImage || undefined,
+        socialLinks: {},
       });
-      router.push("/dashboard/shops");
+      setSuccessMessage(" Boutique créée avec succès ! Redirection...");
+      setTimeout(() => router.push("/dashboard/shops"), 1500);
     } catch (err: any) {
-      setError(err.message || "Erreur lors de la création.");
+      // Gestion spécifique si le nom existe déjà
+      if (err.message.includes("Une boutique avec ce nom existe déjà")) {
+        setError(
+          "Une boutique avec ce nom existe déjà. Si vous pensez qu'il s'agit d'une erreur, " +
+          "contactez-nous sur WhatsApp au +243 992 598 826 ou par email à support@octavia-event.com."
+        );
+      } else {
+        setError(err.message || "Une erreur est survenue lors de la création.");
+      }
     } finally {
       setLoading(false);
     }
@@ -204,8 +249,15 @@ export default function NewShopPage() {
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Créer une boutique / prestataire</h1>
 
       {error && (
-        <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300">
-          {error}
+        <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl flex items-start gap-3 text-red-700 dark:text-red-300">
+          <AlertCircle size={20} className="flex-shrink-0 mt-0.5" />
+          <div className="whitespace-pre-line">{error}</div>
+        </div>
+      )}
+
+      {successMessage && (
+        <div className="mb-4 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl text-green-700 dark:text-green-300">
+          {successMessage}
         </div>
       )}
 
@@ -223,7 +275,7 @@ export default function NewShopPage() {
               className="mt-1 w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
               required
             />
-            <p className="mt-1 text-xs text-gray-400">Le nom doit être unique.</p>
+            <p className="mt-1 text-xs text-gray-400">Le nom doit être unique, deux boutiques ne peuvent pas avoir le même nom.</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Catégorie *</label>
@@ -239,6 +291,7 @@ export default function NewShopPage() {
                 <option key={cat.id} value={cat.id}>{cat.name}</option>
               ))}
             </select>
+            {loadingCategories && <p className="text-xs text-gray-400 mt-1">Chargement des catégories...</p>}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
@@ -311,11 +364,11 @@ export default function NewShopPage() {
               name="phone"
               value={form.phone}
               onChange={handleChange}
-              placeholder="+243 8XX XXX XXX"
+              placeholder="0827733286"
               className="mt-1 w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
               required
             />
-            <p className="mt-1 text-xs text-gray-400">Ce numéro sera utilisé pour WhatsApp.</p>
+            <p className="mt-1 text-xs text-gray-400">10 chiffres, commençant par 0 (ex: 0827733286).</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Site web (optionnel)</label>
@@ -344,7 +397,7 @@ export default function NewShopPage() {
           />
         </div>
 
-        {/* Profil (portfolio, prix, disponibilité, expérience, tags) */}
+        {/* Profil professionnel */}
         <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-6 space-y-4">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Profil professionnel</h2>
           <div>
@@ -429,11 +482,11 @@ export default function NewShopPage() {
         </div>
 
         {/* Boutons */}
-        <div className="flex gap-4">
+        <div className="flex flex-col sm:flex-row gap-4">
           <button
             type="submit"
             disabled={loading}
-            className="w-full md:w-auto flex-1 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl transition disabled:opacity-50 flex items-center justify-center gap-2"
+            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl transition disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {loading && <Loader2 size={18} className="animate-spin" />}
             {loading ? "Création en cours..." : "Créer la boutique"}
@@ -441,7 +494,7 @@ export default function NewShopPage() {
           <button
             type="button"
             onClick={() => router.push("/dashboard/shops")}
-            className="w-full md:w-auto px-6 py-3 rounded-xl border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+            className="flex-1 sm:flex-none px-6 py-3 rounded-xl border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
           >
             Annuler
           </button>

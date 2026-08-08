@@ -10,6 +10,7 @@ import {
   User,
   MessageSquare,
   ArrowRight,
+  Store,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -20,13 +21,14 @@ export default async function AdminDashboardPage() {
     redirect("/dashboard");
   }
 
-  // Statistiques globales
-  const [totalUsers, totalEvents, totalMessages, totalGuests, pendingTransactions] = await Promise.all([
+  // Statistiques globales (6 requêtes)
+  const [totalUsers, totalEvents, totalMessages, totalGuests, pendingTransactions, totalShops] = await Promise.all([
     prisma.user.count(),
     prisma.event.count(),
     prisma.message.count(),
     prisma.guest.count(),
     prisma.transaction.count({ where: { status: "pending" } }),
+    prisma.shop.count(),
   ]);
 
   // Derniers utilisateurs (5)
@@ -57,6 +59,7 @@ export default async function AdminDashboardPage() {
     { label: "Messages", value: totalMessages, icon: MessageSquare, href: "/admin/events", color: "from-purple-500 to-purple-600" },
     { label: "Invités", value: totalGuests, icon: User, href: "/admin/events", color: "from-orange-500 to-orange-600" },
     { label: "Transactions en attente", value: pendingTransactions, icon: CreditCard, href: "/admin/transactions", color: "from-yellow-500 to-yellow-600" },
+    { label: "Boutiques", value: totalShops, icon: Store, href: "/admin/shops", color: "from-pink-500 to-pink-600" },
   ];
 
   return (

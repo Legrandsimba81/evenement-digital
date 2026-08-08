@@ -32,7 +32,11 @@ export async function createShop(data: {
 
   const slug = generateSlug(data.name);
   const existing = await prisma.shop.findUnique({ where: { slug } });
-  if (existing) throw new Error("Une boutique avec ce nom existe déjà.");
+  if (existing) {
+    throw new Error(
+      "Une boutique avec ce nom existe déjà. Si vous êtes le propriétaire de ce nom, contactez-nous sur WhatsApp au +243 992 598 826 ou par email à support@octavia-event.com. pour supprimer le profil de la boutique et libérer le nom."
+    );
+  };
 
   const shop = await prisma.shop.create({
     data: {
