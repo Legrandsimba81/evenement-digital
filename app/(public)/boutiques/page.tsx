@@ -25,7 +25,7 @@ export default async function BoutiquesPage({
         {/* Filtres à implémenter plus tard */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {shops.map((shop) => (
-            <Link key={shop.id} href={`/boutique/${shop.slug}`} className="group">
+            <Link key={shop.id} href={`/boutiques/${shop.slug}`} className="group">
               <div className="bg-white dark:bg-gray-900 rounded-xl shadow-md hover:shadow-xl transition overflow-hidden">
                 {shop.coverImage ? (
                   <div className="aspect-video overflow-hidden">
