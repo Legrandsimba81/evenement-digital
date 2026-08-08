@@ -124,14 +124,14 @@ export default async function BoutiquePage({ params }: { params: { slug: string 
 
           <div className="mt-8 flex flex-wrap gap-4">
             <Link
-              href={`/boutique/${shop.slug}/reserver`}
+              href={`/boutiques/${shop.slug}/reserver`}
               className="inline-flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-6 py-3 rounded-xl font-medium transition"
             >
               <Calendar size={20} /> Réserver maintenant
             </Link>
             {shop.profile?.images && (shop.profile.images as string[]).length > 0 && (
               <Link
-                href={`/boutique/${shop.slug}/portfolio`}
+                href={`/boutiques/${shop.slug}/portfolio`}
                 className="inline-flex items-center gap-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white px-6 py-3 rounded-xl font-medium transition"
               >
                 Voir le portfolio

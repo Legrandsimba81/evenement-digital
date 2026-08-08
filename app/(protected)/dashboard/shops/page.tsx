@@ -123,7 +123,7 @@ export default async function DashboardShopsPage() {
                 {/* Actions */}
                 <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-gray-100 dark:border-gray-800 pt-4">
                   <Link
-                    href={`/boutique/${shop.slug}`}
+                    href={`/boutiques/${shop.slug}`}
                     target="_blank"
                     className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
                   >

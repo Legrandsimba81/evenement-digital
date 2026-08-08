@@ -132,6 +132,12 @@ export async function getShops({
   return { shops: shopsWithAvg, total, page, limit };
 }
 
+export async function getShopCategories() {
+  return prisma.shopCategory.findMany({
+    orderBy: { name: "asc" },
+  });
+}
+
 export async function updateShop(slug: string, data: any) {
   const session = await auth();
   if (!session?.user) throw new Error("Non authentifié");
@@ -155,7 +161,7 @@ export async function updateShop(slug: string, data: any) {
       },
     },
   });
-  revalidatePath(`/boutique/${slug}`);
+  revalidatePath(`/boutiques/${slug}`);
   revalidatePath("/boutiques");
   return updated;
 }
@@ -177,7 +183,7 @@ export async function deleteShop(slug: string) {
 }
 
 export async function createReservation(
-  shopId: string,
+  shopSlug: string,
   date: Date,
   message?: string
 ) {
@@ -186,9 +192,12 @@ export async function createReservation(
   const userId = session.user.id;
   if (!userId) throw new Error("ID utilisateur manquant");
 
+  const shop = await prisma.shop.findUnique({ where: { slug: shopSlug } });
+  if (!shop) throw new Error("Boutique introuvable");
+
   return prisma.reservation.create({
     data: {
-      shopId,
+      shopId: shop.id,
       userId,
       date,
       message,
@@ -203,6 +212,9 @@ export async function addReview(shopId: string, rating: number, comment?: string
   const userId = session.user.id;
   if (!userId) throw new Error("ID utilisateur manquant");
 
+  const shop = await prisma.shop.findUnique({ where: { id: shopId }, select: { slug: true } });
+  if (!shop) throw new Error("Boutique introuvable");
+
   const review = await prisma.review.create({
     data: {
       shopId,
@@ -211,7 +223,7 @@ export async function addReview(shopId: string, rating: number, comment?: string
       comment,
     },
   });
-  revalidatePath(`/boutique/${shopId}`);
+  revalidatePath(`/boutiques/${shop.slug}`);
   return review;
 }
 
@@ -238,7 +250,7 @@ export async function addPortfolioImages(slug: string, imageUrls: string[]) {
     update: { images: updatedImages },
     create: { shopId: shop.id, images: updatedImages },
   });
-  revalidatePath(`/boutique/${slug}`);
+  revalidatePath(`/boutiques/${slug}`);
   revalidatePath(`/dashboard/shops/${slug}/portfolio`);
   return updatedImages;
 }
@@ -263,7 +275,7 @@ export async function removePortfolioImage(slug: string, imageUrl: string) {
     where: { shopId: shop.id },
     data: { images: updatedImages },
   });
-  revalidatePath(`/boutique/${slug}`);
+  revalidatePath(`/boutiques/${slug}`);
   revalidatePath(`/dashboard/shops/${slug}/portfolio`);
   return updatedImages;
 }

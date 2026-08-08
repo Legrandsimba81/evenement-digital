@@ -112,7 +112,7 @@ export default async function AdminShopsPage() {
                     <td className="py-3 px-4">
                       <div className="flex items-center justify-center gap-2">
                         <Link
-                          href={`/boutique/${shop.slug}`}
+                          href={`/boutiques/${shop.slug}`}
                           target="_blank"
                           className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition text-blue-500 hover:text-blue-700"
                           title="Voir la boutique"

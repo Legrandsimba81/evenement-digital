@@ -31,7 +31,7 @@ export default function ReservationPage({ params }: { params: { slug: string } }
     try {
       await createReservation(params.slug, new Date(date), message);
       setSuccess(true);
-      setTimeout(() => router.push(`/boutique/${params.slug}`), 2000);
+      setTimeout(() => router.push(`/boutiques/${params.slug}`), 2000);
     } catch (err: any) {
       setError(err.message || "Erreur lors de la réservation.");
     } finally {
