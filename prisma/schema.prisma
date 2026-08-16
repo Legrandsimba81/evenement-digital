@@ -8,35 +8,36 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String    @unique
-  emailVerified DateTime?
-  emailVerifications EmailVerification[] // ✅
-  image         String?
-  password      String?
-  phone         String?   @unique // 👈 rendu unique
-  role          String    @default("USER")
-  balance       Float         @default(0)
-  transactions  Transaction[]
-  isSuperAdmin   Boolean   @default(false)   // nouvel ajout
-  eventLimits   Json?   // { "ANNIVERSAIRE": 50, "SOUTENANCE": null, ... } null = illimité
-  events        Event[]
-  accounts      Account[]
-  sessions      Session[]
-  collaborators EventCollaborator[]
-  notifications Notification[]
-  posts         BlogPost[]
-  shops       Shop[]
-  reservations Reservation[]
-  reviews     Review[]
-  comments      BlogComment[]
-  likes         BlogLike[]
-  logs          EventLog[] // ✅ relation inverse
-  resetTokens   PasswordResetToken[] // ✅
-  canCreateEvents Boolean @default(true) // ✅ nouveau champ
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id                 String               @id @default(cuid())
+  email              String               @unique
+  name               String?
+  password           String?
+  image              String?
+  role               String               @default("USER")
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  emailVerified      DateTime?
+  canCreateEvents    Boolean              @default(true)
+  phone              String?              @unique
+  isSuperAdmin       Boolean              @default(false)
+  balance            Float                @default(0)
+  eventLimits        Json?
+  accounts           Account[]
+  comments           BlogComment[]
+  likes              BlogLike[]
+  posts              BlogPost[]
+  emailVerifications EmailVerification[]
+  events             Event[]
+  collaborators      EventCollaborator[]
+  collaboratorLimits Json?
+  logs               EventLog[]
+  notifications      Notification[]
+  resetTokens        PasswordResetToken[]
+  reservations       Reservation[]
+  reviews            Review[]
+  sessions           Session[]
+  shops              Shop[]
+  transactions       Transaction[]
 }
 
 model Account {
@@ -45,15 +46,14 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -75,34 +75,33 @@ model VerificationToken {
 }
 
 model Event {
-  id                String    @id @default(cuid())
-  title             String
-  type              String
-  description       String?
-  invitationText    String?
-  program           String?
-  location          String
-  date              DateTime
-  time              String
-  imageUrl          String?
+  id                 String              @id @default(cuid())
+  title              String
+  type               String
+  description        String?
+  invitationText     String?
+  program            String?
+  location           String
+  date               DateTime
+  time               String
+  imageUrl           String?
+  userId             String
+  slug               String              @unique
+  whatsappNumber     String?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
   invitationImageUrl String?
-  userId            String
-  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  guests            Guest[]
-  messages          Message[]
-  collaborators     EventCollaborator[]
-  logs              EventLog[]
-  slug              String    @unique
-  whatsappNumber    String?
-  invitationNumber  String?
-  gateSecret        String?
-  format          String?   @default("INVITATION") // "INVITATION" ou "BILLET"
-  thesisTitle       String?   // pour les soutenances
-  theme             Json?     // thème stocké en JSON
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  invitationNumber   String?
+  gateSecret         String?
+  theme              Json?
+  thesisTitle        String?
+  format             String?             @default("INVITATION")
+  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  collaborators      EventCollaborator[]
+  logs               EventLog[]
+  guests             Guest[]
+  messages           Message[]
 }
-
 
 model EventCollaborator {
   id        String   @id @default(cuid())
@@ -111,133 +110,136 @@ model EventCollaborator {
   role      String   @default("EDITOR")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([eventId, userId])
 }
 
 model EventLog {
-  id        String    @id @default(cuid())
+  id        String   @id @default(cuid())
   eventId   String
-  event     Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
   userId    String
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   action    String
   details   String?
-  createdAt DateTime  @default(now())
+  createdAt DateTime @default(now())
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([eventId])
   @@index([userId])
 }
 
 model Guest {
-  id                String   @id @default(cuid())
-  title             String?
-  firstName         String
-  lastName          String
-  status            String?  @default("en_attente")
-  invitationType    String?  // "single" ou "couple" (par invité)
-  invitationNumber  String?
-  guestLevel        String?  // "SUPERVIP", "VIP", "STANDARD", ou personnalisé
-  eventId           String
-  event             Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id               String   @id @default(cuid())
+  title            String?
+  firstName        String
+  lastName         String
+  eventId          String
+  status           String?  @default("en_attente")
+  invitationNumber String?
+  invitationType   String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  guestLevel       String?
+  email            String?
+  phone            String?
+  event            Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   @@unique([firstName, lastName, eventId])
 }
 
 model Message {
-  id            String    @id @default(cuid())
-  content       String
-  guestName     String
-  guestId       String?
-  eventId       String
-  event         Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id        String   @id @default(cuid())
+  content   String
+  guestName String
+  eventId   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  guestId   String?
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
 
 model Transaction {
   id          String   @id @default(cuid())
   userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type        String   // "deposit" ou "payment"
-  fullName     String?   // nom de l'utilisateur qui fait le dépôt
-  operator    String?  // "mpesa" ou "airtel"
-  countryCode String?  // "CD", "KE", "UG", "TZ", "RW", "BI"
-  phoneNumber String?
+  type        String
   amount      Float
   currency    String   @default("USD")
   description String?
-  provider    String?  // "pawapay"
-  reference   String?  // référence PawaPay
-  proofImage  String?  // URL Cloudinary de la capture
-  status      String   @default("pending") // pending, completed, failed
+  status      String   @default("pending")
   createdAt   DateTime @default(now())
+  countryCode String?
+  operator    String?
+  phoneNumber String?
+  proofImage  String?
   updatedAt   DateTime @updatedAt
+  fullName    String?
+  provider    String?
+  reference   String?
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
+
 model Notification {
   id        String   @id @default(cuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type      String   // "info", "warning", "success", "error"
+  type      String
   title     String?
-  message   String   @db.Text
-  link      String?  // lien optionnel (vers un événement, une transaction, etc.)
+  message   String
+  link      String?
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([createdAt])
 }
+
 model PasswordResetToken {
   id        String   @id @default(cuid())
   token     String   @unique
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
   createdAt DateTime @default(now())
   used      Boolean  @default(false)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model EmailVerification {
   id        String   @id @default(cuid())
   token     String   @unique
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
   used      Boolean  @default(false)
   createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([token])
 }
 
 model BlogPost {
-  id          String   @id @default(cuid())
-  title       String
-  slug        String   @unique
-  content     String   @db.Text
-  excerpt     String?
-  imageUrl    String?
-  metaTitle   String?
-  metaDesc    String?
-  tags        String[] // stocké comme tableau de texte
-  imageOrientation String? @default("landscape") // "landscape" ou "portrait"
-  images Json? // stockera un tableau d'URLs d'images secondaires
-  published   Boolean  @default(false)
-  publishedAt DateTime?
-  views       Int      @default(0)
-  likes       Int      @default(0)
-  authorId    String
-  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  comments    BlogComment[]
-  likesRecords BlogLike[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id               String        @id @default(cuid())
+  title            String
+  slug             String        @unique
+  excerpt          String?
+  content          String
+  imageUrl         String?
+  authorId         String
+  published        Boolean       @default(false)
+  publishedAt      DateTime?
+  views            Int           @default(0)
+  likes            Int           @default(0)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  metaTitle        String?
+  metaDesc         String?
+  tags             String[]
+  imageOrientation String?       @default("landscape")
+  images           Json?
+  comments         BlogComment[]
+  likesRecords     BlogLike[]
+  author           User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
   @@index([published])
   @@index([publishedAt])
@@ -246,13 +248,13 @@ model BlogPost {
 
 model BlogComment {
   id         String   @id @default(cuid())
-  content    String   @db.Text
-  authorName String   // nom affiché
-  authorId   String?  // si l'utilisateur est connecté
-  author     User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
   postId     String
-  post       BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  authorName String
+  authorId   String?
+  content    String
   createdAt  DateTime @default(now())
+  author     User?    @relation(fields: [authorId], references: [id])
+  post       BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
 
   @@index([postId])
 }
@@ -260,55 +262,54 @@ model BlogComment {
 model BlogLike {
   id        String   @id @default(cuid())
   postId    String
-  post      BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
-  sessionId String?  // pour les anonymes
-  userId    String?  // pour les utilisateurs connectés
-  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull) // ✅ ajout
+  sessionId String?
+  userId    String?
   createdAt DateTime @default(now())
+  post      BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User?    @relation(fields: [userId], references: [id])
 
-  @@unique([postId, sessionId]) // empêcher un même visiteur de liker plusieurs fois
+  @@unique([postId, sessionId])
   @@unique([postId, userId])
   @@index([postId])
 }
 
-// ===================== MARKETPLACE / BOUTIQUES =====================
 model ShopCategory {
   id          String   @id @default(cuid())
   name        String   @unique
   slug        String   @unique
   description String?
-  icon        String?  // nom d'icône (ex: 'music', 'camera', etc.)
-  shops       Shop[]
-  tags        String[] // ✅ ajoutez ce champ pour stocker les tags par catégorie
+  icon        String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  tags        String[]
+  shops       Shop[]
 }
 
 model Shop {
-  id          String   @id @default(cuid())
-  name        String
-  slug        String   @unique
-  description String?
-  logo        String?  // URL de l'image
-  coverImage  String?  // URL de la bannière
-  categoryId  String
-  category    ShopCategory @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  userId      String
-  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  isActive    Boolean     @default(true)
-  isVerified  Boolean     @default(false)
-  address     String?
-  city        String?
-  province   String? // ajout
-  phone       String?
-  whatsapp    String?
-  website     String?
-  metadata    Json?       // horaires, réseaux sociaux, etc.
-  profile     ShopProfile? // relation 1-1
+  id           String        @id @default(cuid())
+  name         String
+  slug         String        @unique
+  description  String?
+  logo         String?
+  coverImage   String?
+  categoryId   String
+  userId       String
+  isActive     Boolean       @default(true)
+  isVerified   Boolean       @default(false)
+  address      String?
+  city         String?
+  phone        String?
+  whatsapp     String?
+  website      String?
+  metadata     Json?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  province     String?
   reservations Reservation[]
-  reviews     Review[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  reviews      Review[]
+  category     ShopCategory  @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  profile      ShopProfile?
 
   @@index([slug])
   @@index([categoryId])
@@ -316,47 +317,47 @@ model Shop {
 }
 
 model ShopProfile {
-  id          String   @id @default(cuid())
-  shopId      String   @unique
-  shop        Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  portfolio   String?  // URL ou description du portfolio (peut être un tableau d'images JSON)
-  priceRange  String?  // ex: "50-150$"
-  availability String? // JSON: jours/horaires, ou texte libre
-  experience  String?  // nombre d'années d'expérience, description
-  tags        String[] // mots-clés
-  images      Json?    // tableau d'URLs d'images du portfolio
-  socialLinks Json?    // { facebook: "...", instagram: "...", etc. }
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String   @id @default(cuid())
+  shopId       String   @unique
+  portfolio    String?
+  priceRange   String?
+  availability String?
+  experience   String?
+  tags         String[]
+  socialLinks  Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  images       Json?
+  shop         Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
 }
 
 model Reservation {
-  id          String   @id @default(cuid())
-  shopId      String
-  shop        Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  date        DateTime // date de la réservation
-  message     String?
-  status      String   @default("pending") // pending, confirmed, cancelled, completed
-  metadata    Json?    // informations supplémentaires
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(cuid())
+  shopId    String
+  userId    String
+  date      DateTime
+  message   String?
+  status    String   @default("pending")
+  metadata  Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  shop      Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([shopId])
   @@index([userId])
 }
 
 model Review {
-  id          String   @id @default(cuid())
-  shopId      String
-  shop        Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  rating      Int      // 1-5 étoiles
-  comment     String?  @db.Text
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(cuid())
+  shopId    String
+  userId    String
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  shop      Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([shopId])
   @@index([userId])
