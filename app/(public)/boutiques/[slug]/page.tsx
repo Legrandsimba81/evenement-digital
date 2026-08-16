@@ -185,7 +185,7 @@ export default async function BoutiquePage({ params }: { params: { slug: string 
             Impossible de charger cette boutique. Nous avons été notifiés.
           </p>
           <Link href="/boutiques" className="mt-4 inline-flex items-center gap-2 text-blue-600 hover:underline">
-            <ArrowLeft size={16} /> Retour à la liste
+            <ArrowLeft size={16} /> Retour
           </Link>
         </div>
       </div>

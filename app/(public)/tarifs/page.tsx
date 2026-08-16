@@ -333,7 +333,7 @@ export default function PricingPage() {
             <Sparkles className="w-6 h-6 text-blue-600 dark:text-blue-400" />
           </div> */}
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-3">
-            Nos tarifs
+            Nos tarifs Events
           </h1>
           <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
             Choisissez le forfait qui correspond à votre événement. Paiement unique ou abonnement flexible.
