@@ -1,8 +1,12 @@
 // app/(public)/boutiques/page.tsx
+import { prisma } from "@/lib/prisma";
 import { getShops, getShopCategories } from "@/actions/shop-actions";
 import Link from "next/link";
 import { MapPin, Star, Store } from "lucide-react";
 import ShopFilters from "@/components/shops/ShopFilters";
+
+// app/(public)/boutiques/page.tsx
+export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: "Boutiques et prestataires - Octavia Event",
