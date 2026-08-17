@@ -1,13 +1,17 @@
 // app/(public)/boutiques/[slug]/page.tsx
-import { getShop } from "@/actions/shop-actions";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Calendar, MapPin, Phone, Globe, Star, ArrowLeft, BadgeCheck } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata({ params }: { params: { slug: string } }) {
   try {
-    const shop = await getShop(params.slug);
-    if (!shop) return { title: "Boutique introuvable" };
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/shops/${params.slug}`, {
+      cache: "no-store",
+    });
+    if (!res.ok) return { title: "Boutique introuvable" };
+    const shop = await res.json();
     return {
       title: shop.name,
       description: shop.description || `Découvrez ${shop.name} sur Octavia Event.`,
@@ -22,19 +26,19 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   }
 }
 
-export const dynamic = "force-dynamic";
-export const dynamicParams = true;
-
 export default async function BoutiquePage({ params }: { params: { slug: string } }) {
   try {
-    const shop = await getShop(params.slug);
-    if (!shop) return notFound();
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/shops/${params.slug}`, {
+      cache: "no-store",
+    });
+    if (!res.ok) return notFound();
+    const shop = await res.json();
 
     const avgRating = shop.reviews?.length
       ? (shop.reviews.reduce((sum: number, r: { rating: number }) => sum + r.rating, 0) / shop.reviews.length).toFixed(1)
       : "N/A";
 
-    const profileImages = Array.isArray(shop.profile?.images) ? shop.profile.images.filter((img): img is string => typeof img === "string") : [];
+    const profileImages = Array.isArray(shop.profile?.images) ? shop.profile.images.filter((img: any) => typeof img === "string") : [];
     const tags = Array.isArray(shop.profile?.tags) ? shop.profile.tags : [];
     const reviews = Array.isArray(shop.reviews) ? shop.reviews : [];
 
@@ -184,16 +188,13 @@ export default async function BoutiquePage({ params }: { params: { slug: string 
         </div>
       </div>
     );
-  } catch (error: any) {
+  } catch (error) {
     console.error("Erreur sur la page boutique :", error);
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-950 dark:to-gray-900">
         <div className="max-w-md bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8 text-center">
-          <h1 className="text-2xl font-bold text-red-600 dark:text-red-400">Erreur</h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-300">
-            {error.message || "Une erreur inattendue s'est produite."}
-          </p>
-          {error.code && <p className="mt-1 text-sm text-gray-500">Code : {error.code}</p>}
+          <h1 className="text-2xl font-bold text-red-600 dark:text-red-400">Oups !</h1>
+          <p className="mt-2 text-gray-600 dark:text-gray-300">Impossible de charger cette boutique. Nous avons été notifiés.</p>
           <Link href="/boutiques" className="mt-4 inline-flex items-center gap-2 text-blue-600 hover:underline">
             <ArrowLeft size={16} /> Retour à la liste
           </Link>
