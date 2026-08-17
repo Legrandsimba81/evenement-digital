@@ -1,140 +1,199 @@
-// app/(public)/boutiques/page.tsx
-import { prisma } from "@/lib/prisma";
-import { getShops, getShopCategories } from "@/actions/shop-actions";
+// app/(public)/boutiques/[slug]/page.tsx
+import { getShop } from "@/actions/shop-actions";
+import { notFound } from "next/navigation";
 import Link from "next/link";
-import { MapPin, Star, Store } from "lucide-react";
-import ShopFilters from "@/components/shops/ShopFilters";
+import { Calendar, MapPin, Phone, Globe, Star, ArrowLeft } from "lucide-react";
 
-// app/(public)/boutiques/page.tsx
+export async function generateMetadata({ params }: { params: { slug: string } }) {
+  try {
+    const shop = await getShop(params.slug);
+    if (!shop) return { title: "Boutique introuvable" };
+    return {
+      title: shop.name,
+      description: shop.description || `Découvrez ${shop.name} sur Octavia Event.`,
+      openGraph: {
+        title: shop.name,
+        description: shop.description || "",
+        images: shop.logo ? [{ url: shop.logo }] : [],
+      },
+    };
+  } catch {
+    return { title: "Erreur" };
+  }
+}
+
+// ✅ Forcer le rendu dynamique pour éviter la génération statique de slugs inexistants
 export const dynamic = 'force-dynamic';
+export const dynamicParams = true;
 
-export const metadata = {
-  title: "Boutiques et prestataires - Octavia Event",
-  description: "Trouvez les meilleurs prestataires pour votre événement en RDC.",
-};
+export default async function BoutiquePage({ params }: { params: { slug: string } }) {
+  try {
+    const shop = await getShop(params.slug);
+    if (!shop) return notFound();
 
-export default async function BoutiquesPage({
-  searchParams,
-}: {
-  searchParams: { category?: string; city?: string; search?: string; page?: string };
-}) {
-  const page = Number(searchParams.page) || 1;
-  const limit = 12;
-  const { shops, total } = await getShops({
-    categoryId: searchParams.category,
-    city: searchParams.city,
-    search: searchParams.search,
-    page,
-    limit,
-  });
+    const avgRating = shop.reviews?.length
+      ? (shop.reviews.reduce((sum: number, r: { rating: number }) => sum + r.rating, 0) / shop.reviews.length).toFixed(1)
+      : "N/A";
 
-  const totalPages = Math.ceil(total / limit);
+    const profileImages = Array.isArray(shop.profile?.images) ? shop.profile.images.filter((img): img is string => typeof img === "string") : [];
+    const tags = Array.isArray(shop.profile?.tags) ? shop.profile.tags : [];
+    const reviews = Array.isArray(shop.reviews) ? shop.reviews : [];
 
-  // Récupération des catégories
-  const categories = await getShopCategories();
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-950 dark:to-gray-900 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
-          Prestataires événementiels
-        </h1>
-        <p className="text-gray-600 dark:text-gray-300 mb-6">
-          Trouvez les meilleurs professionnels pour votre événement en RDC.
-        </p>
-
-        {/* Filtres et recherche */}
-        <ShopFilters categories={categories} />
-
-        {/* Résultats */}
-        {shops.length === 0 ? (
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm p-12 text-center">
-            <Store className="mx-auto h-12 w-12 text-gray-400" />
-            <p className="mt-4 text-gray-600 dark:text-gray-300">
-              Aucun prestataire ne correspond à vos critères.
-            </p>
-          </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-6">
-              {shops.map((shop) => (
-                <Link
-                  key={shop.id}
-                  href={`/boutiques/${shop.slug}`}
-                  className="group bg-white dark:bg-gray-900 rounded-2xl shadow-sm hover:shadow-xl transition overflow-hidden border border-gray-200 dark:border-gray-800"
-                >
-                  {shop.coverImage ? (
-                    <div className="aspect-[16/9] overflow-hidden">
-                      <img
-                        src={shop.coverImage}
-                        alt={shop.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
-                      />
-                    </div>
-                  ) : (
-                    <div className="aspect-[16/9] bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center text-white text-4xl font-bold">
-                      {shop.name.charAt(0).toUpperCase()}
-                    </div>
-                  )}
-                  <div className="p-4">
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-primary-500 transition">
-                      {shop.name}
-                    </h2>
-                    <div className="mt-2 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                      <span className="px-2 py-0.5 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-full">
-                        {shop.category?.name || "Catégorie"}
-                      </span>
-                      {shop.city && (
-                        <span className="flex items-center gap-1">
-                          <MapPin size={14} /> {shop.city}
-                        </span>
-                      )}
-                    </div>
-                    <div className="mt-3 flex items-center justify-between">
-                      <span className="text-sm text-gray-600 dark:text-gray-300">
-                        {shop.profile?.priceRange || "Prix sur demande"}
-                      </span>
-                      <span className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
-                        <Star size={16} className="text-yellow-500" />
-                        {shop.avgRating !== null ? shop.avgRating : "N/A"}
-                        ({shop.reviews.length})
-                      </span>
-                    </div>
-                  </div>
-                </Link>
-              ))}
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-950 dark:to-gray-900 py-12 px-4">
+        <div className="max-w-5xl mx-auto bg-white dark:bg-gray-900 rounded-2xl shadow-xl overflow-hidden">
+          {shop.coverImage && (
+            <div className="aspect-[21/9] overflow-hidden">
+              <img src={shop.coverImage} alt={shop.name} className="w-full h-full object-cover" />
+            </div>
+          )}
+          <div className="p-6 md:p-8">
+            <div className="flex items-center gap-4">
+              {shop.logo && (
+                <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-white dark:border-gray-800 shadow-md flex-shrink-0">
+                  <img src={shop.logo} alt={shop.name} className="w-full h-full object-cover" />
+                </div>
+              )}
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{shop.name}</h1>
+                <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  <span className="bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 px-2 py-1 rounded-full">
+                    {shop.category?.name}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Star size={16} className="text-yellow-500" />
+                    {avgRating} ({reviews.length} avis)
+                  </span>
+                </div>
+              </div>
             </div>
 
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex justify-center items-center gap-2 mt-8">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => {
-                  const isActive = p === page;
-                  const params = new URLSearchParams({
-                    ...(searchParams.category && { category: searchParams.category }),
-                    ...(searchParams.city && { city: searchParams.city }),
-                    ...(searchParams.search && { search: searchParams.search }),
-                    page: String(p),
-                  });
-                  return (
-                    <Link
-                      key={p}
-                      href={`/boutiques?${params.toString()}`}
-                      className={`px-4 py-2 rounded-xl text-sm font-medium transition ${
-                        isActive
-                          ? "bg-primary-500 text-white"
-                          : "bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700"
-                      }`}
-                    >
-                      {p}
-                    </Link>
-                  );
-                })}
+            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                {shop.description && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">À propos</h3>
+                    <p className="text-gray-600 dark:text-gray-300">{shop.description}</p>
+                  </div>
+                )}
+                {shop.profile?.portfolio && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Portfolio</h3>
+                    <p className="text-gray-600 dark:text-gray-300">{shop.profile.portfolio}</p>
+                  </div>
+                )}
+                {shop.profile?.priceRange && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Tarifs</h3>
+                    <p className="text-gray-600 dark:text-gray-300">{shop.profile.priceRange}</p>
+                  </div>
+                )}
+                {shop.profile?.experience && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Expérience</h3>
+                    <p className="text-gray-600 dark:text-gray-300">{shop.profile.experience}</p>
+                  </div>
+                )}
+                {tags.length > 0 && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Mots-clés</h3>
+                    <div className="flex flex-wrap gap-2 mt-1">
+                      {tags.map((tag: string) => (
+                        <span key={tag} className="bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full text-xs text-gray-600 dark:text-gray-300">#{tag}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
-          </>
-        )}
+
+              <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl space-y-3">
+                <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Coordonnées</h3>
+                {shop.city && (
+                  <p className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
+                    <MapPin size={18} /> {shop.city}
+                  </p>
+                )}
+                {shop.address && (
+                  <p className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
+                    <MapPin size={18} /> {shop.address}
+                  </p>
+                )}
+                {shop.phone && (
+                  <p className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
+                    <Phone size={18} /> {shop.phone}
+                  </p>
+                )}
+                {shop.whatsapp && (
+                  <p className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
+                    <span className="text-green-500">WhatsApp</span> {shop.whatsapp}
+                  </p>
+                )}
+                {shop.website && (
+                  <p className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
+                    <Globe size={18} /> <a href={shop.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{shop.website}</a>
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-8 flex flex-wrap gap-4">
+              <Link
+                href={`/boutiques/${shop.slug}/reserver`}
+                className="inline-flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-6 py-3 rounded-xl font-medium transition"
+              >
+                <Calendar size={20} /> Réserver maintenant
+              </Link>
+              {profileImages.length > 0 && (
+                <Link
+                  href={`/boutiques/${shop.slug}/portfolio`}
+                  className="inline-flex items-center gap-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white px-6 py-3 rounded-xl font-medium transition"
+                >
+                  Voir le portfolio
+                </Link>
+              )}
+            </div>
+
+            <div className="mt-8 border-t border-gray-200 dark:border-gray-700 pt-6">
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+                Avis ({reviews.length})
+              </h3>
+              {reviews.length === 0 ? (
+                <p className="text-gray-500 dark:text-gray-400 mt-2">Aucun avis pour le moment.</p>
+              ) : (
+                <div className="mt-4 space-y-4">
+                  {reviews.map((review: any) => (
+                    <div key={review.id} className="border-b border-gray-100 dark:border-gray-700 pb-4">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-gray-800 dark:text-white">{review.user?.name || "Anonyme"}</span>
+                        <span className="text-yellow-500 flex items-center gap-0.5">
+                          {"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}
+                        </span>
+                        <span className="text-xs text-gray-400">{new Date(review.createdAt).toLocaleDateString("fr-FR")}</span>
+                      </div>
+                      {review.comment && <p className="text-gray-600 dark:text-gray-300 mt-1">{review.comment}</p>}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
-  );
+    );
+  } catch (error) {
+    console.error("Erreur sur la page boutique :", error);
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-950 dark:to-gray-900">
+        <div className="max-w-md bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8 text-center">
+          <h1 className="text-2xl font-bold text-red-600 dark:text-red-400">Oups !</h1>
+          <p className="mt-2 text-gray-600 dark:text-gray-300">
+            Impossible de charger cette boutique. Nous avons été notifiés.
+          </p>
+          <Link href="/boutiques" className="mt-4 inline-flex items-center gap-2 text-blue-600 hover:underline">
+            <ArrowLeft size={16} /> Retour à la liste
+          </Link>
+        </div>
+      </div>
+    );
+  }
 }
