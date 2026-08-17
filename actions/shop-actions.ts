@@ -36,7 +36,7 @@ export async function createShop(data: {
     throw new Error(
       "Une boutique avec ce nom existe déjà. Si vous êtes le propriétaire de ce nom, contactez-nous sur WhatsApp au +243 992 598 826 ou par email à support@octavia-event.com. pour supprimer le profil de la boutique et libérer le nom."
     );
-  };
+  }
 
   const shop = await prisma.shop.create({
     data: {
@@ -115,7 +115,9 @@ export async function getShops({
       include: {
         category: true,
         profile: { select: { priceRange: true } },
-        reviews: { select: { id: true } },
+        reviews: {
+          select: { rating: true }, // ✅ inclus rating pour le calcul
+        },
       },
       orderBy: { createdAt: "desc" },
       skip,
@@ -124,10 +126,15 @@ export async function getShops({
     prisma.shop.count({ where }),
   ]);
 
-  const shopsWithAvg = shops.map((shop) => ({
-    ...shop,
-    avgRating: shop.reviews.length ? 0 : 0,
-  }));
+  const shopsWithAvg = shops.map((shop) => {
+    const avgRating = shop.reviews.length > 0
+      ? (shop.reviews.reduce((sum, r) => sum + r.rating, 0) / shop.reviews.length).toFixed(1)
+      : null;
+    return {
+      ...shop,
+      avgRating,
+    };
+  });
 
   return { shops: shopsWithAvg, total, page, limit };
 }

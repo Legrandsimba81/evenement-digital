@@ -1,3 +1,4 @@
+// app/(public)/boutiques/[slug]/page.tsx
 import { getShop } from "@/actions/shop-actions";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -27,7 +28,7 @@ export default async function BoutiquePage({ params }: { params: { slug: string 
     if (!shop) return notFound();
 
     const avgRating = shop.reviews?.length
-      ? (shop.reviews.reduce((sum, r) => sum + r.rating, 0) / shop.reviews.length).toFixed(1)
+      ? (shop.reviews.reduce((sum: number, r: { rating: number }) => sum + r.rating, 0) / shop.reviews.length).toFixed(1)
       : "N/A";
 
     const profileImages = Array.isArray(shop.profile?.images) ? shop.profile.images : [];
@@ -93,7 +94,7 @@ export default async function BoutiquePage({ params }: { params: { slug: string 
                   <div>
                     <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Mots-clés</h3>
                     <div className="flex flex-wrap gap-2 mt-1">
-                      {tags.map((tag) => (
+                      {tags.map((tag: string) => (
                         <span key={tag} className="bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full text-xs text-gray-600 dark:text-gray-300">#{tag}</span>
                       ))}
                     </div>
@@ -156,7 +157,7 @@ export default async function BoutiquePage({ params }: { params: { slug: string 
                 <p className="text-gray-500 dark:text-gray-400 mt-2">Aucun avis pour le moment.</p>
               ) : (
                 <div className="mt-4 space-y-4">
-                  {reviews.map((review) => (
+                  {reviews.map((review: any) => (
                     <div key={review.id} className="border-b border-gray-100 dark:border-gray-700 pb-4">
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-gray-800 dark:text-white">{review.user?.name || "Anonyme"}</span>
@@ -185,7 +186,7 @@ export default async function BoutiquePage({ params }: { params: { slug: string 
             Impossible de charger cette boutique. Nous avons été notifiés.
           </p>
           <Link href="/boutiques" className="mt-4 inline-flex items-center gap-2 text-blue-600 hover:underline">
-            <ArrowLeft size={16} /> Retour
+            <ArrowLeft size={16} /> Retour à la liste
           </Link>
         </div>
       </div>
