@@ -6,7 +6,8 @@ import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import { canManageEvent } from "@/lib/permissions";
-import { createNotification, notifyLimitReached } from "@/lib/notifications";
+import { createNotification, notifyLimitReached,  } from "@/lib/notifications";
+import {sendGuestInvitation} from "@/lib/notification-external";
 
 async function generateInvitationNumber(eventId: string): Promise<string> {
   const count = await prisma.guest.count({ where: { eventId } });
@@ -20,7 +21,9 @@ export async function addGuest(
   lastName: string,
   title?: string,
   invitationType: string = "seul",
-  guestLevel?: string
+  guestLevel?: string,
+  phone?: string,   // nouveau
+  email?: string    // nouveau
 ) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Non authentifié");
@@ -34,11 +37,10 @@ export async function addGuest(
   const hasAccess = await canManageEvent(eventId, session.user.id);
   if (!hasAccess) throw new Error("Non autorisé");
 
-  // Vérification des limites de l'organisateur
+  // Vérification des limites
   const owner = event.user;
   const limits = owner.eventLimits as Record<string, number | null> | null;
-  const limit = limits?.[event.type] ?? 5; // par défaut 5
-
+  const limit = limits?.[event.type] ?? 5;
   const existingGuestsCount = await prisma.guest.count({
     where: {
       event: {
@@ -47,9 +49,7 @@ export async function addGuest(
       },
     },
   });
-
   if (limit !== null && existingGuestsCount >= limit) {
-    // Notification de limite atteinte avant de lancer l'erreur
     await notifyLimitReached(owner.id, event.type, limit);
     throw new Error(
       `Limite atteinte : vous ne pouvez pas ajouter plus de ${limit} invités pour les événements de type "${event.type}".`
@@ -58,7 +58,7 @@ export async function addGuest(
 
   const invitationNumber = await generateInvitationNumber(eventId);
 
-  await prisma.guest.create({
+  const guest = await prisma.guest.create({
     data: {
       firstName,
       lastName,
@@ -68,6 +68,8 @@ export async function addGuest(
       status: "en_attente",
       eventId,
       guestLevel: guestLevel || null,
+      phone: phone || null,
+      email: email || null,
     },
   });
 
@@ -79,6 +81,19 @@ export async function addGuest(
     message: `${firstName} ${lastName} a été ajouté à l'événement "${event.title}".`,
     link: `/dashboard/${event.slug}/guests`,
   });
+
+  // Envoyer l'invitation si phone ou email est renseigné
+  if (phone || email) {
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://evenement-digital.vercel.app";
+    const invitationLink = `${baseUrl}/invitation/${event.slug}?firstName=${encodeURIComponent(firstName)}&lastName=${encodeURIComponent(lastName)}`;
+    await sendGuestInvitation({
+      phone: phone || undefined,
+      email: email || undefined,
+      guestName: `${firstName} ${lastName}`,
+      eventTitle: event.title,
+      invitationLink,
+    });
+  }
 
   revalidatePath(`/dashboard/${event.slug}`);
 }
@@ -100,7 +115,6 @@ export async function removeGuest(guestId: string) {
 
   await prisma.guest.delete({ where: { id: guestId } });
 
-  // Notification à l'organisateur
   await createNotification({
     userId: guest.event.userId,
     type: "warning",
@@ -121,6 +135,8 @@ export async function updateGuest(
     invitationType?: string;
     status?: string;
     guestLevel?: string;
+    phone?: string;
+    email?: string;
   }
 ) {
   const session = await auth();
@@ -135,7 +151,10 @@ export async function updateGuest(
   const hasAccess = await canManageEvent(guest.eventId, session.user.id);
   if (!hasAccess) throw new Error("Non autorisé");
 
-  await prisma.guest.update({
+  const phoneChanged = data.phone !== undefined && data.phone !== guest.phone;
+  const emailChanged = data.email !== undefined && data.email !== guest.email;
+
+  const updated = await prisma.guest.update({
     where: { id: guestId },
     data: {
       title: data.title || null,
@@ -144,13 +163,15 @@ export async function updateGuest(
       invitationType: data.invitationType || guest.invitationType,
       status: data.status || guest.status,
       guestLevel: data.guestLevel || null,
+      phone: data.phone || null,
+      email: data.email || null,
     },
   });
 
-  // Notification à l'organisateur
   const guestName = data.firstName && data.lastName 
     ? `${data.firstName} ${data.lastName}` 
     : `${guest.firstName} ${guest.lastName}`;
+
   await createNotification({
     userId: guest.event.userId,
     type: "info",
@@ -158,6 +179,18 @@ export async function updateGuest(
     message: `Les informations de ${guestName} ont été mises à jour pour l'événement "${guest.event.title}".`,
     link: `/dashboard/${guest.event.slug}/guests`,
   });
+
+  if ((phoneChanged || emailChanged) && (data.phone || data.email)) {
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://evenement-digital.vercel.app";
+    const invitationLink = `${baseUrl}/invitation/${guest.event.slug}?firstName=${encodeURIComponent(updated.firstName)}&lastName=${encodeURIComponent(updated.lastName)}`;
+    await sendGuestInvitation({
+      phone: data.phone || undefined,
+      email: data.email || undefined,
+      guestName: `${updated.firstName} ${updated.lastName}`,
+      eventTitle: guest.event.title,
+      invitationLink,
+    });
+  }
 
   revalidatePath(`/dashboard/${guest.event.slug}`);
 }
@@ -188,7 +221,6 @@ export async function updateGuestStatus(guestId: string, status: string) {
     data: { status },
   });
 
-  // Notification à l'organisateur
   const guestName = guest.title ? `${guest.title} ${guest.firstName} ${guest.lastName}` : `${guest.firstName} ${guest.lastName}`;
   await createNotification({
     userId: guest.event.userId,
@@ -237,8 +269,8 @@ export async function exportGuestList(eventId: string, format: "csv" | "pdf" = "
   const guests = event.guests;
 
   if (format === "csv") {
-    const headers = ["N°", "Titre", "Prénom", "Nom", "Type", "Statut", "Numéro d'invitation", "Niveau"];
-    const rows = guests.map((g, index) => [
+    const headers = ["N°", "Titre", "Prénom", "Nom", "Type", "Statut", "Numéro d'invitation", "Niveau", "Téléphone", "Email"];
+    const rows = guests.map((g: any, index: number) => [
       index + 1,
       g.title || "",
       g.firstName,
@@ -247,8 +279,10 @@ export async function exportGuestList(eventId: string, format: "csv" | "pdf" = "
       g.status || "En attente",
       g.invitationNumber || "",
       g.guestLevel || "",
+      g.phone || "",
+      g.email || "",
     ]);
-    const csvContent = [headers.join(","), ...rows.map((row) => row.join(","))].join("\n");
+    const csvContent = [headers.join(","), ...rows.map((row: string[]) => row.join(","))].join("\n");
     return { success: true, csvContent };
   }
 
@@ -272,9 +306,9 @@ export async function exportGuestList(eventId: string, format: "csv" | "pdf" = "
     });
     y -= 30;
 
-    const headers = ["N°", "Titre", "Prénom", "Nom", "Type", "Statut", "N° Invitation", "Niveau"];
-    const headerX = [50, 90, 140, 200, 260, 310, 370, 430];
-    headers.forEach((h, i) => {
+    const headers = ["N°", "Titre", "Prénom", "Nom", "Type", "Statut", "N° Invitation", "Niveau", "Téléphone", "Email"];
+    const headerX = [50, 90, 140, 200, 260, 310, 370, 430, 470, 510];
+    headers.forEach((h: string, i: number) => {
       page.drawText(h, {
         x: headerX[i],
         y: y,
@@ -285,7 +319,7 @@ export async function exportGuestList(eventId: string, format: "csv" | "pdf" = "
     });
     y -= lineHeight;
 
-    guests.forEach((g, index) => {
+    guests.forEach((g: any, index: number) => {
       const row = [
         String(index + 1),
         g.title || "",
@@ -295,8 +329,10 @@ export async function exportGuestList(eventId: string, format: "csv" | "pdf" = "
         g.status || "En attente",
         g.invitationNumber || "",
         g.guestLevel || "",
+        g.phone || "",
+        g.email || "",
       ];
-      row.forEach((text, i) => {
+      row.forEach((text: string, i: number) => {
         page.drawText(text, {
           x: headerX[i],
           y: y,
