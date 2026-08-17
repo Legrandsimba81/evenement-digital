@@ -184,13 +184,16 @@ export default async function BoutiquePage({ params }: { params: { slug: string 
         </div>
       </div>
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Erreur sur la page boutique :", error);
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-950 dark:to-gray-900">
         <div className="max-w-md bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8 text-center">
-          <h1 className="text-2xl font-bold text-red-600 dark:text-red-400">Oups !</h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-300">Impossible de charger cette boutique. Nous avons été notifiés.</p>
+          <h1 className="text-2xl font-bold text-red-600 dark:text-red-400">Erreur</h1>
+          <p className="mt-2 text-gray-600 dark:text-gray-300">
+            {error.message || "Une erreur inattendue s'est produite."}
+          </p>
+          {error.code && <p className="mt-1 text-sm text-gray-500">Code : {error.code}</p>}
           <Link href="/boutiques" className="mt-4 inline-flex items-center gap-2 text-blue-600 hover:underline">
             <ArrowLeft size={16} /> Retour à la liste
           </Link>
