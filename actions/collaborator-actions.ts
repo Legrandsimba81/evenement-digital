@@ -1,3 +1,4 @@
+// actions/collaborator-actions.ts
 "use server";
 
 import { prisma } from "@/lib/prisma";
@@ -10,60 +11,71 @@ export async function addCollaborator(eventId: string, email: string) {
 
   const event = await prisma.event.findUnique({
     where: { id: eventId },
+    include: { collaborators: true },
   });
   if (!event) throw new Error("Événement non trouvé");
-  if (event.userId !== session.user.id) throw new Error("Non autorisé");
+  if (event.userId !== session.user.id) {
+    throw new Error("Seul le propriétaire de l'événement peut ajouter des collaborateurs");
+  }
 
-  const userToAdd = await prisma.user.findUnique({
+  // ✅ Limite de 2 collaborateurs
+  if (event.collaborators.length >= 2) {
+    throw new Error("Vous ne pouvez ajouter que 2 collaborateurs maximum.");
+  }
+
+  const user = await prisma.user.findUnique({
     where: { email },
+    select: { id: true, canCreateEvents: true },
   });
-  if (!userToAdd) throw new Error("Utilisateur non trouvé");
-  if (userToAdd.id === session.user.id) throw new Error("Vous ne pouvez pas vous ajouter vous-même");
+  if (!user) throw new Error("Utilisateur non trouvé");
+  if (!user.canCreateEvents) {
+    throw new Error("Cet utilisateur n'est pas autorisé à collaborer.");
+  }
 
-  const existing = await prisma.eventCollaborator.findUnique({
-    where: { eventId_userId: { eventId, userId: userToAdd.id } },
-  });
-  if (existing) throw new Error("Cet utilisateur est déjà collaborateur");
-
-  // Vérifier le nombre de collaborateurs (max 2)
-  const count = await prisma.eventCollaborator.count({
-    where: { eventId },
-  });
-  if (count >= 2) {
-    throw new Error("Vous ne pouvez pas ajouter plus de 2 collaborateurs par événement.");
+  if (event.userId === user.id) {
+    throw new Error("Cet utilisateur est déjà le propriétaire de l'événement");
+  }
+  const alreadyCollaborator = event.collaborators.some((c: { userId: string }) => c.userId === user.id);
+  if (alreadyCollaborator) {
+    throw new Error("Cet utilisateur est déjà collaborateur");
   }
 
   await prisma.eventCollaborator.create({
     data: {
       eventId,
-      userId: userToAdd.id,
-      role: "EDITOR",
+      userId: user.id,
+      role: "admin",
     },
   });
 
   revalidatePath(`/dashboard/${event.slug}`);
-  revalidatePath(`/dashboard/${event.slug}/collaborators`);
+  revalidatePath(`/dashboard/${event.slug}/admin`);
   return { success: true };
 }
 
-export async function removeCollaborator(eventId: string, userId: string) {
+export async function removeCollaborator(eventId: string, collaboratorId: string) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Non authentifié");
 
   const event = await prisma.event.findUnique({
     where: { id: eventId },
+    include: { collaborators: true },
   });
   if (!event) throw new Error("Événement non trouvé");
-  if (event.userId !== session.user.id) throw new Error("Non autorisé");
+  if (event.userId !== session.user.id) {
+    throw new Error("Seul le propriétaire peut retirer des collaborateurs");
+  }
 
-  if (userId === session.user.id) throw new Error("Vous ne pouvez pas vous retirer vous-même");
+  const collaborator = event.collaborators.find((c: { id: string }) => c.id === collaboratorId);
+  if (!collaborator) throw new Error("Collaborateur non trouvé");
 
-  await prisma.eventCollaborator.delete({
-    where: { eventId_userId: { eventId, userId } },
-  });
+  if (collaborator.userId === event.userId) {
+    throw new Error("Impossible de retirer le propriétaire");
+  }
 
+  await prisma.eventCollaborator.delete({ where: { id: collaboratorId } });
   revalidatePath(`/dashboard/${event.slug}`);
-  revalidatePath(`/dashboard/${event.slug}/collaborators`);
+  revalidatePath(`/dashboard/${event.slug}/admin`);
   return { success: true };
 }
 
@@ -73,21 +85,28 @@ export async function getCollaborators(eventId: string) {
 
   const event = await prisma.event.findUnique({
     where: { id: eventId },
-    include: { user: true },
+    include: { collaborators: { include: { user: true } } },
   });
   if (!event) throw new Error("Événement non trouvé");
 
-  const isOwner = event.userId === session.user.id;
-  const isCollaborator = await prisma.eventCollaborator.findUnique({
-    where: { eventId_userId: { eventId, userId: session.user.id } },
-  });
-  if (!isOwner && !isCollaborator) throw new Error("Non autorisé");
+  const isCreator = event.userId === session.user.id;
+  const isCollaborator = event.collaborators.some((c: { userId: string }) => c.userId === session.user.id);
+  if (!isCreator && !isCollaborator) {
+    throw new Error("Non autorisé");
+  }
 
-  const collaborators = await prisma.eventCollaborator.findMany({
-    where: { eventId },
-    include: { user: { select: { id: true, name: true, email: true, image: true } } },
-    orderBy: { createdAt: "asc" },
+  const owner = await prisma.user.findUnique({
+    where: { id: event.userId },
+    select: { id: true, name: true },
   });
 
-  return collaborators || [];
+  return {
+    owner: { id: owner?.id, name: owner?.name },
+    collaborators: event.collaborators.map((c: any) => ({
+      id: c.id,
+      userId: c.userId,
+      name: c.user.name,
+      email: c.user.email,
+    })),
+  };
 }

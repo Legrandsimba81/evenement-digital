@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
+
 import {
   BellRing,
   CircleDollarSign,
@@ -17,6 +18,7 @@ import {
   Sparkles,
   Store,
   Sun,
+  Tag,
   UserRound,
 } from "lucide-react";
 
@@ -55,7 +57,8 @@ export default function Navbar() {
     { href: "/", label: "Accueil", icon: Home },
     { href: "/dashboard", label: "Mes événements", icon: LayoutGrid },
     { href: "/dashboard/event/new", label: "Créer", icon: PlusCircle },
-    { href: "/boutiques", label: "Prestataires", icon: Store },
+    { href: "/tarifs", label: "Tarifs", icon: Tag },
+    // { href: "/boutiques", label: "Prestataires", icon: Store },
     { href: "/blog", label: "Blog", icon: Newspaper },
   ];
 
