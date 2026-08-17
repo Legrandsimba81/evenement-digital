@@ -1,9 +1,11 @@
+// app/(protected)/admin/shops/page.tsx
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Eye, Edit, Trash2, Check, X, Store } from "lucide-react";
 import DeleteShopButton from "@/components/shops/DeleteShopButton";
+import CertifyToggle from "@/components/admin/CertifyToggle";
 
 export const dynamic = "force-dynamic";
 
@@ -63,6 +65,7 @@ export default async function AdminShopsPage() {
                   <th className="text-left py-3 px-4 font-semibold text-gray-600 dark:text-gray-300">Catégorie</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-600 dark:text-gray-300">Ville</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-600 dark:text-gray-300">Statut</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-600 dark:text-gray-300">Certifié</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-600 dark:text-gray-300">Créé le</th>
                   <th className="text-center py-3 px-4 font-semibold text-gray-600 dark:text-gray-300">Actions</th>
                 </tr>
@@ -105,6 +108,9 @@ export default async function AdminShopsPage() {
                         {shop.isActive ? <Check size={12} /> : <X size={12} />}
                         {shop.isActive ? "Actif" : "Inactif"}
                       </span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <CertifyToggle shopSlug={shop.slug} isVerified={shop.isVerified} />
                     </td>
                     <td className="py-3 px-4 text-xs text-gray-500 dark:text-gray-400">
                       {formatDate(shop.createdAt)}

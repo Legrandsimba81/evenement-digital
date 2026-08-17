@@ -2,7 +2,7 @@
 import { getShop } from "@/actions/shop-actions";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { Calendar, MapPin, Phone, Globe, Star, ArrowLeft } from "lucide-react";
+import { Calendar, MapPin, Phone, Globe, Star, ArrowLeft, BadgeCheck } from "lucide-react";
 
 export async function generateMetadata({ params }: { params: { slug: string } }) {
   try {
@@ -22,6 +22,9 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   }
 }
 
+export const dynamic = "force-dynamic";
+export const dynamicParams = true;
+
 export default async function BoutiquePage({ params }: { params: { slug: string } }) {
   try {
     const shop = await getShop(params.slug);
@@ -31,7 +34,7 @@ export default async function BoutiquePage({ params }: { params: { slug: string 
       ? (shop.reviews.reduce((sum: number, r: { rating: number }) => sum + r.rating, 0) / shop.reviews.length).toFixed(1)
       : "N/A";
 
-    const profileImages = Array.isArray(shop.profile?.images) ? shop.profile.images : [];
+    const profileImages = Array.isArray(shop.profile?.images) ? shop.profile.images.filter((img): img is string => typeof img === "string") : [];
     const tags = Array.isArray(shop.profile?.tags) ? shop.profile.tags : [];
     const reviews = Array.isArray(shop.reviews) ? shop.reviews : [];
 
@@ -51,7 +54,12 @@ export default async function BoutiquePage({ params }: { params: { slug: string 
                 </div>
               )}
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{shop.name}</h1>
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                  {shop.name}
+                  {shop.isVerified && (
+                    <BadgeCheck className="w-6 h-6 text-blue-500 fill-blue-500" />
+                  )}
+                </h1>
                 <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500 dark:text-gray-400 mt-1">
                   <span className="bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 px-2 py-1 rounded-full">
                     {shop.category?.name}
@@ -182,9 +190,7 @@ export default async function BoutiquePage({ params }: { params: { slug: string 
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-950 dark:to-gray-900">
         <div className="max-w-md bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8 text-center">
           <h1 className="text-2xl font-bold text-red-600 dark:text-red-400">Oups !</h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-300">
-            Impossible de charger cette boutique. Nous avons été notifiés.
-          </p>
+          <p className="mt-2 text-gray-600 dark:text-gray-300">Impossible de charger cette boutique. Nous avons été notifiés.</p>
           <Link href="/boutiques" className="mt-4 inline-flex items-center gap-2 text-blue-600 hover:underline">
             <ArrowLeft size={16} /> Retour à la liste
           </Link>
