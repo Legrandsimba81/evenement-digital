@@ -74,8 +74,8 @@ const plans: Plan[] = [
   {
     id: "anniv-50",
     category: "classique",
-    name: "Anniversaire (50 invités)",
-    price: 5,
+    name: "Anniversaire (10 invités)",
+    price: 10,
     currency: "$",
     icon: Gift,
     color: "pink",
@@ -87,7 +87,7 @@ const plans: Plan[] = [
     id: "anniv-illimite",
     category: "classique",
     name: "Anniversaire (Illimité)",
-    price: 10,
+    price: 25,
     currency: "$",
     icon: Gift,
     color: "pink",
@@ -98,8 +98,8 @@ const plans: Plan[] = [
   {
     id: "soutenance-50",
     category: "classique",
-    name: "Soutenance (50 invités)",
-    price: 5,
+    name: "Soutenance (10 invités)",
+    price: 10,
     currency: "$",
     icon: Trophy,
     color: "purple",
@@ -111,7 +111,7 @@ const plans: Plan[] = [
     id: "soutenance-illimite",
     category: "classique",
     name: "Soutenance (Illimité)",
-    price: 10,
+    price: 25,
     currency: "$",
     icon: Trophy,
     color: "purple",
@@ -123,7 +123,7 @@ const plans: Plan[] = [
     id: "mariage",
     category: "premium",
     name: "Mariage (Illimité)",
-    price: 30,
+    price: 50,
     currency: "$",
     icon: Heart,
     color: "rose",
@@ -135,7 +135,7 @@ const plans: Plan[] = [
     id: "concert",
     category: "premium",
     name: "Concert (Illimité)",
-    price: 20,
+    price: 50,
     currency: "$",
     icon: Music,
     color: "orange",
@@ -147,7 +147,7 @@ const plans: Plan[] = [
     id: "autre",
     category: "premium",
     name: "Autre événement (Illimité)",
-    price: 20,
+    price: 50,
     currency: "$",
     icon: Calendar,
     color: "blue",
@@ -160,7 +160,7 @@ const plans: Plan[] = [
     id: "abonnement-3mois",
     category: "abonnement",
     name: "Abonnement 3 mois",
-    price: 50,
+    price: 150,
     currency: "$",
     icon: Star,
     color: "gold",
@@ -180,7 +180,7 @@ const plans: Plan[] = [
     id: "abonnement-6mois",
     category: "abonnement",
     name: "Abonnement 6 mois",
-    price: 90,
+    price: 250,
     currency: "$",
     icon: Star,
     color: "gold",
@@ -200,7 +200,7 @@ const plans: Plan[] = [
     id: "abonnement-1an",
     category: "abonnement",
     name: "Abonnement 1 an",
-    price: 150,
+    price: 350,
     currency: "$",
     icon: Star,
     color: "gold",
@@ -333,7 +333,7 @@ export default function PricingPage() {
             <Sparkles className="w-6 h-6 text-blue-600 dark:text-blue-400" />
           </div> */}
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-3">
-            Nos tarifs Events
+            Nos tarifs
           </h1>
           <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
             Choisissez le forfait qui correspond à votre événement. Paiement unique ou abonnement flexible.
