@@ -53,6 +53,8 @@ export async function createShop(data: {
       phone: data.phone,
       whatsapp: data.whatsapp,
       website: data.website,
+      isActive: true,
+      isVerified: false,
       profile: {
         create: {
           portfolio: data.portfolio,
@@ -71,18 +73,35 @@ export async function createShop(data: {
 }
 
 export async function getShop(slug: string) {
-  return prisma.shop.findUnique({
-    where: { slug },
-    include: {
-      category: true,
-      profile: true,
-      user: { select: { name: true, email: true } },
-      reviews: {
-        include: { user: { select: { name: true } } },
-        orderBy: { createdAt: "desc" },
+  try {
+    // 1. Récupérer la boutique avec ses relations principales (sans reviews)
+    const shop = await prisma.shop.findUnique({
+      where: { slug },
+      include: {
+        category: true,
+        profile: true,
+        user: { select: { name: true, email: true } },
       },
-    },
-  });
+    });
+
+    if (!shop) return null;
+
+    // 2. Récupérer les avis séparément (pour éviter les includes imbriqués)
+    const reviews = await prisma.review.findMany({
+      where: { shopId: shop.id },
+      include: { user: { select: { name: true } } },
+      orderBy: { createdAt: "desc" },
+    });
+
+    // 3. Retourner l'objet complet
+    return {
+      ...shop,
+      reviews,
+    };
+  } catch (error) {
+    console.error("Erreur getShop:", error);
+    throw new Error("Impossible de charger la boutique.");
+  }
 }
 
 export async function getShops({
@@ -116,7 +135,7 @@ export async function getShops({
         category: true,
         profile: { select: { priceRange: true } },
         reviews: {
-          select: { rating: true }, // ✅ inclus rating pour le calcul
+          select: { rating: true },
         },
       },
       orderBy: { createdAt: "desc" },
