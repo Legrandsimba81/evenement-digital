@@ -7,7 +7,6 @@ import { createShop } from "@/actions/shop-actions";
 import { Loader2, ArrowLeft, AlertCircle, CheckCircle } from "lucide-react";
 import ImageUpload from "@/components/ui/ImageUpload";
 
-// Provinces et villes de la RDC
 const PROVINCES = [
   "Kinshasa", "Kongo Central", "Kwango", "Kwilu", "Mai-Ndombe",
   "Équateur", "Mongala", "Nord-Ubangi", "Sud-Ubangi", "Tshuapa",
@@ -59,6 +58,7 @@ export default function NewShopPage() {
   const [successMessage, setSuccessMessage] = useState("");
   const [categories, setCategories] = useState<{ id: string; name: string; tags?: string[] }[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const [form, setForm] = useState({
     name: "",
@@ -79,7 +79,6 @@ export default function NewShopPage() {
     coverImage: "",
   });
 
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [availableTags, setAvailableTags] = useState<string[]>([]);
 
   useEffect(() => {
@@ -116,7 +115,6 @@ export default function NewShopPage() {
     if (name === "availability" && value !== "Personnalisé") {
       setForm((prev) => ({ ...prev, availabilityCustom: "" }));
     }
-    // Effacer l'erreur du champ lorsqu'il est modifié
     setFieldErrors((prev) => ({ ...prev, [name]: "" }));
     if (error) setError("");
   };
@@ -137,7 +135,6 @@ export default function NewShopPage() {
 
   const validatePhone = (phone: string) => /^0\d{9}$/.test(phone);
 
-  // Validation côté client avant soumission
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
     if (!form.name.trim()) errors.name = "Le nom de la boutique est obligatoire.";
@@ -147,7 +144,13 @@ export default function NewShopPage() {
     if (!form.address.trim()) errors.address = "L'adresse détaillée est obligatoire.";
     if (!form.phone.trim()) errors.phone = "Le numéro de téléphone est obligatoire.";
     if (!validatePhone(form.phone)) errors.phone = "Le numéro doit contenir 10 chiffres et commencer par 0 (ex: 0827733286).";
-    
+    if (form.website.trim()) {
+      try {
+        new URL(form.website.trim());
+      } catch {
+        errors.website = "L'URL du site web est invalide (ex: https://monsite.com).";
+      }
+    }
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -157,9 +160,7 @@ export default function NewShopPage() {
     setError("");
     setSuccessMessage("");
 
-    // Validation client
     if (!validateForm()) {
-      // Focus sur le premier champ en erreur
       const firstError = Object.keys(fieldErrors)[0];
       if (firstError) {
         const el = document.querySelector(`[name="${firstError}"]`) as HTMLElement;
@@ -175,7 +176,7 @@ export default function NewShopPage() {
         availabilityValue = form.availabilityCustom;
       }
 
-      const result = await createShop({
+      const shopData = {
         name: form.name.trim(),
         description: form.description.trim() || undefined,
         categoryId: form.categoryId,
@@ -195,22 +196,15 @@ export default function NewShopPage() {
           tags: form.selectedTags,
           images: [],
         },
-      });
+      };
 
+      const result = await createShop(shopData);
       if (result.success) {
         setSuccessMessage("✅ Boutique créée avec succès ! Redirection...");
         setTimeout(() => router.push("/dashboard/shops"), 1500);
-      } else {
-        setError("Erreur inconnue lors de la création.");
       }
     } catch (err: any) {
-      console.error("Erreur création:", err);
-      let errorMsg = err.message || "Une erreur est survenue lors de la création.";
-      // Si l'erreur est une validation Zod, afficher les détails
-      if (err.name === "ZodError" && err.errors) {
-        errorMsg = err.errors.map((e: any) => e.message).join(", ");
-      }
-      setError(errorMsg);
+      setError(err.message || "Une erreur est survenue lors de la création.");
     } finally {
       setLoading(false);
     }
@@ -278,7 +272,6 @@ export default function NewShopPage() {
               ))}
             </select>
             {fieldErrors.categoryId && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.categoryId}</p>}
-            {loadingCategories && <p className="text-xs text-gray-400 mt-1">Chargement des catégories...</p>}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
@@ -373,11 +366,16 @@ export default function NewShopPage() {
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Site web (optionnel)</label>
             <input
               name="website"
+              type="url"
               value={form.website}
               onChange={handleChange}
               placeholder="https://monsite.com"
-              className="mt-1 w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className={`mt-1 w-full px-4 py-2 rounded-xl border ${
+                fieldErrors.website ? "border-red-500 focus:ring-red-500" : "border-gray-300 dark:border-gray-700 focus:ring-blue-500"
+              } bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:border-transparent`}
             />
+            {fieldErrors.website && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.website}</p>}
+            <p className="mt-1 text-xs text-gray-400">Doit commencer par http:// ou https://</p>
           </div>
         </div>
 
@@ -399,6 +397,7 @@ export default function NewShopPage() {
         {/* Profil professionnel */}
         <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-6 space-y-4">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Profil professionnel</h2>
+          {/* ... (restent les mêmes champs portfolio, priceRange, availability, experience, tags) ... */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Portfolio (URL ou description)</label>
             <input
@@ -453,34 +452,26 @@ export default function NewShopPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Tags (selon votre catégorie)</label>
-            {loadingCategories ? (
-              <p className="text-gray-400">Chargement des catégories...</p>
-            ) : availableTags.length === 0 ? (
-              <p className="text-gray-400">Aucun tag disponible pour cette catégorie.</p>
-            ) : (
-              <div className="mt-2 flex flex-wrap gap-2">
-                {availableTags.map((tag) => (
-                  <button
-                    key={tag}
-                    type="button"
-                    onClick={() => handleTagToggle(tag)}
-                    className={`px-3 py-1 rounded-full text-sm font-medium transition ${
-                      form.selectedTags.includes(tag)
-                        ? "bg-blue-600 text-white"
-                        : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
-                    }`}
-                  >
-                    {tag}
-                  </button>
-                ))}
-              </div>
-            )}
-            <p className="mt-1 text-xs text-gray-400">Sélectionnez les tags qui décrivent le mieux votre service.</p>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Tags</label>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {availableTags.map((tag) => (
+                <button
+                  key={tag}
+                  type="button"
+                  onClick={() => handleTagToggle(tag)}
+                  className={`px-3 py-1 rounded-full text-sm font-medium transition ${
+                    form.selectedTags.includes(tag)
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
+                  }`}
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* Boutons */}
         <div className="flex flex-col sm:flex-row gap-4">
           <button
             type="submit"

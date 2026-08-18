@@ -4,62 +4,46 @@ import { auth } from "@/auth";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import PortfolioManager from "@/components/shops/PortfolioManager";
+import PortfolioManagerWithUpload from "@/components/shops/PortfolioManagerWithUpload";
 
 export const dynamic = "force-dynamic";
 
-export default async function DashboardPortfolioPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
+export default async function DashboardPortfolioPage({ 
+  params 
+}: { 
+  params: Promise<{ slug: string }> 
 }) {
-  try {
-    const { slug } = await params;
-    const session = await auth();
-    if (!session?.user) redirect("/login");
+  const { slug } = await params;
+  const session = await auth();
+  if (!session?.user) redirect("/login");
 
-    const shop = await getShopBySlug(slug);
-    if (!shop) return notFound();
+  const shop = await getShopBySlug(slug);
+  if (!shop) return notFound();
 
-    if (shop.userId !== session.user.id && session.user.role !== "ADMIN") {
-      return (
-        <div className="p-6 text-center">
-          <p className="text-red-500">Vous n'êtes pas autorisé.</p>
-        </div>
-      );
-    }
-
-    // Les images sont déjà normalisées par getShopBySlug
-    const images = shop.profile?.images || [];
-
-    return (
-      <div className="max-w-5xl mx-auto p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Portfolio - {shop.name}
-          </h1>
-          <Link
-            href={`/dashboard/shops/${shop.slug}`}
-            className="inline-flex items-center gap-2 text-sm text-blue-600 hover:underline"
-          >
-            <ArrowLeft size={16} /> Retour
-          </Link>
-        </div>
-        <PortfolioManager shopSlug={shop.slug} initialImages={images} />
-      </div>
-    );
-  } catch (error) {
-    console.error("[DashboardPortfolioPage] Erreur:", error);
+  if (shop.userId !== session.user.id && session.user.role !== "ADMIN") {
     return (
       <div className="p-6 text-center">
-        <h1 className="text-2xl font-bold text-red-600">Erreur</h1>
-        <p className="text-gray-600 dark:text-gray-300">
-          Impossible de charger le portfolio.
-        </p>
-        <Link href="/dashboard/shops" className="mt-4 inline-block text-blue-600 hover:underline">
-          Retour au tableau de bord
-        </Link>
+        <p className="text-red-500">Vous n'êtes pas autorisé.</p>
       </div>
     );
   }
+
+  const images = Array.isArray(shop.profile?.images) ? shop.profile.images : [];
+
+  return (
+    <div className="max-w-5xl mx-auto p-6">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          Portfolio - {shop.name}
+        </h1>
+        <Link
+          href={`/dashboard/shops/${shop.slug}`}
+          className="inline-flex items-center gap-2 text-sm text-blue-600 hover:underline"
+        >
+          <ArrowLeft size={16} /> Retour
+        </Link>
+      </div>
+      <PortfolioManagerWithUpload shopSlug={shop.slug} initialImages={images} />
+    </div>
+  );
 }

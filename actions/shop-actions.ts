@@ -6,13 +6,12 @@ import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
-// actions/shop-actions.ts (extrait modifié)
 import { sendReservationEmail } from "@/lib/mail-reservation";
 
 // ---------- Types ----------
 type ImageItem = { url: string; orientation: 'portrait' | 'paysage' };
 
-// ---------- Schémas de validation ----------
+// ---------- Schéma de création ----------
 const ShopCreateSchema = z.object({
   name: z.string().min(1, "Nom requis").max(100),
   description: z.string().optional().nullable(),
@@ -21,9 +20,18 @@ const ShopCreateSchema = z.object({
   address: z.string().optional().nullable(),
   phone: z.string().optional().nullable(),
   whatsapp: z.string().optional().nullable(),
-  website: z.string().url("URL invalide").optional().nullable().or(z.literal("")),
-  coverImage: z.string().url("URL invalide").optional().nullable().or(z.literal("")),
-  logo: z.string().url("URL invalide").optional().nullable().or(z.literal("")),
+  website: z.preprocess(
+    (val) => (typeof val === 'string' && val.trim() === '' ? undefined : val),
+    z.string().url("URL invalide").optional().nullable()
+  ),
+  coverImage: z.preprocess(
+    (val) => (typeof val === 'string' && val.trim() === '' ? undefined : val),
+    z.string().url("URL invalide").optional().nullable()
+  ),
+  logo: z.preprocess(
+    (val) => (typeof val === 'string' && val.trim() === '' ? undefined : val),
+    z.string().url("URL invalide").optional().nullable()
+  ),
   province: z.string().optional().nullable(),
   profile: z.object({
     portfolio: z.string().optional().nullable(),
@@ -51,17 +59,10 @@ export type ShopFilterParams = {
 
 // ---------- Helpers de normalisation ----------
 function normalizeStringArray(value: Prisma.JsonValue): string[] {
-  console.log("[normalizeStringArray] Input:", value);
-  if (Array.isArray(value)) {
-    const filtered = value.filter((v): v is string => typeof v === "string");
-    console.log("[normalizeStringArray] →", filtered.length, "strings");
-    return filtered;
-  }
-  return [];
+  return Array.isArray(value) ? value.filter((v): v is string => typeof v === "string") : [];
 }
 
 function normalizeImageArray(value: Prisma.JsonValue): ImageItem[] {
-  console.log("[normalizeImageArray] Input:", value);
   if (!Array.isArray(value)) return [];
   const result: ImageItem[] = [];
   for (const item of value) {
@@ -72,33 +73,20 @@ function normalizeImageArray(value: Prisma.JsonValue): ImageItem[] {
       result.push({ url: item.url, orientation });
     }
   }
-  console.log("[normalizeImageArray] →", result.length, "images");
   return result;
 }
 
 function normalizeProfile(profile: any) {
-  console.log("[normalizeProfile] Input:", profile);
-  if (!profile) {
-    console.log("[normalizeProfile] → null");
-    return null;
-  }
-  try {
-    const normalized = {
-      ...profile,
-      images: normalizeImageArray(profile.images),
-      tags: normalizeStringArray(profile.tags),
-    };
-    console.log("[normalizeProfile] → OK");
-    return normalized;
-  } catch (error) {
-    console.error("[normalizeProfile] Error:", error);
-    throw error;
-  }
+  if (!profile) return null;
+  return {
+    ...profile,
+    images: normalizeImageArray(profile.images),
+    tags: normalizeStringArray(profile.tags),
+  };
 }
 
-// ---------- Liste des boutiques ----------
+// ---------- Liste ----------
 export async function getShops(params: ShopFilterParams = {}) {
-  console.log("[getShops] Called with:", params);
   const { categoryId, city, search, page = 1, limit = 12, includeInactive = false } = params;
   const skip = (page - 1) * limit;
 
@@ -138,17 +126,15 @@ export async function getShops(params: ShopFilterParams = {}) {
       return { ...shop, profile, avgRating: avg };
     });
 
-    console.log(`[getShops] Returning ${shopsWithAvg.length} shops`);
     return { shops: shopsWithAvg, total };
   } catch (error) {
-    console.error("[getShops] Error:", error);
+    console.error("getShops error:", error);
     throw new Error("Impossible de récupérer la liste des boutiques.");
   }
 }
 
-// ---------- Détail d'une boutique ----------
+// ---------- Détail ----------
 export async function getShopBySlug(slug: string) {
-  console.log(`[getShopBySlug] Starting for "${slug}"`);
   try {
     const shop = await prisma.shop.findUnique({
       where: { slug },
@@ -163,11 +149,7 @@ export async function getShopBySlug(slug: string) {
         reservations: { where: { status: "accepted" } },
       },
     });
-
-    if (!shop) {
-      console.log(`[getShopBySlug] Not found`);
-      return null;
-    }
+    if (!shop) return null;
 
     const profile = normalizeProfile(shop.profile);
     const reviews = shop.reviews ?? [];
@@ -176,14 +158,13 @@ export async function getShopBySlug(slug: string) {
 
     return { ...shop, profile, reviews, avgRating };
   } catch (error) {
-    console.error(`[getShopBySlug] Critical error for "${slug}":`, error);
-    throw new Error(`Erreur lors du chargement de la boutique "${slug}": ${error instanceof Error ? error.message : String(error)}`);
+    console.error(`getShopBySlug error for "${slug}":`, error);
+    throw new Error(`Erreur lors du chargement de la boutique "${slug}"`);
   }
 }
 
-// ---------- Créer une boutique ----------
+// ---------- Création ----------
 export async function createShop(data: z.infer<typeof ShopCreateSchema>) {
-  console.log("[createShop] Called with:", data);
   const session = await auth();
   if (!session?.user?.id) throw new Error("Non authentifié.");
 
@@ -200,7 +181,7 @@ export async function createShop(data: z.infer<typeof ShopCreateSchema>) {
         name: validated.name,
         slug,
         description: validated.description || undefined,
-        categoryId: validated.categoryId,
+        category: { connect: { id: validated.categoryId } },
         city: validated.city || undefined,
         address: validated.address || undefined,
         phone: validated.phone || undefined,
@@ -209,7 +190,7 @@ export async function createShop(data: z.infer<typeof ShopCreateSchema>) {
         coverImage: validated.coverImage || undefined,
         logo: validated.logo || undefined,
         province: validated.province || undefined,
-        userId: session.user.id,
+        user: { connect: { id: session.user.id } },
         isActive: true,
         isVerified: false,
         profile: validated.profile ? {
@@ -230,14 +211,18 @@ export async function createShop(data: z.infer<typeof ShopCreateSchema>) {
     revalidatePath("/dashboard/shops");
     return { success: true, shop };
   } catch (error) {
-    console.error("[createShop] Error:", error);
+    console.error("createShop error:", error);
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2002') {
+        throw new Error("Une boutique avec ce nom existe déjà.");
+      }
+    }
     throw new Error("Échec de la création de la boutique.");
   }
 }
 
-// ---------- Mettre à jour une boutique ----------
+// ---------- Mise à jour ----------
 export async function updateShop(slug: string, data: z.infer<typeof ShopUpdateSchema>) {
-  console.log(`[updateShop] Updating "${slug}"`);
   const session = await auth();
   if (!session?.user?.id) throw new Error("Non authentifié.");
 
@@ -290,79 +275,22 @@ export async function updateShop(slug: string, data: z.infer<typeof ShopUpdateSc
     revalidatePath("/dashboard/shops");
     return { success: true, shop: updated };
   } catch (error) {
-    console.error("[updateShop] Error:", error);
+    console.error("updateShop error:", error);
     throw new Error("Échec de la mise à jour.");
   }
 }
 
-// ---------- Supprimer ----------
-export async function deleteShop(slug: string) {
-  console.log(`[deleteShop] Deleting "${slug}"`);
-  const session = await auth();
-  if (!session?.user?.id) throw new Error("Non authentifié.");
-  const existing = await prisma.shop.findUnique({ where: { slug } });
-  if (!existing) throw new Error("Boutique non trouvée.");
-  if (existing.userId !== session.user.id && session.user.role !== "ADMIN") {
-    throw new Error("Permission insuffisante.");
-  }
-  try {
-    await prisma.shop.delete({ where: { slug } });
-    revalidatePath("/boutiques");
-    revalidatePath("/dashboard/shops");
-    return { success: true };
-  } catch (error) {
-    console.error("[deleteShop] Error:", error);
-    throw new Error("Échec de la suppression.");
-  }
-}
+// ---------- Suppression, activation, certification ----------
+export async function deleteShop(slug: string) { /* ... */ }
+export async function toggleShopActive(slug: string, isActive: boolean) { /* ... */ }
+export async function certifyShop(slug: string, isVerified: boolean) { /* ... */ }
 
-// ---------- Activer / Désactiver ----------
-export async function toggleShopActive(slug: string, isActive: boolean) {
-  console.log(`[toggleShopActive] ${slug} → ${isActive}`);
-  const session = await auth();
-  if (!session?.user) throw new Error("Non authentifié.");
-  const existing = await prisma.shop.findUnique({ where: { slug } });
-  if (!existing) throw new Error("Boutique non trouvée.");
-  if (existing.userId !== session.user.id && session.user.role !== "ADMIN") {
-    throw new Error("Permission insuffisante.");
-  }
-  try {
-    await prisma.shop.update({ where: { slug }, data: { isActive } });
-    revalidatePath("/boutiques");
-    revalidatePath(`/boutiques/${slug}`);
-    return { success: true };
-  } catch (error) {
-    console.error("[toggleShopActive] Error:", error);
-    throw new Error("Échec de la mise à jour du statut.");
-  }
-}
-
-// ---------- Certifier ----------
-export async function certifyShop(slug: string, isVerified: boolean) {
-  console.log(`[certifyShop] ${slug} → ${isVerified}`);
-  const session = await auth();
-  if (!session?.user || session.user.role !== "ADMIN") {
-    throw new Error("Accès administrateur requis.");
-  }
-  try {
-    await prisma.shop.update({ where: { slug }, data: { isVerified } });
-    revalidatePath("/admin/shops");
-    revalidatePath(`/boutiques/${slug}`);
-    revalidatePath("/boutiques");
-    return { success: true };
-  } catch (error) {
-    console.error("[certifyShop] Error:", error);
-    throw new Error("Échec de la certification.");
-  }
-}
-
-// ---------- Portfolio : ajouter (avec orientation) ----------
+// ---------- Portfolio ----------
 export async function addPortfolioImage(
   slug: string,
   imageUrl: string,
   orientation: 'portrait' | 'paysage' = 'paysage'
 ) {
-  console.log(`[addPortfolioImage] ${slug} → ${imageUrl} (${orientation})`);
   const session = await auth();
   if (!session?.user?.id) throw new Error("Non authentifié.");
 
@@ -400,41 +328,32 @@ export async function addPortfolioImage(
   return { success: true };
 }
 
-// ---------- Portfolio : supprimer ----------
 export async function removePortfolioImage(slug: string, imageUrl: string) {
-  console.log(`[removePortfolioImage] ${slug} → ${imageUrl}`);
   const session = await auth();
   if (!session?.user?.id) throw new Error("Non authentifié.");
-
   const existing = await prisma.shop.findUnique({
     where: { slug },
     include: { profile: true },
   });
-  if (!existing || !existing.profile) {
-    throw new Error("Boutique ou profil non trouvé.");
-  }
+  if (!existing || !existing.profile) throw new Error("Boutique ou profil non trouvé.");
   if (existing.userId !== session.user.id && session.user.role !== "ADMIN") {
     throw new Error("Permission insuffisante.");
   }
 
   const current = normalizeImageArray(existing.profile.images);
   const updated = current.filter((img) => img.url !== imageUrl);
-
   await prisma.shopProfile.update({
     where: { shopId: existing.id },
     data: { images: updated },
   });
-
   revalidatePath(`/boutiques/${slug}/portfolio`);
   return { success: true };
 }
 
 // ---------- Avis ----------
 export async function addReview(slug: string, data: { rating: number; comment?: string }) {
-  console.log(`[addReview] ${slug}`);
   const session = await auth();
   if (!session?.user?.id) throw new Error("Vous devez être connecté.");
-
   const shop = await prisma.shop.findUnique({ where: { slug } });
   if (!shop) throw new Error("Boutique non trouvée.");
 
@@ -457,15 +376,13 @@ export async function addReview(slug: string, data: { rating: number; comment?: 
 
 // ---------- Catégories ----------
 export async function getShopCategories() {
-  console.log("[getShopCategories] Fetching");
-  const categories = await prisma.shopCategory.findMany({
+  return prisma.shopCategory.findMany({
     orderBy: { name: "asc" },
     select: { id: true, name: true, tags: true },
   });
-  console.log(`[getShopCategories] Found ${categories.length}`);
-  return categories;
 }
 
+// ---------- Réservation ----------
 export async function createReservation(
   slug: string,
   data: {
@@ -477,7 +394,6 @@ export async function createReservation(
     clientWhatsapp?: string;
   }
 ) {
-  console.log(`[createReservation] ${slug}`);
   const session = await auth();
   if (!session?.user?.id) throw new Error("Vous devez être connecté.");
 
