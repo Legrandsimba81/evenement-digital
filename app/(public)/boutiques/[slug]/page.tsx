@@ -2,7 +2,7 @@
 import { getShopBySlug } from "@/actions/shop-actions";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { Calendar, MapPin, Phone, Globe, Star, ArrowLeft, BadgeCheck } from "lucide-react";
+import { Calendar, MapPin, Phone, Globe, Star, ArrowLeft, BadgeCheck, Tag } from "lucide-react";
 import ReviewForm from "@/components/shops/ReviewForm";
 
 
@@ -78,17 +78,17 @@ export default async function BoutiquePage({ params }: { params: Promise<{ slug:
                                     {shop.name.charAt(0).toUpperCase()}
                                 </div>
                             )}
-                            {shop.isVerified && (
+                            {/* {shop.isVerified && (
                                 <div className="absolute top-3 right-3 sm:top-4 sm:right-4 bg-blue-600 text-white rounded-full px-3 py-1 flex items-center gap-1.5 text-xs font-medium shadow-lg">
                                     <BadgeCheck size={14} className="stroke-white fill-blue-600" />
                                 </div>
-                            )}
+                            )} */}
                         </div>
 
                         <div className="p-4 sm:p-6 md:p-8">
                             {/* En-tête avec logo et nom */}
-                            <div className="flex items-center gap-4">
-                                <div className="w-10 h-10 sm:w-24 sm:h-24 rounded-full bg-white dark:bg-gray-800 flex-shrink-0 overflow-hidden">
+                            <div className="flex items-center gap-2 sm:gap-4">
+                                <div className="w-12 h-12 sm:w-20 sm:h-20 rounded-full bg-white dark:bg-gray-800 flex-shrink-0 overflow-hidden">
                                     {shop.logo ? (
                                         <img src={shop.logo} alt={shop.name} className="w-full h-full object-cover" />
                                     ) : (
@@ -103,26 +103,28 @@ export default async function BoutiquePage({ params }: { params: Promise<{ slug:
                                             {shop.name}
                                         </h1>
                                         {shop.isVerified && (
-                                            <span className="inline-flex items-center gap-1 bg-blue-600 text-white rounded-full px-2.5 py-1 text-xs font-medium shadow-sm flex-shrink-0">
-                                                <BadgeCheck size={14} className="stroke-white fill-blue-600" />
-                                            </span>
+                                            <BadgeCheck size={16} className="stroke-white fill-blue-600 flex-shrink-0" />
                                         )}
                                     </div>
                                     <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-1 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                                        <span className="bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 py-0.5 rounded-full">
-                                            {shop.category?.name || "Catégorie"}
+                                        <span className="flex items-center gap-1 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 px-2 py-0.5 rounded-full">
+                                            <Tag size={14} className="flex-shrink-0" />
+                                            <span>{shop.category?.name || "Catégorie"}</span>
                                         </span>
+
                                         <span className="flex items-center gap-1">
-                                            <Star size={14} className="text-yellow-500 fill-yellow-500" />
+                                            <Star size={14} className="text-yellow-500 fill-yellow-500 flex-shrink-0" />
                                             <span className="font-medium text-gray-700 dark:text-gray-300">{avgRating}</span>
                                             <span>({reviews.length} avis)</span>
                                         </span>
+
                                         {shop.city && (
                                             <span className="flex items-center gap-1">
-                                                <MapPin size={14} /> {shop.city}
+                                                <MapPin size={14} className="flex-shrink-0" /> {shop.city}
                                             </span>
                                         )}
                                     </div>
+
                                 </div>
                             </div>
 
@@ -138,18 +140,24 @@ export default async function BoutiquePage({ params }: { params: Promise<{ slug:
                                         </div>
                                     )}
 
+                                    // Dans la section Portfolio, remplacer le rendu des images par ceci :
+
                                     {profileImages.length > 0 && (
                                         <div>
                                             <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Portfolio</h2>
                                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
-                                                {profileImages.slice(0, 6).map((url: string, idx: number) => (
-                                                    <div
-                                                        key={idx}
-                                                        className="aspect-square rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 hover:scale-[1.02] transition duration-200"
-                                                    >
-                                                        <img src={url} alt={`Portfolio ${idx + 1}`} className="w-full h-full object-cover" />
-                                                    </div>
-                                                ))}
+                                                {profileImages.slice(0, 6).map((img: any, idx: number) => {
+                                                    const isPortrait = img.orientation === 'portrait';
+                                                    return (
+                                                        <div
+                                                            key={idx}
+                                                            className={`overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 hover:scale-[1.02] transition duration-200 ${isPortrait ? 'aspect-[3/4]' : 'aspect-[4/3]'
+                                                                }`}
+                                                        >
+                                                            <img src={img.url} alt={`Portfolio ${idx + 1}`} className="w-full h-full object-cover" />
+                                                        </div>
+                                                    );
+                                                })}
                                                 {profileImages.length > 6 && (
                                                     <Link
                                                         href={`/boutiques/${shop.slug}/portfolio`}

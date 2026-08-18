@@ -2,7 +2,7 @@
 import { prisma } from "@/lib/prisma";
 import { getShops } from "@/actions/shop-actions";
 import Link from "next/link";
-import { MapPin, Star, Store, BadgeCheck } from "lucide-react";
+import { MapPin, Star, Store, BadgeCheck, Tag } from "lucide-react";
 import ShopFilters from "@/components/shops/ShopFilters";
 
 export const dynamic = "force-dynamic";
@@ -79,7 +79,7 @@ export default async function BoutiquesPage({
                                         )}
                                         <div className="p-4">
                                             <div className="flex items-center gap-1">
-                                                <div className="w-10 h-10 sm:w-24 sm:h-24 rounded-full bg-white dark:bg-gray-800 flex-shrink-0 overflow-hidden">
+                                                <div className="w-10 h-10 rounded-full bg-white dark:bg-gray-800 flex-shrink-0 overflow-hidden">
                                                     {shop.logo ? (
                                                         <img src={shop.logo} alt={shop.name} className="w-full h-full object-cover" />
                                                     ) : (
@@ -88,23 +88,27 @@ export default async function BoutiquesPage({
                                                         </div>
                                                     )}
                                                 </div>
-                                                <h2 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-primary-500 transition">
-                                                    {shop.name}
-                                                </h2>
-                                                {shop.isVerified && (
-                                                    <BadgeCheck size={14} className="stroke-white fill-blue-600" />
-                                                )}
+                                                <div className="flex items-center gap-1.5 min-w-0">
+                                                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-primary-500 transition truncate">
+                                                        {shop.name}
+                                                    </h2>
+                                                    {shop.isVerified && (
+                                                        <BadgeCheck size={15} className="stroke-white fill-blue-600 flex-shrink-0" />
+                                                    )}
+                                                </div>
                                             </div>
                                             <div className="mt-2 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                                                <span className="py-0.5 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-full">
-                                                    {shop.category?.name || "Catégorie"}
+                                                <span className="flex items-center gap-1 py-0.5 px-2 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-full">
+                                                    <Tag size={14} className="flex-shrink-0" />
+                                                    <span>{shop.category?.name || "Catégorie"}</span>
                                                 </span>
                                                 {shop.city && (
                                                     <span className="flex items-center gap-1">
-                                                        <MapPin size={14} /> {shop.city}
+                                                        <MapPin size={14} className="flex-shrink-0" /> {shop.city}
                                                     </span>
                                                 )}
                                             </div>
+
                                             <div className="mt-3 flex items-center justify-between">
                                                 <span className="text-sm text-gray-600 dark:text-gray-300">
                                                     {shop.profile?.priceRange || "Prix sur demande"}

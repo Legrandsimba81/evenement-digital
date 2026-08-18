@@ -8,22 +8,19 @@ import PortfolioManager from "@/components/shops/PortfolioManager";
 
 export const dynamic = "force-dynamic";
 
-export default async function DashboardPortfolioPage({ 
-  params 
-}: { 
-  params: Promise<{ slug: string }> 
+export default async function DashboardPortfolioPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
 }) {
   try {
-    // ✅ Résoudre la promesse des paramètres
     const { slug } = await params;
-    
     const session = await auth();
     if (!session?.user) redirect("/login");
 
     const shop = await getShopBySlug(slug);
     if (!shop) return notFound();
 
-    // Vérification des droits
     if (shop.userId !== session.user.id && session.user.role !== "ADMIN") {
       return (
         <div className="p-6 text-center">
@@ -32,12 +29,8 @@ export default async function DashboardPortfolioPage({
       );
     }
 
-    // Normalisation des images
-    const profileImages = Array.isArray(shop.profile?.images)
-      ? (shop.profile.images as any[]).filter(
-          (img: any): img is string => typeof img === "string"
-        )
-      : [];
+    // Les images sont déjà normalisées par getShopBySlug
+    const images = shop.profile?.images || [];
 
     return (
       <div className="max-w-5xl mx-auto p-6">
@@ -52,7 +45,7 @@ export default async function DashboardPortfolioPage({
             <ArrowLeft size={16} /> Retour
           </Link>
         </div>
-        <PortfolioManager shopSlug={shop.slug} initialImages={profileImages} />
+        <PortfolioManager shopSlug={shop.slug} initialImages={images} />
       </div>
     );
   } catch (error) {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Check, X } from "lucide-react";
 
 export default function CertifyToggle({
@@ -10,6 +11,7 @@ export default function CertifyToggle({
   shopSlug: string;
   isVerified: boolean;
 }) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   const toggleCertify = async () => {
@@ -20,10 +22,10 @@ export default function CertifyToggle({
       body: JSON.stringify({ certified: newStatus }),
     });
     if (res.ok) {
-      // Rafraîchir la page (router.refresh())
-      window.location.reload();
+      startTransition(() => router.refresh());
     } else {
-      alert("Erreur lors de la mise à jour de la certification.");
+      const data = await res.json().catch(() => ({}));
+      alert(data.error || "Erreur lors de la mise à jour de la certification.");
     }
   };
 

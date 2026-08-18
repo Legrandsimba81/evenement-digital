@@ -1,10 +1,11 @@
+// app/api/admin/shops/[slug]/certify/route.ts
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> } // ✅ ajouter Promise
 ) {
   try {
     const session = await auth();
@@ -17,8 +18,11 @@ export async function PATCH(
       return NextResponse.json({ error: "Le champ 'certified' doit être un booléen" }, { status: 400 });
     }
 
+    // ✅ Résoudre la promesse params
+    const { slug } = await params;
+
     const shop = await prisma.shop.update({
-      where: { slug: params.slug },
+      where: { slug },
       data: { isVerified: certified },
       select: { id: true, name: true, isVerified: true },
     });

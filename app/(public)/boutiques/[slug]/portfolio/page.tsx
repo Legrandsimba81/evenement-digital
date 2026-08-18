@@ -2,7 +2,7 @@
 import { getShopBySlug } from "@/actions/shop-actions";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Images, X } from "lucide-react";
+import { ArrowLeft, Images } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -60,18 +60,23 @@ export default async function PortfolioPage({ params }: { params: Promise<{ slug
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                {images.map((url: string, index: number) => (
-                  <div
-                    key={index}
-                    className="group relative aspect-square rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 hover:shadow-lg transition"
-                  >
-                    <img
-                      src={url}
-                      alt={`${shop.name} - ${index + 1}`}
-                      className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
-                    />
-                  </div>
-                ))}
+                {images.map((img: any, index: number) => {
+                  const isPortrait = img.orientation === 'portrait';
+                  return (
+                    <div
+                      key={index}
+                      className={`group rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 hover:shadow-lg transition ${
+                        isPortrait ? 'aspect-[3/4]' : 'aspect-[4/3]'
+                      }`}
+                    >
+                      <img
+                        src={img.url}
+                        alt={`${shop.name} - ${index + 1}`}
+                        className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                      />
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>

@@ -92,8 +92,8 @@ export default async function DashboardShopsPage() {
 
               {/* Logo & infos */}
               <div className="p-5">
-                <div className="flex items-start gap-4 -mt-10">
-                  <div className="w-16 h-16 rounded-xl bg-white dark:bg-gray-800 shadow-md border border-gray-200 dark:border-gray-700 flex items-center justify-center overflow-hidden flex-shrink-0">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="w-16 h-16 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center overflow-hidden flex-shrink-0">
                     {shop.logo ? (
                       <img src={shop.logo} alt={shop.name} className="w-full h-full object-cover" />
                     ) : (
