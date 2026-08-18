@@ -21,9 +21,17 @@ export default async function DashboardShopsPage() {
 
   // Calcul de la note moyenne pour chaque boutique
   const shopsWithRating = shops.map((shop) => {
-    const totalRating = shop.reviews.reduce((sum, r) => sum + (r.rating || 0), 0);
-    const avgRating = shop.reviews.length > 0 ? (totalRating / shop.reviews.length).toFixed(1) : "N/A";
-    return { ...shop, avgRating };
+    // Sécurisation des reviews
+    const reviews = shop.reviews ?? [];
+    const totalRating = reviews.reduce((sum, r) => sum + (r.rating || 0), 0);
+    const avgRating = reviews.length > 0 ? (totalRating / reviews.length).toFixed(1) : "N/A";
+    
+    // Sécurisation des images du profil
+    const profileImages = Array.isArray(shop.profile?.images) 
+      ? (shop.profile.images as any[]).filter((img: any): img is string => typeof img === "string")
+      : [];
+    
+    return { ...shop, avgRating, profileImages };
   });
 
   return (
@@ -112,10 +120,10 @@ export default async function DashboardShopsPage() {
                     <Star size={16} className="text-yellow-500" />
                     <span>{shop.avgRating} ({shop.reviews.length} avis)</span>
                   </div>
-                  {shop.profile?.images && (shop.profile.images as string[]).length > 0 && (
+                  {shop.profileImages.length > 0 && (
                     <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
                       <Images size={16} className="text-gray-400" />
-                      <span>{(shop.profile.images as string[]).length} photos</span>
+                      <span>{shop.profileImages.length} photos</span>
                     </div>
                   )}
                 </div>
