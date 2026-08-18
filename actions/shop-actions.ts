@@ -6,6 +6,8 @@ import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
+// actions/shop-actions.ts (extrait modifié)
+import { sendReservationEmail } from "@/lib/mail-reservation";
 
 // ---------- Types ----------
 type ImageItem = { url: string; orientation: 'portrait' | 'paysage' };
@@ -427,31 +429,6 @@ export async function removePortfolioImage(slug: string, imageUrl: string) {
   return { success: true };
 }
 
-// ---------- Réservation ----------
-export async function createReservation(slug: string, data: { date: string; message?: string }) {
-  console.log(`[createReservation] ${slug}`);
-  const session = await auth();
-  if (!session?.user?.id) throw new Error("Non authentifié.");
-  const shop = await prisma.shop.findUnique({ where: { slug } });
-  if (!shop) throw new Error("Boutique non trouvée.");
-  try {
-    const reservation = await prisma.reservation.create({
-      data: {
-        shopId: shop.id,
-        userId: session.user.id,
-        date: new Date(data.date),
-        message: data.message,
-        status: "pending",
-      },
-    });
-    revalidatePath(`/boutiques/${slug}`);
-    return { success: true, reservation };
-  } catch (error) {
-    console.error("[createReservation] Error:", error);
-    throw new Error("Échec de la réservation.");
-  }
-}
-
 // ---------- Avis ----------
 export async function addReview(slug: string, data: { rating: number; comment?: string }) {
   console.log(`[addReview] ${slug}`);
@@ -487,4 +464,60 @@ export async function getShopCategories() {
   });
   console.log(`[getShopCategories] Found ${categories.length}`);
   return categories;
+}
+
+export async function createReservation(
+  slug: string,
+  data: {
+    date: string;
+    message?: string;
+    clientName: string;
+    clientEmail: string;
+    clientPhone?: string;
+    clientWhatsapp?: string;
+  }
+) {
+  console.log(`[createReservation] ${slug}`);
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("Vous devez être connecté.");
+
+  const shop = await prisma.shop.findUnique({
+    where: { slug },
+    include: { user: true },
+  });
+  if (!shop) throw new Error("Boutique non trouvée.");
+
+  const reservation = await prisma.reservation.create({
+    data: {
+      shopId: shop.id,
+      userId: session.user.id,
+      clientName: data.clientName,
+      clientEmail: data.clientEmail,
+      clientPhone: data.clientPhone,
+      clientWhatsapp: data.clientWhatsapp,
+      date: new Date(data.date),
+      message: data.message,
+      status: "pending",
+    },
+    include: { user: true, shop: { include: { user: true } } },
+  });
+
+  // Envoyer un email au propriétaire
+  if (shop.user?.email) {
+    await sendReservationEmail({
+      to: shop.user.email,
+      shopName: shop.name,
+      clientName: data.clientName,
+      clientEmail: data.clientEmail,
+      clientPhone: data.clientPhone || "Non renseigné",
+      clientWhatsapp: data.clientWhatsapp || "Non renseigné",
+      date: data.date,
+      message: data.message || "Aucun message",
+      reservationId: reservation.id,
+    });
+  }
+
+  revalidatePath(`/boutiques/${slug}`);
+  revalidatePath(`/dashboard/shops/${slug}/reservations`);
+  return { success: true, reservation };
 }

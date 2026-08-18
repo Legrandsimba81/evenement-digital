@@ -103,7 +103,7 @@ export default async function BoutiquePage({ params }: { params: Promise<{ slug:
                                             {shop.name}
                                         </h1>
                                         {shop.isVerified && (
-                                            <BadgeCheck size={16} className="stroke-white fill-blue-600 flex-shrink-0" />
+                                            <BadgeCheck size={18} className="stroke-white fill-blue-600 flex-shrink-0" />
                                         )}
                                     </div>
                                     <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-1 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
@@ -139,8 +139,6 @@ export default async function BoutiquePage({ params }: { params: Promise<{ slug:
                                             </p>
                                         </div>
                                     )}
-
-                                    // Dans la section Portfolio, remplacer le rendu des images par ceci :
 
                                     {profileImages.length > 0 && (
                                         <div>

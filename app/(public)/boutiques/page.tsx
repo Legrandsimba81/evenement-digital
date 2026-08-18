@@ -93,7 +93,7 @@ export default async function BoutiquesPage({
                                                         {shop.name}
                                                     </h2>
                                                     {shop.isVerified && (
-                                                        <BadgeCheck size={15} className="stroke-white fill-blue-600 flex-shrink-0" />
+                                                        <BadgeCheck size={18} className="stroke-white fill-blue-600 flex-shrink-0" />
                                                     )}
                                                 </div>
                                             </div>

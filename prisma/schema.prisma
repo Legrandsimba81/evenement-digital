@@ -332,17 +332,21 @@ model ShopProfile {
 }
 
 model Reservation {
-  id        String   @id @default(cuid())
-  shopId    String
-  userId    String
-  date      DateTime
-  message   String?
-  status    String   @default("pending")
-  metadata  Json?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  shop      Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id              String   @id @default(cuid())
+  shopId          String
+  userId          String
+  clientName      String?  // Nom du client
+  clientEmail     String?  // Email du client
+  clientPhone     String?  // Téléphone
+  clientWhatsapp  String?  // WhatsApp
+  date            DateTime
+  message         String?
+  status          String   @default("pending") // pending, accepted, rejected
+  metadata        Json?    // pour stocker des infos supplémentaires si besoin
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  shop            Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([shopId])
   @@index([userId])
