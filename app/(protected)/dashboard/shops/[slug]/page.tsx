@@ -1,10 +1,14 @@
-import { getShop } from "@/actions/shop-actions";
+// app/(public)/boutiques/[slug]/page.tsx
+import { getShopBySlug } from "@/actions/shop-actions";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { Calendar, MapPin, Phone, Globe, Star, User, ArrowLeft } from "lucide-react";
+import { Calendar, MapPin, Phone, Globe, Star, ArrowLeft, BadgeCheck } from "lucide-react";
+import type { Review } from "@prisma/client"; // ou définir un type local
+
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: { slug: string } }) {
-  const shop = await getShop(params.slug);
+  const shop = await getShopBySlug(params.slug);
   if (!shop) return { title: "Boutique introuvable" };
   return {
     title: shop.name,
@@ -18,12 +22,15 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 }
 
 export default async function BoutiquePage({ params }: { params: { slug: string } }) {
-  const shop = await getShop(params.slug);
+  const shop = await getShopBySlug(params.slug);
   if (!shop) return notFound();
 
-  const avgRating = shop.reviews.length
-    ? (shop.reviews.reduce((sum, r) => sum + r.rating, 0) / shop.reviews.length).toFixed(1)
-    : "N/A";
+  const avgRating = shop.avgRating !== null ? shop.avgRating.toFixed(1) : "N/A";
+  const reviews = shop.reviews || [];
+  const tags = Array.isArray(shop.profile?.tags) ? shop.profile.tags : [];
+  const profileImages = Array.isArray(shop.profile?.images)
+    ? shop.profile.images.filter((img): img is string => typeof img === "string")
+    : [];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-950 dark:to-gray-900 py-12 px-4">
@@ -41,14 +48,19 @@ export default async function BoutiquePage({ params }: { params: { slug: string 
               </div>
             )}
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{shop.name}</h1>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                {shop.name}
+                {shop.isVerified && (
+                  <BadgeCheck className="w-6 h-6 text-blue-500 fill-blue-500" />
+                )}
+              </h1>
               <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500 dark:text-gray-400 mt-1">
                 <span className="bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 px-2 py-1 rounded-full">
                   {shop.category?.name}
                 </span>
                 <span className="flex items-center gap-1">
                   <Star size={16} className="text-yellow-500" />
-                  {avgRating} ({shop.reviews.length} avis)
+                  {avgRating} ({reviews.length} avis)
                 </span>
               </div>
             </div>
@@ -80,11 +92,11 @@ export default async function BoutiquePage({ params }: { params: { slug: string 
                   <p className="text-gray-600 dark:text-gray-300">{shop.profile.experience}</p>
                 </div>
               )}
-              {shop.profile?.tags && shop.profile.tags.length > 0 && (
+              {tags.length > 0 && (
                 <div>
                   <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Mots-clés</h3>
                   <div className="flex flex-wrap gap-2 mt-1">
-                    {shop.profile.tags.map((tag) => (
+                    {tags.map((tag: string) => (
                       <span key={tag} className="bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full text-xs text-gray-600 dark:text-gray-300">#{tag}</span>
                     ))}
                   </div>
@@ -116,7 +128,7 @@ export default async function BoutiquePage({ params }: { params: { slug: string 
               )}
               {shop.website && (
                 <p className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
-                  <Globe size={18} /> <a href={shop.website} target="_blank" className="text-blue-600 hover:underline">{shop.website}</a>
+                  <Globe size={18} /> <a href={shop.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{shop.website}</a>
                 </p>
               )}
             </div>
@@ -129,7 +141,7 @@ export default async function BoutiquePage({ params }: { params: { slug: string 
             >
               <Calendar size={20} /> Réserver maintenant
             </Link>
-            {shop.profile?.images && (shop.profile.images as string[]).length > 0 && (
+            {profileImages.length > 0 && (
               <Link
                 href={`/boutiques/${shop.slug}/portfolio`}
                 className="inline-flex items-center gap-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white px-6 py-3 rounded-xl font-medium transition"
@@ -139,16 +151,15 @@ export default async function BoutiquePage({ params }: { params: { slug: string 
             )}
           </div>
 
-          {/* Avis */}
           <div className="mt-8 border-t border-gray-200 dark:border-gray-700 pt-6">
             <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
-              Avis ({shop.reviews.length})
+              Avis ({reviews.length})
             </h3>
-            {shop.reviews.length === 0 ? (
+            {reviews.length === 0 ? (
               <p className="text-gray-500 dark:text-gray-400 mt-2">Aucun avis pour le moment.</p>
             ) : (
               <div className="mt-4 space-y-4">
-                {shop.reviews.map((review) => (
+                {reviews.map((review: any) => ( // on peut typer avec Review mais attention à l'inclusion de user
                   <div key={review.id} className="border-b border-gray-100 dark:border-gray-700 pb-4">
                     <div className="flex items-center gap-2">
                       <span className="font-medium text-gray-800 dark:text-white">{review.user?.name || "Anonyme"}</span>

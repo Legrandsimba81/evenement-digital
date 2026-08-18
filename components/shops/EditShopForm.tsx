@@ -2,11 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { createShop } from "@/actions/shop-actions";
+import { updateShop } from "@/actions/shop-actions";
 import { Loader2, ArrowLeft, AlertCircle } from "lucide-react";
 import ImageUpload from "@/components/ui/ImageUpload";
 
-// Provinces et villes de la RDC (conservés pour l'affichage)
 const PROVINCES = [
   "Kinshasa",
   "Kongo Central",
@@ -52,7 +51,7 @@ const CITIES_BY_PROVINCE: Record<string, string[]> = {
   "Bas-Uele": ["Buta", "Aketi"],
   Tshopo: ["Kisangani", "Yangambi"],
   "Nord-Ubangi": ["Gbadolite", "Zongo"],
-  "Sud-Ubangi": ["Gemena", "Kinshasa? non"],
+  "Sud-Ubangi": ["Gemena"],
   Mongala: ["Lisala", "Bumba"],
   Tshuapa: ["Boende", "Ikela"],
   Équateur: ["Mbandaka", "Bikoro"],
@@ -72,53 +71,40 @@ const AVAILABILITY_OPTIONS = [
   "Personnalisé",
 ];
 
-export default function NewShopPage() {
+export default function EditShopForm({
+  shop,
+  categories,
+}: {
+  shop: any;
+  categories: { id: string; name: string; tags?: string[] }[];
+}) {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
-  const [categories, setCategories] = useState<{ id: string; name: string; tags?: string[] }[]>([]);
-  const [loadingCategories, setLoadingCategories] = useState(true);
 
   const [form, setForm] = useState({
-    name: "",
-    description: "",
-    categoryId: "",
-    province: "",
-    city: "",
-    address: "",
-    phone: "",
-    website: "",
-    portfolio: "",
-    priceRange: "",
-    availability: "",
+    name: shop.name || "",
+    description: shop.description || "",
+    categoryId: shop.categoryId || "",
+    province: shop.province || "",
+    city: shop.city || "",
+    address: shop.address || "",
+    phone: shop.phone || "",
+    website: shop.website || "",
+    portfolio: shop.profile?.portfolio || "",
+    priceRange: shop.profile?.priceRange || "",
+    availability: shop.profile?.availability || "",
     availabilityCustom: "",
-    experience: "",
-    selectedTags: [] as string[],
-    logo: "",
-    coverImage: "",
+    experience: shop.profile?.experience || "",
+    selectedTags: Array.isArray(shop.profile?.tags) ? shop.profile.tags : [],
+    logo: shop.logo || "",
+    coverImage: shop.coverImage || "",
   });
 
   const [availableTags, setAvailableTags] = useState<string[]>([]);
 
-  // Chargement des catégories
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const res = await fetch("/api/shop-categories");
-        if (!res.ok) throw new Error("Erreur chargement catégories");
-        const data = await res.json();
-        setCategories(data);
-      } catch {
-        setCategories([]);
-      } finally {
-        setLoadingCategories(false);
-      }
-    };
-    fetchCategories();
-  }, []);
-
-  // Mise à jour des tags selon la catégorie
+  // ✅ Utilisation de useEffect pour mettre à jour les tags quand la catégorie change
   useEffect(() => {
     const cat = categories.find((c) => c.id === form.categoryId);
     if (cat && cat.tags) {
@@ -126,7 +112,8 @@ export default function NewShopPage() {
     } else {
       setAvailableTags([]);
     }
-    setForm((prev) => ({ ...prev, selectedTags: [] }));
+    // On réinitialise les tags sélectionnés si la catégorie change ?
+    // Optionnel, on peut garder ou vider. On laisse comme avant : on ne vide pas automatiquement.
   }, [form.categoryId, categories]);
 
   const handleChange = (
@@ -144,7 +131,7 @@ export default function NewShopPage() {
     setForm((prev) => ({
       ...prev,
       selectedTags: prev.selectedTags.includes(tag)
-        ? prev.selectedTags.filter((t) => t !== tag)
+        ? prev.selectedTags.filter((t: string) => t !== tag) // ✅ typage explicite de t
         : [...prev.selectedTags, tag],
     }));
   };
@@ -189,22 +176,23 @@ export default function NewShopPage() {
       return;
     }
 
-    setLoading(true);
+    setSaving(true);
     try {
       let availabilityValue = form.availability;
       if (form.availability === "Personnalisé" && form.availabilityCustom) {
         availabilityValue = form.availabilityCustom;
       }
 
-      // ✅ Appel corrigé : on passe ce que le schéma attend
-      await createShop({
+      // ✅ On retire 'province' de l'objet passé à updateShop
+      await updateShop(shop.slug, {
         name: form.name.trim(),
         description: form.description.trim(),
         categoryId: form.categoryId,
-        city: form.city,
         address: form.address.trim(),
+        city: form.city,
+        // province: form.province, // ❌ RETIRÉ
         phone: form.phone.trim(),
-        whatsapp: form.phone.trim(), // utilisé comme WhatsApp
+        whatsapp: form.phone.trim(),
         website: form.website.trim() || undefined,
         coverImage: form.coverImage || undefined,
         logo: form.logo || undefined,
@@ -214,22 +202,15 @@ export default function NewShopPage() {
           availability: availabilityValue || undefined,
           experience: form.experience.trim() || undefined,
           tags: form.selectedTags,
-          images: [], // initialement vide
+          images: shop.profile?.images || [],
         },
       });
-      setSuccessMessage("✅ Boutique créée avec succès ! Redirection...");
+      setSuccessMessage("✅ Boutique mise à jour avec succès ! Redirection...");
       setTimeout(() => router.push("/dashboard/shops"), 1500);
     } catch (err: any) {
-      if (err.message && err.message.includes("Une boutique avec ce nom existe déjà")) {
-        setError(
-          "❌ Une boutique avec ce nom existe déjà. Si vous pensez qu'il s'agit d'une erreur, " +
-          "contactez-nous sur WhatsApp au +243 992 598 826 ou par email à support@octavia-event.com."
-        );
-      } else {
-        setError(err.message || "Une erreur est survenue lors de la création.");
-      }
+      setError(err.message || "Une erreur est survenue lors de la mise à jour.");
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
@@ -243,7 +224,7 @@ export default function NewShopPage() {
       >
         <ArrowLeft size={18} /> Retour
       </button>
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Créer une boutique / prestataire</h1>
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Modifier la boutique</h1>
 
       {error && (
         <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl flex items-start gap-3 text-red-700 dark:text-red-300">
@@ -268,11 +249,9 @@ export default function NewShopPage() {
               name="name"
               value={form.name}
               onChange={handleChange}
-              placeholder="Ex: Salon de mariage Élégance"
               className="mt-1 w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
               required
             />
-            <p className="mt-1 text-xs text-gray-400">Le nom doit être unique.</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Catégorie *</label>
@@ -288,7 +267,6 @@ export default function NewShopPage() {
                 <option key={cat.id} value={cat.id}>{cat.name}</option>
               ))}
             </select>
-            {loadingCategories && <p className="text-xs text-gray-400 mt-1">Chargement des catégories...</p>}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
@@ -297,7 +275,6 @@ export default function NewShopPage() {
               value={form.description}
               onChange={handleChange}
               rows={3}
-              placeholder="Présentez votre activité, vos spécialités..."
               className="mt-1 w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -345,7 +322,6 @@ export default function NewShopPage() {
               name="address"
               value={form.address}
               onChange={handleChange}
-              placeholder="Ex: Avenue de la Révolution, N° 12"
               className="mt-1 w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
               required
             />
@@ -365,7 +341,7 @@ export default function NewShopPage() {
               className="mt-1 w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
               required
             />
-            <p className="mt-1 text-xs text-gray-400">10 chiffres, commençant par 0 (ex: 0827733286).</p>
+            <p className="mt-1 text-xs text-gray-400">10 chiffres, commençant par 0</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Site web (optionnel)</label>
@@ -382,38 +358,28 @@ export default function NewShopPage() {
         {/* Images */}
         <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-6 space-y-4">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Images</h2>
-          <ImageUpload
-            value={form.logo}
-            onChange={handleImageChange("logo")}
-            label="Logo (carré, 1:1)"
-          />
-          <ImageUpload
-            value={form.coverImage}
-            onChange={handleImageChange("coverImage")}
-            label="Image de couverture (paysage, 16:9)"
-          />
+          <ImageUpload value={form.logo} onChange={handleImageChange("logo")} label="Logo (carré, 1:1)" />
+          <ImageUpload value={form.coverImage} onChange={handleImageChange("coverImage")} label="Image de couverture (paysage, 16:9)" />
         </div>
 
         {/* Profil professionnel */}
         <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-6 space-y-4">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Profil professionnel</h2>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Portfolio (URL ou description)</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Portfolio</label>
             <input
               name="portfolio"
               value={form.portfolio}
               onChange={handleChange}
-              placeholder="Ex: https://monportfolio.com ou '10 ans d'expérience dans les mariages'"
               className="mt-1 w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Fourchette de prix (optionnel)</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Fourchette de prix</label>
             <input
               name="priceRange"
               value={form.priceRange}
               onChange={handleChange}
-              placeholder="Ex: 50-150$"
               className="mt-1 w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -446,35 +412,27 @@ export default function NewShopPage() {
               name="experience"
               value={form.experience}
               onChange={handleChange}
-              placeholder="Ex: 5 ans d'expérience"
               className="mt-1 w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Tags (selon votre catégorie)</label>
-            {loadingCategories ? (
-              <p className="text-gray-400">Chargement des catégories...</p>
-            ) : availableTags.length === 0 ? (
-              <p className="text-gray-400">Aucun tag disponible pour cette catégorie.</p>
-            ) : (
-              <div className="mt-2 flex flex-wrap gap-2">
-                {availableTags.map((tag) => (
-                  <button
-                    key={tag}
-                    type="button"
-                    onClick={() => handleTagToggle(tag)}
-                    className={`px-3 py-1 rounded-full text-sm font-medium transition ${
-                      form.selectedTags.includes(tag)
-                        ? "bg-blue-600 text-white"
-                        : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
-                    }`}
-                  >
-                    {tag}
-                  </button>
-                ))}
-              </div>
-            )}
-            <p className="mt-1 text-xs text-gray-400">Sélectionnez les tags qui décrivent le mieux votre service.</p>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Tags</label>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {availableTags.map((tag) => (
+                <button
+                  key={tag}
+                  type="button"
+                  onClick={() => handleTagToggle(tag)}
+                  className={`px-3 py-1 rounded-full text-sm font-medium transition ${
+                    form.selectedTags.includes(tag)
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
+                  }`}
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -482,11 +440,11 @@ export default function NewShopPage() {
         <div className="flex flex-col sm:flex-row gap-4">
           <button
             type="submit"
-            disabled={loading}
+            disabled={saving}
             className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl transition disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            {loading && <Loader2 size={18} className="animate-spin" />}
-            {loading ? "Création en cours..." : "Créer la boutique"}
+            {saving && <Loader2 size={18} className="animate-spin" />}
+            {saving ? "Enregistrement..." : "Mettre à jour"}
           </button>
           <button
             type="button"
