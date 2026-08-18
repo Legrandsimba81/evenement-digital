@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createShop } from "@/actions/shop-actions";
-import { Loader2, ArrowLeft, AlertCircle } from "lucide-react";
+import { Loader2, ArrowLeft, AlertCircle, CheckCircle } from "lucide-react";
 import ImageUpload from "@/components/ui/ImageUpload";
 
 // Provinces et villes de la RDC
@@ -79,6 +79,7 @@ export default function NewShopPage() {
     coverImage: "",
   });
 
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [availableTags, setAvailableTags] = useState<string[]>([]);
 
   useEffect(() => {
@@ -115,6 +116,8 @@ export default function NewShopPage() {
     if (name === "availability" && value !== "Personnalisé") {
       setForm((prev) => ({ ...prev, availabilityCustom: "" }));
     }
+    // Effacer l'erreur du champ lorsqu'il est modifié
+    setFieldErrors((prev) => ({ ...prev, [name]: "" }));
     if (error) setError("");
   };
 
@@ -129,41 +132,39 @@ export default function NewShopPage() {
 
   const handleImageChange = (field: string) => (url: string) => {
     setForm((prev) => ({ ...prev, [field]: url }));
+    setFieldErrors((prev) => ({ ...prev, [field]: "" }));
   };
 
   const validatePhone = (phone: string) => /^0\d{9}$/.test(phone);
+
+  // Validation côté client avant soumission
+  const validateForm = (): boolean => {
+    const errors: Record<string, string> = {};
+    if (!form.name.trim()) errors.name = "Le nom de la boutique est obligatoire.";
+    if (!form.categoryId) errors.categoryId = "Veuillez sélectionner une catégorie.";
+    if (!form.province) errors.province = "Veuillez sélectionner une province.";
+    if (!form.city) errors.city = "Veuillez sélectionner une ville.";
+    if (!form.address.trim()) errors.address = "L'adresse détaillée est obligatoire.";
+    if (!form.phone.trim()) errors.phone = "Le numéro de téléphone est obligatoire.";
+    if (!validatePhone(form.phone)) errors.phone = "Le numéro doit contenir 10 chiffres et commencer par 0 (ex: 0827733286).";
+    
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setSuccessMessage("");
 
-    if (!form.name.trim()) {
-      setError("Le nom de la boutique est obligatoire.");
-      return;
-    }
-    if (!form.categoryId) {
-      setError("Veuillez sélectionner une catégorie.");
-      return;
-    }
-    if (!form.province) {
-      setError("Veuillez sélectionner une province.");
-      return;
-    }
-    if (!form.city) {
-      setError("Veuillez sélectionner une ville.");
-      return;
-    }
-    if (!form.address.trim()) {
-      setError("L'adresse détaillée est obligatoire.");
-      return;
-    }
-    if (!form.phone.trim()) {
-      setError("Le numéro de téléphone est obligatoire.");
-      return;
-    }
-    if (!validatePhone(form.phone)) {
-      setError("Le numéro de téléphone doit contenir 10 chiffres et commencer par 0 (ex: 0827733286).");
+    // Validation client
+    if (!validateForm()) {
+      // Focus sur le premier champ en erreur
+      const firstError = Object.keys(fieldErrors)[0];
+      if (firstError) {
+        const el = document.querySelector(`[name="${firstError}"]`) as HTMLElement;
+        if (el) el.focus();
+      }
       return;
     }
 
@@ -174,7 +175,7 @@ export default function NewShopPage() {
         availabilityValue = form.availabilityCustom;
       }
 
-      await createShop({
+      const result = await createShop({
         name: form.name.trim(),
         description: form.description.trim() || undefined,
         categoryId: form.categoryId,
@@ -195,11 +196,21 @@ export default function NewShopPage() {
           images: [],
         },
       });
-      setSuccessMessage("✅ Boutique créée avec succès ! Redirection...");
-      setTimeout(() => router.push("/dashboard/shops"), 1500);
+
+      if (result.success) {
+        setSuccessMessage("✅ Boutique créée avec succès ! Redirection...");
+        setTimeout(() => router.push("/dashboard/shops"), 1500);
+      } else {
+        setError("Erreur inconnue lors de la création.");
+      }
     } catch (err: any) {
       console.error("Erreur création:", err);
-      setError(err.message || "Une erreur est survenue lors de la création.");
+      let errorMsg = err.message || "Une erreur est survenue lors de la création.";
+      // Si l'erreur est une validation Zod, afficher les détails
+      if (err.name === "ZodError" && err.errors) {
+        errorMsg = err.errors.map((e: any) => e.message).join(", ");
+      }
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -225,8 +236,9 @@ export default function NewShopPage() {
       )}
 
       {successMessage && (
-        <div className="mb-4 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl text-green-700 dark:text-green-300">
-          {successMessage}
+        <div className="mb-4 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl flex items-start gap-3 text-green-700 dark:text-green-300">
+          <CheckCircle size={20} className="flex-shrink-0 mt-0.5" />
+          <div>{successMessage}</div>
         </div>
       )}
 
@@ -241,9 +253,12 @@ export default function NewShopPage() {
               value={form.name}
               onChange={handleChange}
               placeholder="Ex: Salon de mariage Élégance"
-              className="mt-1 w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+              className={`mt-1 w-full px-4 py-2 rounded-xl border ${
+                fieldErrors.name ? "border-red-500 focus:ring-red-500" : "border-gray-300 dark:border-gray-700 focus:ring-blue-500"
+              } bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:border-transparent`}
               required
             />
+            {fieldErrors.name && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.name}</p>}
             <p className="mt-1 text-xs text-gray-400">Le nom doit être unique.</p>
           </div>
           <div>
@@ -252,7 +267,9 @@ export default function NewShopPage() {
               name="categoryId"
               value={form.categoryId}
               onChange={handleChange}
-              className="mt-1 w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+              className={`mt-1 w-full px-4 py-2 rounded-xl border ${
+                fieldErrors.categoryId ? "border-red-500 focus:ring-red-500" : "border-gray-300 dark:border-gray-700 focus:ring-blue-500"
+              } bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:border-transparent`}
               required
             >
               <option value="">Sélectionner une catégorie</option>
@@ -260,6 +277,7 @@ export default function NewShopPage() {
                 <option key={cat.id} value={cat.id}>{cat.name}</option>
               ))}
             </select>
+            {fieldErrors.categoryId && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.categoryId}</p>}
             {loadingCategories && <p className="text-xs text-gray-400 mt-1">Chargement des catégories...</p>}
           </div>
           <div>
@@ -270,7 +288,7 @@ export default function NewShopPage() {
               onChange={handleChange}
               rows={3}
               placeholder="Présentez votre activité, vos spécialités..."
-              className="mt-1 w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+              className="mt-1 w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
         </div>
@@ -285,7 +303,9 @@ export default function NewShopPage() {
                 name="province"
                 value={form.province}
                 onChange={handleChange}
-                className="mt-1 w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                className={`mt-1 w-full px-4 py-2 rounded-xl border ${
+                  fieldErrors.province ? "border-red-500 focus:ring-red-500" : "border-gray-300 dark:border-gray-700 focus:ring-blue-500"
+                } bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:border-transparent`}
                 required
               >
                 <option value="">Sélectionner</option>
@@ -293,6 +313,7 @@ export default function NewShopPage() {
                   <option key={p} value={p}>{p}</option>
                 ))}
               </select>
+              {fieldErrors.province && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.province}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Ville *</label>
@@ -300,7 +321,9 @@ export default function NewShopPage() {
                 name="city"
                 value={form.city}
                 onChange={handleChange}
-                className="mt-1 w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                className={`mt-1 w-full px-4 py-2 rounded-xl border ${
+                  fieldErrors.city ? "border-red-500 focus:ring-red-500" : "border-gray-300 dark:border-gray-700 focus:ring-blue-500"
+                } bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:border-transparent`}
                 required
                 disabled={!form.province}
               >
@@ -309,6 +332,7 @@ export default function NewShopPage() {
                   <option key={city} value={city}>{city}</option>
                 ))}
               </select>
+              {fieldErrors.city && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.city}</p>}
             </div>
           </div>
           <div>
@@ -318,9 +342,12 @@ export default function NewShopPage() {
               value={form.address}
               onChange={handleChange}
               placeholder="Ex: Avenue de la Révolution, N° 12"
-              className="mt-1 w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+              className={`mt-1 w-full px-4 py-2 rounded-xl border ${
+                fieldErrors.address ? "border-red-500 focus:ring-red-500" : "border-gray-300 dark:border-gray-700 focus:ring-blue-500"
+              } bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:border-transparent`}
               required
             />
+            {fieldErrors.address && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.address}</p>}
           </div>
         </div>
 
@@ -334,9 +361,12 @@ export default function NewShopPage() {
               value={form.phone}
               onChange={handleChange}
               placeholder="0827733286"
-              className="mt-1 w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+              className={`mt-1 w-full px-4 py-2 rounded-xl border ${
+                fieldErrors.phone ? "border-red-500 focus:ring-red-500" : "border-gray-300 dark:border-gray-700 focus:ring-blue-500"
+              } bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:border-transparent`}
               required
             />
+            {fieldErrors.phone && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.phone}</p>}
             <p className="mt-1 text-xs text-gray-400">10 chiffres, commençant par 0 (ex: 0827733286).</p>
           </div>
           <div>
@@ -346,7 +376,7 @@ export default function NewShopPage() {
               value={form.website}
               onChange={handleChange}
               placeholder="https://monsite.com"
-              className="mt-1 w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+              className="mt-1 w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
         </div>
@@ -376,7 +406,7 @@ export default function NewShopPage() {
               value={form.portfolio}
               onChange={handleChange}
               placeholder="Ex: https://monportfolio.com ou '10 ans d'expérience dans les mariages'"
-              className="mt-1 w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+              className="mt-1 w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
           <div>
@@ -386,7 +416,7 @@ export default function NewShopPage() {
               value={form.priceRange}
               onChange={handleChange}
               placeholder="Ex: 50-150$"
-              className="mt-1 w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+              className="mt-1 w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
           <div>
@@ -395,7 +425,7 @@ export default function NewShopPage() {
               name="availability"
               value={form.availability}
               onChange={handleChange}
-              className="mt-1 w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+              className="mt-1 w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="">Choisir...</option>
               {AVAILABILITY_OPTIONS.map((opt) => (
@@ -408,7 +438,7 @@ export default function NewShopPage() {
                 value={form.availabilityCustom}
                 onChange={handleChange}
                 placeholder="Décrivez vos horaires"
-                className="mt-2 w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                className="mt-2 w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             )}
           </div>
@@ -419,7 +449,7 @@ export default function NewShopPage() {
               value={form.experience}
               onChange={handleChange}
               placeholder="Ex: 5 ans d'expérience"
-              className="mt-1 w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+              className="mt-1 w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
           <div>
