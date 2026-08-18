@@ -7,26 +7,27 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
 
-// ---------- Schémas de validation ----------
+// ---------- Schémas de validation avec Zod ----------
 const ShopCreateSchema = z.object({
-  name: z.string().min(1, "Nom requis"),
-  description: z.string().optional(),
+  name: z.string().min(1, "Nom requis").max(100),
+  description: z.string().optional().nullable(),
   categoryId: z.string().min(1, "Catégorie requise"),
-  city: z.string().optional(),
-  address: z.string().optional(),
-  phone: z.string().optional(),
-  whatsapp: z.string().optional(),
-  website: z.string().url("URL invalide").optional().or(z.literal("")),
-  coverImage: z.string().url().optional().or(z.literal("")),
-  logo: z.string().url().optional().or(z.literal("")),
+  city: z.string().optional().nullable(),
+  address: z.string().optional().nullable(),
+  phone: z.string().optional().nullable(),
+  whatsapp: z.string().optional().nullable(),
+  website: z.string().url("URL invalide").optional().nullable().or(z.literal("")),
+  coverImage: z.string().url("URL invalide").optional().nullable().or(z.literal("")),
+  logo: z.string().url("URL invalide").optional().nullable().or(z.literal("")),
+  province: z.string().optional().nullable(), // ajouté
   profile: z.object({
-    portfolio: z.string().optional(),
-    priceRange: z.string().optional(),
-    availability: z.string().optional(),
-    experience: z.string().optional(),
-    tags: z.array(z.string()).optional(),
-    images: z.array(z.string()).optional(),
-  }).optional(),
+    portfolio: z.string().optional().nullable(),
+    priceRange: z.string().optional().nullable(),
+    availability: z.string().optional().nullable(),
+    experience: z.string().optional().nullable(),
+    tags: z.array(z.string()).default([]),
+    images: z.array(z.string().url("URL invalide")).default([]),
+  }).optional().nullable(),
 });
 
 const ShopUpdateSchema = ShopCreateSchema.partial();
@@ -40,12 +41,11 @@ export type ShopFilterParams = {
   includeInactive?: boolean;
 };
 
-// ---------- Helper pour normaliser un tableau JSON ----------
+// ---------- Helpers pour normaliser les champs JSON ----------
 function normalizeStringArray(value: Prisma.JsonValue): string[] {
   return Array.isArray(value) ? value.filter((v): v is string => typeof v === "string") : [];
 }
 
-// ---------- Helper pour normaliser un profil ----------
 function normalizeProfile(profile: any) {
   if (!profile) return null;
   return {
@@ -55,7 +55,7 @@ function normalizeProfile(profile: any) {
   };
 }
 
-// ---------- Liste (paginée, filtrée) ----------
+// ---------- Liste des boutiques (paginée, filtrée) ----------
 export async function getShops(params: ShopFilterParams = {}) {
   const { categoryId, city, search, page = 1, limit = 12, includeInactive = false } = params;
   const skip = (page - 1) * limit;
@@ -92,7 +92,6 @@ export async function getShops(params: ShopFilterParams = {}) {
     const shopsWithAvg = shops.map((shop) => {
       const ratings = shop.reviews?.map((r) => r.rating) ?? [];
       const avg = ratings.length ? ratings.reduce((a, b) => a + b, 0) / ratings.length : null;
-      // Normalisation du profil
       const profile = normalizeProfile(shop.profile);
       return { ...shop, profile, avgRating: avg };
     });
@@ -151,26 +150,27 @@ export async function createShop(data: z.infer<typeof ShopCreateSchema>) {
       data: {
         name: validated.name,
         slug,
-        description: validated.description,
+        description: validated.description || undefined,
         categoryId: validated.categoryId,
-        city: validated.city,
-        address: validated.address,
-        phone: validated.phone,
-        whatsapp: validated.whatsapp,
-        website: validated.website,
-        coverImage: validated.coverImage,
-        logo: validated.logo,
+        city: validated.city || undefined,
+        address: validated.address || undefined,
+        phone: validated.phone || undefined,
+        whatsapp: validated.whatsapp || undefined,
+        website: validated.website || undefined,
+        coverImage: validated.coverImage || undefined,
+        logo: validated.logo || undefined,
+        province: validated.province || undefined,
         userId: session.user.id,
         isActive: true,
         isVerified: false,
         profile: validated.profile ? {
           create: {
-            portfolio: validated.profile.portfolio,
-            priceRange: validated.profile.priceRange,
-            availability: validated.profile.availability,
-            experience: validated.profile.experience,
-            tags: validated.profile.tags || [],
-            images: validated.profile.images || [],
+            portfolio: validated.profile.portfolio || undefined,
+            priceRange: validated.profile.priceRange || undefined,
+            availability: validated.profile.availability || undefined,
+            experience: validated.profile.experience || undefined,
+            tags: validated.profile.tags ?? [],
+            images: validated.profile.images ?? [],
           },
         } : undefined,
       },
@@ -200,41 +200,32 @@ export async function updateShop(slug: string, data: z.infer<typeof ShopUpdateSc
 
   const updateData: Prisma.ShopUpdateInput = {
     name: validated.name,
-    description: validated.description,
-    city: validated.city,
-    address: validated.address,
-    phone: validated.phone,
-    whatsapp: validated.whatsapp,
-    website: validated.website,
-    coverImage: validated.coverImage,
-    logo: validated.logo,
+    description: validated.description || undefined,
+    city: validated.city || undefined,
+    address: validated.address || undefined,
+    phone: validated.phone || undefined,
+    whatsapp: validated.whatsapp || undefined,
+    website: validated.website || undefined,
+    coverImage: validated.coverImage || undefined,
+    logo: validated.logo || undefined,
+    province: validated.province || undefined,
     ...(validated.categoryId && { category: { connect: { id: validated.categoryId } } }),
   };
 
   if (validated.profile) {
     const existingProfile = await prisma.shopProfile.findUnique({ where: { shopId: existing.id } });
+    const profileData = {
+      portfolio: validated.profile.portfolio || undefined,
+      priceRange: validated.profile.priceRange || undefined,
+      availability: validated.profile.availability || undefined,
+      experience: validated.profile.experience || undefined,
+      tags: validated.profile.tags ?? [],
+      images: validated.profile.images ?? [],
+    };
     if (existingProfile) {
-      updateData.profile = {
-        update: {
-          portfolio: validated.profile.portfolio,
-          priceRange: validated.profile.priceRange,
-          availability: validated.profile.availability,
-          experience: validated.profile.experience,
-          tags: validated.profile.tags,
-          images: validated.profile.images,
-        },
-      };
+      updateData.profile = { update: profileData };
     } else {
-      updateData.profile = {
-        create: {
-          portfolio: validated.profile.portfolio,
-          priceRange: validated.profile.priceRange,
-          availability: validated.profile.availability,
-          experience: validated.profile.experience,
-          tags: validated.profile.tags || [],
-          images: validated.profile.images || [],
-        },
-      };
+      updateData.profile = { create: profileData };
     }
   }
 
@@ -312,7 +303,7 @@ export async function certifyShop(slug: string, isVerified: boolean) {
   }
 }
 
-// ---------- Portfolio : ajouter / supprimer ----------
+// ---------- Portfolio : ajouter / supprimer une image ----------
 export async function addPortfolioImage(slug: string, imageUrl: string) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Non authentifié.");
@@ -381,10 +372,10 @@ export async function createReservation(slug: string, data: { date: string; mess
   }
 }
 
-// ---------- Catégories (pour filtres) ----------
+// ---------- Catégories ----------
 export async function getShopCategories() {
   return prisma.shopCategory.findMany({
     orderBy: { name: "asc" },
-    select: { id: true, name: true },
+    select: { id: true, name: true, tags: true },
   });
 }

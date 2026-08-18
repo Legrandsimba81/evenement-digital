@@ -1,3 +1,4 @@
+// components/shops/EditShopForm.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -6,33 +7,13 @@ import { updateShop } from "@/actions/shop-actions";
 import { Loader2, ArrowLeft, AlertCircle } from "lucide-react";
 import ImageUpload from "@/components/ui/ImageUpload";
 
+// mêmes PROVINCES, CITIES_BY_PROVINCE, AVAILABILITY_OPTIONS que dans NewShopPage
 const PROVINCES = [
-  "Kinshasa",
-  "Kongo Central",
-  "Kwango",
-  "Kwilu",
-  "Mai-Ndombe",
-  "Équateur",
-  "Mongala",
-  "Nord-Ubangi",
-  "Sud-Ubangi",
-  "Tshuapa",
-  "Bas-Uele",
-  "Haut-Uele",
-  "Ituri",
-  "Nord-Kivu",
-  "Sud-Kivu",
-  "Maniema",
-  "Kasaï",
-  "Kasaï-Central",
-  "Kasaï-Oriental",
-  "Lomami",
-  "Sankuru",
-  "Lualaba",
-  "Haut-Katanga",
-  "Haut-Lomami",
-  "Tanganyika",
-  "Tshopo",
+  "Kinshasa", "Kongo Central", "Kwango", "Kwilu", "Mai-Ndombe",
+  "Équateur", "Mongala", "Nord-Ubangi", "Sud-Ubangi", "Tshuapa",
+  "Bas-Uele", "Haut-Uele", "Ituri", "Nord-Kivu", "Sud-Kivu",
+  "Maniema", "Kasaï", "Kasaï-Central", "Kasaï-Oriental", "Lomami",
+  "Sankuru", "Lualaba", "Haut-Katanga", "Haut-Lomami", "Tanganyika", "Tshopo",
 ];
 
 const CITIES_BY_PROVINCE: Record<string, string[]> = {
@@ -104,7 +85,6 @@ export default function EditShopForm({
 
   const [availableTags, setAvailableTags] = useState<string[]>([]);
 
-  // ✅ Utilisation de useEffect pour mettre à jour les tags quand la catégorie change
   useEffect(() => {
     const cat = categories.find((c) => c.id === form.categoryId);
     if (cat && cat.tags) {
@@ -112,8 +92,6 @@ export default function EditShopForm({
     } else {
       setAvailableTags([]);
     }
-    // On réinitialise les tags sélectionnés si la catégorie change ?
-    // Optionnel, on peut garder ou vider. On laisse comme avant : on ne vide pas automatiquement.
   }, [form.categoryId, categories]);
 
   const handleChange = (
@@ -131,7 +109,7 @@ export default function EditShopForm({
     setForm((prev) => ({
       ...prev,
       selectedTags: prev.selectedTags.includes(tag)
-        ? prev.selectedTags.filter((t: string) => t !== tag) // ✅ typage explicite de t
+        ? prev.selectedTags.filter((t: string) => t !== tag)
         : [...prev.selectedTags, tag],
     }));
   };
@@ -183,31 +161,33 @@ export default function EditShopForm({
         availabilityValue = form.availabilityCustom;
       }
 
-      // ✅ On retire 'province' de l'objet passé à updateShop
       await updateShop(shop.slug, {
         name: form.name.trim(),
-        description: form.description.trim(),
+        description: form.description.trim() || undefined,
         categoryId: form.categoryId,
-        address: form.address.trim(),
         city: form.city,
-        // province: form.province, // ❌ RETIRÉ
+        address: form.address.trim(),
         phone: form.phone.trim(),
         whatsapp: form.phone.trim(),
         website: form.website.trim() || undefined,
         coverImage: form.coverImage || undefined,
         logo: form.logo || undefined,
+        province: form.province,
         profile: {
           portfolio: form.portfolio.trim() || undefined,
           priceRange: form.priceRange.trim() || undefined,
           availability: availabilityValue || undefined,
           experience: form.experience.trim() || undefined,
           tags: form.selectedTags,
-          images: shop.profile?.images || [],
+          images: Array.isArray(shop.profile?.images)
+            ? shop.profile.images.filter((img: any): img is string => typeof img === "string")
+            : [],
         },
       });
       setSuccessMessage("✅ Boutique mise à jour avec succès ! Redirection...");
       setTimeout(() => router.push("/dashboard/shops"), 1500);
     } catch (err: any) {
+      console.error("Erreur mise à jour:", err);
       setError(err.message || "Une erreur est survenue lors de la mise à jour.");
     } finally {
       setSaving(false);
@@ -240,6 +220,7 @@ export default function EditShopForm({
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Le formulaire est identique à la création, avec les mêmes champs */}
         {/* Informations générales */}
         <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-6 space-y-4">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Informations générales</h2>

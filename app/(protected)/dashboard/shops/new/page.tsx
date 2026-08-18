@@ -1,3 +1,4 @@
+// app/(protected)/dashboard/shops/new/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -6,34 +7,13 @@ import { createShop } from "@/actions/shop-actions";
 import { Loader2, ArrowLeft, AlertCircle } from "lucide-react";
 import ImageUpload from "@/components/ui/ImageUpload";
 
-// Provinces et villes de la RDC (conservés pour l'affichage)
+// Provinces et villes de la RDC
 const PROVINCES = [
-  "Kinshasa",
-  "Kongo Central",
-  "Kwango",
-  "Kwilu",
-  "Mai-Ndombe",
-  "Équateur",
-  "Mongala",
-  "Nord-Ubangi",
-  "Sud-Ubangi",
-  "Tshuapa",
-  "Bas-Uele",
-  "Haut-Uele",
-  "Ituri",
-  "Nord-Kivu",
-  "Sud-Kivu",
-  "Maniema",
-  "Kasaï",
-  "Kasaï-Central",
-  "Kasaï-Oriental",
-  "Lomami",
-  "Sankuru",
-  "Lualaba",
-  "Haut-Katanga",
-  "Haut-Lomami",
-  "Tanganyika",
-  "Tshopo",
+  "Kinshasa", "Kongo Central", "Kwango", "Kwilu", "Mai-Ndombe",
+  "Équateur", "Mongala", "Nord-Ubangi", "Sud-Ubangi", "Tshuapa",
+  "Bas-Uele", "Haut-Uele", "Ituri", "Nord-Kivu", "Sud-Kivu",
+  "Maniema", "Kasaï", "Kasaï-Central", "Kasaï-Oriental", "Lomami",
+  "Sankuru", "Lualaba", "Haut-Katanga", "Haut-Lomami", "Tanganyika", "Tshopo",
 ];
 
 const CITIES_BY_PROVINCE: Record<string, string[]> = {
@@ -52,7 +32,7 @@ const CITIES_BY_PROVINCE: Record<string, string[]> = {
   "Bas-Uele": ["Buta", "Aketi"],
   Tshopo: ["Kisangani", "Yangambi"],
   "Nord-Ubangi": ["Gbadolite", "Zongo"],
-  "Sud-Ubangi": ["Gemena", "Kinshasa? non"],
+  "Sud-Ubangi": ["Gemena"],
   Mongala: ["Lisala", "Bumba"],
   Tshuapa: ["Boende", "Ikela"],
   Équateur: ["Mbandaka", "Bikoro"],
@@ -101,7 +81,6 @@ export default function NewShopPage() {
 
   const [availableTags, setAvailableTags] = useState<string[]>([]);
 
-  // Chargement des catégories
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -118,7 +97,6 @@ export default function NewShopPage() {
     fetchCategories();
   }, []);
 
-  // Mise à jour des tags selon la catégorie
   useEffect(() => {
     const cat = categories.find((c) => c.id === form.categoryId);
     if (cat && cat.tags) {
@@ -196,38 +174,32 @@ export default function NewShopPage() {
         availabilityValue = form.availabilityCustom;
       }
 
-      // ✅ Appel corrigé : on passe ce que le schéma attend
       await createShop({
         name: form.name.trim(),
-        description: form.description.trim(),
+        description: form.description.trim() || undefined,
         categoryId: form.categoryId,
         city: form.city,
         address: form.address.trim(),
         phone: form.phone.trim(),
-        whatsapp: form.phone.trim(), // utilisé comme WhatsApp
+        whatsapp: form.phone.trim(),
         website: form.website.trim() || undefined,
         coverImage: form.coverImage || undefined,
         logo: form.logo || undefined,
+        province: form.province,
         profile: {
           portfolio: form.portfolio.trim() || undefined,
           priceRange: form.priceRange.trim() || undefined,
           availability: availabilityValue || undefined,
           experience: form.experience.trim() || undefined,
           tags: form.selectedTags,
-          images: [], // initialement vide
+          images: [],
         },
       });
       setSuccessMessage("✅ Boutique créée avec succès ! Redirection...");
       setTimeout(() => router.push("/dashboard/shops"), 1500);
     } catch (err: any) {
-      if (err.message && err.message.includes("Une boutique avec ce nom existe déjà")) {
-        setError(
-          "❌ Une boutique avec ce nom existe déjà. Si vous pensez qu'il s'agit d'une erreur, " +
-          "contactez-nous sur WhatsApp au +243 992 598 826 ou par email à support@octavia-event.com."
-        );
-      } else {
-        setError(err.message || "Une erreur est survenue lors de la création.");
-      }
+      console.error("Erreur création:", err);
+      setError(err.message || "Une erreur est survenue lors de la création.");
     } finally {
       setLoading(false);
     }
