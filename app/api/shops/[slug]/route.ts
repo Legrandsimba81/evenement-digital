@@ -1,43 +1,57 @@
-// app/api/shops/[slug]/route.ts
-import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { NextRequest, NextResponse } from "next/server";
+import { getShopBySlug, updateShop, deleteShop } from "@/actions/shop-actions";
 
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { slug: string } }
 ) {
   try {
-    const shop = await prisma.shop.findUnique({
-      where: { slug: params.slug },
-    });
-
+    const shop = await getShopBySlug(params.slug);
     if (!shop) {
       return NextResponse.json({ error: "Boutique non trouvée" }, { status: 404 });
     }
-
-    // Récupérer les relations séparément
-    const [category, profile, user, reviews] = await Promise.all([
-      shop.categoryId ? prisma.shopCategory.findUnique({ where: { id: shop.categoryId } }) : null,
-      prisma.shopProfile.findUnique({ where: { shopId: shop.id } }),
-      prisma.user.findUnique({ where: { id: shop.userId }, select: { name: true, email: true } }),
-      prisma.review.findMany({
-        where: { shopId: shop.id },
-        include: { user: { select: { name: true } } },
-        orderBy: { createdAt: "desc" },
-      }),
-    ]);
-
-    return NextResponse.json({
-      ...shop,
-      category,
-      profile,
-      user,
-      reviews,
-    });
+    return NextResponse.json(shop);
   } catch (error) {
-    console.error("API getShop error:", error);
+    console.error("GET /api/shops/[slug] error:", error);
     return NextResponse.json(
-      { error: "Erreur lors du chargement de la boutique" },
+      { error: "Erreur interne" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { slug: string } }
+) {
+  try {
+    const body = await request.json();
+    const result = await updateShop(params.slug, body);
+    return NextResponse.json(result);
+  } catch (error: any) {
+    if (error.name === "ZodError") {
+      return NextResponse.json(
+        { error: "Données invalides", details: error.errors },
+        { status: 400 }
+      );
+    }
+    return NextResponse.json(
+      { error: error.message || "Erreur interne" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { slug: string } }
+) {
+  try {
+    const result = await deleteShop(params.slug);
+    return NextResponse.json(result);
+  } catch (error: any) {
+    return NextResponse.json(
+      { error: error.message || "Erreur interne" },
       { status: 500 }
     );
   }

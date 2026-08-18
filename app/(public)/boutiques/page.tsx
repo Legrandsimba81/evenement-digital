@@ -19,6 +19,8 @@ export default async function BoutiquesPage({
 }) {
   const page = Number(searchParams.page) || 1;
   const limit = 12;
+
+  // Récupération des boutiques avec les filtres
   const { shops, total } = await getShops({
     categoryId: searchParams.category,
     city: searchParams.city,
@@ -28,6 +30,8 @@ export default async function BoutiquesPage({
   });
 
   const totalPages = Math.ceil(total / limit);
+
+  // Récupération des catégories pour les filtres
   const categories = await prisma.shopCategory.findMany({
     orderBy: { name: "asc" },
     select: { id: true, name: true },
@@ -36,15 +40,22 @@ export default async function BoutiquesPage({
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-950 dark:to-gray-900 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">Prestataires événementiels</h1>
-        <p className="text-gray-600 dark:text-gray-300 mb-6">Trouvez les meilleurs professionnels pour votre événement en RDC.</p>
+        <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
+          Prestataires événementiels
+        </h1>
+        <p className="text-gray-600 dark:text-gray-300 mb-6">
+          Trouvez les meilleurs professionnels pour votre événement en RDC.
+        </p>
 
+        {/* Filtres */}
         <ShopFilters categories={categories} />
 
         {shops.length === 0 ? (
           <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm p-12 text-center">
             <Store className="mx-auto h-12 w-12 text-gray-400" />
-            <p className="mt-4 text-gray-600 dark:text-gray-300">Aucun prestataire ne correspond à vos critères.</p>
+            <p className="mt-4 text-gray-600 dark:text-gray-300">
+              Aucun prestataire ne correspond à vos critères.
+            </p>
           </div>
         ) : (
           <>
@@ -55,6 +66,7 @@ export default async function BoutiquesPage({
                   href={`/boutiques/${shop.slug}`}
                   className="group bg-white dark:bg-gray-900 rounded-2xl shadow-sm hover:shadow-xl transition overflow-hidden border border-gray-200 dark:border-gray-800"
                 >
+                  {/* Image de couverture */}
                   {shop.coverImage ? (
                     <div className="aspect-[16/9] overflow-hidden">
                       <img
@@ -93,7 +105,7 @@ export default async function BoutiquesPage({
                       </span>
                       <span className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
                         <Star size={16} className="text-yellow-500" />
-                        {shop.avgRating !== null ? shop.avgRating : "N/A"} ({shop.reviews.length})
+                        {shop.avgRating !== null ? shop.avgRating.toFixed(1) : "N/A"} ({shop.reviews.length})
                       </span>
                     </div>
                   </div>
@@ -101,6 +113,7 @@ export default async function BoutiquesPage({
               ))}
             </div>
 
+            {/* Pagination */}
             {totalPages > 1 && (
               <div className="flex justify-center items-center gap-2 mt-8">
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => {
