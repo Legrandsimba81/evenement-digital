@@ -6,14 +6,18 @@ import EditShopForm from "@/components/shops/EditShopForm";
 
 export const dynamic = "force-dynamic";
 
-export default async function EditShopPage({ params }: { params: { slug: string } }) {
+export default async function EditShopPage({ 
+  params 
+}: { 
+  params: Promise<{ slug: string }> 
+}) {
+  const { slug } = await params;
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const shop = await getShopBySlug(params.slug);
+  const shop = await getShopBySlug(slug);
   if (!shop) return notFound();
 
-  // Vérification des droits
   if (shop.userId !== session.user.id && session.user.role !== "ADMIN") {
     return (
       <div className="p-6 text-center">
@@ -23,6 +27,5 @@ export default async function EditShopPage({ params }: { params: { slug: string 
   }
 
   const categories = await getShopCategories();
-
   return <EditShopForm shop={shop} categories={categories} />;
 }

@@ -455,3 +455,29 @@ export async function getShopCategories() {
   console.log(`[getShopCategories] Found ${categories.length} categories`);
   return categories;
 }
+
+// ---------- Ajouter un avis ----------
+export async function addReview(slug: string, data: { rating: number; comment?: string }) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("Vous devez être connecté pour laisser un avis.");
+
+  const shop = await prisma.shop.findUnique({ where: { slug } });
+  if (!shop) throw new Error("Boutique non trouvée.");
+
+  // Vérifier que l'utilisateur n'a pas déjà laissé un avis (optionnel)
+  const existing = await prisma.review.findFirst({
+    where: { shopId: shop.id, userId: session.user.id },
+  });
+  if (existing) throw new Error("Vous avez déjà laissé un avis pour cette boutique.");
+
+  const review = await prisma.review.create({
+    data: {
+      shopId: shop.id,
+      userId: session.user.id,
+      rating: data.rating,
+      comment: data.comment,
+    },
+  });
+  revalidatePath(`/boutiques/${slug}`);
+  return { success: true, review };
+}
