@@ -40,6 +40,21 @@ export type ShopFilterParams = {
   includeInactive?: boolean;
 };
 
+// ---------- Helper pour normaliser un tableau JSON ----------
+function normalizeStringArray(value: Prisma.JsonValue): string[] {
+  return Array.isArray(value) ? value.filter((v): v is string => typeof v === "string") : [];
+}
+
+// ---------- Helper pour normaliser un profil ----------
+function normalizeProfile(profile: any) {
+  if (!profile) return null;
+  return {
+    ...profile,
+    images: normalizeStringArray(profile.images),
+    tags: normalizeStringArray(profile.tags),
+  };
+}
+
 // ---------- Liste (paginée, filtrée) ----------
 export async function getShops(params: ShopFilterParams = {}) {
   const { categoryId, city, search, page = 1, limit = 12, includeInactive = false } = params;
@@ -75,9 +90,11 @@ export async function getShops(params: ShopFilterParams = {}) {
     ]);
 
     const shopsWithAvg = shops.map((shop) => {
-      const ratings = shop.reviews.map((r) => r.rating);
+      const ratings = shop.reviews?.map((r) => r.rating) ?? [];
       const avg = ratings.length ? ratings.reduce((a, b) => a + b, 0) / ratings.length : null;
-      return { ...shop, avgRating: avg };
+      // Normalisation du profil
+      const profile = normalizeProfile(shop.profile);
+      return { ...shop, profile, avgRating: avg };
     });
 
     return { shops: shopsWithAvg, total };
@@ -104,9 +121,13 @@ export async function getShopBySlug(slug: string) {
       },
     });
     if (!shop) return null;
-    const ratings = shop.reviews.map((r) => r.rating);
+
+    const reviews = shop.reviews ?? [];
+    const ratings = reviews.map((r) => r.rating);
     const avgRating = ratings.length ? ratings.reduce((a, b) => a + b, 0) / ratings.length : null;
-    return { ...shop, avgRating };
+    const profile = normalizeProfile(shop.profile);
+
+    return { ...shop, profile, reviews, avgRating };
   } catch (error) {
     console.error("getShopBySlug error:", error);
     throw new Error("Erreur lors du chargement de la boutique.");
@@ -187,7 +208,6 @@ export async function updateShop(slug: string, data: z.infer<typeof ShopUpdateSc
     website: validated.website,
     coverImage: validated.coverImage,
     logo: validated.logo,
-    // ⚡ Correction : mise à jour de la catégorie via la relation
     ...(validated.categoryId && { category: { connect: { id: validated.categoryId } } }),
   };
 
@@ -293,11 +313,6 @@ export async function certifyShop(slug: string, isVerified: boolean) {
 }
 
 // ---------- Portfolio : ajouter / supprimer ----------
-// Helper pour extraire un tableau de chaînes depuis un champ JSON
-function getStringArray(value: Prisma.JsonValue): string[] {
-  return Array.isArray(value) ? value.filter((v): v is string => typeof v === "string") : [];
-}
-
 export async function addPortfolioImage(slug: string, imageUrl: string) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Non authentifié.");
@@ -312,7 +327,7 @@ export async function addPortfolioImage(slug: string, imageUrl: string) {
       data: { shopId: existing.id, images: [imageUrl], tags: [] },
     });
   } else {
-    const current = getStringArray(existing.profile.images);
+    const current = normalizeStringArray(existing.profile.images);
     if (!current.includes(imageUrl)) {
       await prisma.shopProfile.update({
         where: { shopId: existing.id },
@@ -332,7 +347,7 @@ export async function removePortfolioImage(slug: string, imageUrl: string) {
   if (existing.userId !== session.user.id && session.user.role !== "ADMIN") {
     throw new Error("Permission insuffisante.");
   }
-  const current = getStringArray(existing.profile.images);
+  const current = normalizeStringArray(existing.profile.images);
   const updated = current.filter((url) => url !== imageUrl);
   await prisma.shopProfile.update({
     where: { shopId: existing.id },

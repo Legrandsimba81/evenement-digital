@@ -3,21 +3,26 @@ import { getShopBySlug } from "@/actions/shop-actions";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Calendar, MapPin, Phone, Globe, Star, ArrowLeft, BadgeCheck } from "lucide-react";
+import type { Review } from "@prisma/client"; // utilisé pour le typage
 
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: { slug: string } }) {
-  const shop = await getShopBySlug(params.slug);
-  if (!shop) return { title: "Boutique introuvable" };
-  return {
-    title: shop.name,
-    description: shop.description || `Découvrez ${shop.name} sur Octavia Event.`,
-    openGraph: {
+  try {
+    const shop = await getShopBySlug(params.slug);
+    if (!shop) return { title: "Boutique introuvable" };
+    return {
       title: shop.name,
-      description: shop.description || "",
-      images: shop.logo ? [{ url: shop.logo }] : [],
-    },
-  };
+      description: shop.description || `Découvrez ${shop.name} sur Octavia Event.`,
+      openGraph: {
+        title: shop.name,
+        description: shop.description || "",
+        images: shop.logo ? [{ url: shop.logo }] : [],
+      },
+    };
+  } catch {
+    return { title: "Erreur" };
+  }
 }
 
 export default async function BoutiquePage({ params }: { params: { slug: string } }) {
@@ -25,16 +30,17 @@ export default async function BoutiquePage({ params }: { params: { slug: string 
     const shop = await getShopBySlug(params.slug);
     if (!shop) return notFound();
 
-    // Sécurisation des données
+    const avgRating = shop.avgRating !== null ? shop.avgRating.toFixed(1) : "N/A";
     const reviews = shop.reviews || [];
-    const avgRating = reviews.length
-      ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
-      : "N/A";
-
+    
+    // Sécurisation des tags et images avec typage explicite
     const tags = Array.isArray(shop.profile?.tags) ? shop.profile.tags : [];
-    const images = Array.isArray(shop.profile?.images)
-      ? shop.profile.images.filter((img): img is string => typeof img === "string")
-      : [];
+    let profileImages: string[] = [];
+    if (Array.isArray(shop.profile?.images)) {
+      profileImages = (shop.profile.images as any[]).filter(
+        (img: any): img is string => typeof img === "string"
+      );
+    }
 
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-950 dark:to-gray-900 py-12 px-4">
@@ -54,11 +60,13 @@ export default async function BoutiquePage({ params }: { params: { slug: string 
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                   {shop.name}
-                  {shop.isVerified && <BadgeCheck className="w-6 h-6 text-blue-500 fill-blue-500" />}
+                  {shop.isVerified && (
+                    <BadgeCheck className="w-6 h-6 text-blue-500 fill-blue-500" />
+                  )}
                 </h1>
                 <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500 dark:text-gray-400 mt-1">
                   <span className="bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 px-2 py-1 rounded-full">
-                    {shop.category?.name || "Catégorie"}
+                    {shop.category?.name}
                   </span>
                   <span className="flex items-center gap-1">
                     <Star size={16} className="text-yellow-500" />
@@ -130,10 +138,7 @@ export default async function BoutiquePage({ params }: { params: { slug: string 
                 )}
                 {shop.website && (
                   <p className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
-                    <Globe size={18} />{" "}
-                    <a href={shop.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                      {shop.website}
-                    </a>
+                    <Globe size={18} /> <a href={shop.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{shop.website}</a>
                   </p>
                 )}
               </div>
@@ -146,12 +151,12 @@ export default async function BoutiquePage({ params }: { params: { slug: string 
               >
                 <Calendar size={20} /> Réserver maintenant
               </Link>
-              {images.length > 0 && (
+              {profileImages.length > 0 && (
                 <Link
                   href={`/boutiques/${shop.slug}/portfolio`}
                   className="inline-flex items-center gap-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white px-6 py-3 rounded-xl font-medium transition"
                 >
-                  Voir le portfolio ({images.length})
+                  Voir le portfolio ({profileImages.length})
                 </Link>
               )}
             </div>
@@ -164,18 +169,14 @@ export default async function BoutiquePage({ params }: { params: { slug: string 
                 <p className="text-gray-500 dark:text-gray-400 mt-2">Aucun avis pour le moment.</p>
               ) : (
                 <div className="mt-4 space-y-4">
-                  {reviews.map((review) => (
+                  {reviews.map((review: any) => (
                     <div key={review.id} className="border-b border-gray-100 dark:border-gray-700 pb-4">
                       <div className="flex items-center gap-2">
-                        <span className="font-medium text-gray-800 dark:text-white">
-                          {review.user?.name || "Anonyme"}
-                        </span>
+                        <span className="font-medium text-gray-800 dark:text-white">{review.user?.name || "Anonyme"}</span>
                         <span className="text-yellow-500 flex items-center gap-0.5">
                           {"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}
                         </span>
-                        <span className="text-xs text-gray-400">
-                          {new Date(review.createdAt).toLocaleDateString("fr-FR")}
-                        </span>
+                        <span className="text-xs text-gray-400">{new Date(review.createdAt).toLocaleDateString("fr-FR")}</span>
                       </div>
                       {review.comment && <p className="text-gray-600 dark:text-gray-300 mt-1">{review.comment}</p>}
                     </div>
@@ -189,7 +190,6 @@ export default async function BoutiquePage({ params }: { params: { slug: string 
     );
   } catch (error) {
     console.error("Erreur dans BoutiquePage:", error);
-    // En production, affiche une page d'erreur générique
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-950 dark:to-gray-900">
         <div className="bg-white dark:bg-gray-900 p-8 rounded-2xl shadow-xl max-w-md text-center">

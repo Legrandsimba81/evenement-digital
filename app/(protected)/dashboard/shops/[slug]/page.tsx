@@ -29,7 +29,7 @@ export default async function BoutiquePage({ params }: { params: { slug: string 
   const reviews = shop.reviews || [];
   const tags = Array.isArray(shop.profile?.tags) ? shop.profile.tags : [];
   const profileImages = Array.isArray(shop.profile?.images)
-    ? shop.profile.images.filter((img): img is string => typeof img === "string")
+    ? (shop.profile.images as any[]).filter((img: any): img is string => typeof img === "string")
     : [];
 
   return (

@@ -23,8 +23,8 @@ export default async function DashboardPortfolioPage({ params }: { params: { slu
     );
   }
 
-  const images = Array.isArray(shop.profile?.images)
-    ? shop.profile.images.filter((img): img is string => typeof img === "string")
+  const profileImages = Array.isArray(shop.profile?.images)
+    ? (shop.profile.images as any[]).filter((img: any): img is string => typeof img === "string")
     : [];
 
   return (
@@ -40,7 +40,7 @@ export default async function DashboardPortfolioPage({ params }: { params: { slu
           <ArrowLeft size={16} /> Retour
         </Link>
       </div>
-      <PortfolioManager shopSlug={shop.slug} initialImages={images} />
+      <PortfolioManager shopSlug={shop.slug} initialImages={profileImages} />
     </div>
   );
 }
