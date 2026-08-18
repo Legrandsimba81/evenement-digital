@@ -5,20 +5,21 @@ import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
-export default async function DebugShopPage({ params }: { params: { slug: string } }) {
-  // Vérifier que le slug existe
-  if (!params?.slug) {
-    return (
-      <div className="p-8">
-        <h1 className="text-2xl font-bold text-red-600">Erreur : slug manquant</h1>
-        <p>Le paramètre de route n'a pas été fourni.</p>
-      </div>
-    );
-  }
-
+export default async function DebugShopPage({ params }: { params: Promise<{ slug: string }> }) {
   try {
+    const { slug } = await params;
+
+    if (!slug) {
+      return (
+        <div className="p-8">
+          <h1 className="text-2xl font-bold text-red-600">Erreur : slug manquant</h1>
+          <p>Le paramètre de route n'a pas été fourni.</p>
+        </div>
+      );
+    }
+
     const shop = await prisma.shop.findUnique({
-      where: { slug: params.slug },
+      where: { slug },
       include: {
         category: true,
         profile: true,
@@ -44,7 +45,7 @@ export default async function DebugShopPage({ params }: { params: { slug: string
             {JSON.stringify(shop.profile, null, 2)}
           </pre>
         </div>
-        <Link href={`/boutiques/${params.slug}`} className="mt-4 inline-block text-blue-600 hover:underline">
+        <Link href={`/boutiques/${slug}`} className="mt-4 inline-block text-blue-600 hover:underline">
           Retour à la boutique
         </Link>
       </div>

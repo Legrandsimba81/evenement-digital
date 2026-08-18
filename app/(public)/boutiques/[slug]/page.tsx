@@ -6,10 +6,12 @@ import { Calendar, MapPin, Phone, Globe, Star, ArrowLeft, BadgeCheck } from "luc
 
 export const dynamic = "force-dynamic";
 
-export async function generateMetadata({ params }: { params: { slug: string } }) {
+// ✅ generateMetadata avec await params
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   try {
-    if (!params?.slug) return { title: "Boutique introuvable" };
-    const shop = await getShopBySlug(params.slug);
+    const { slug } = await params;
+    if (!slug) return { title: "Boutique introuvable" };
+    const shop = await getShopBySlug(slug);
     if (!shop) return { title: "Boutique introuvable" };
     return {
       title: shop.name,
@@ -26,10 +28,11 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   }
 }
 
-export default async function BoutiquePage({ params }: { params: { slug: string } }) {
+// ✅ Page avec await params
+export default async function BoutiquePage({ params }: { params: Promise<{ slug: string }> }) {
   try {
-    // Vérification du slug
-    if (!params?.slug) {
+    const { slug } = await params;
+    if (!slug) {
       console.error("[BoutiquePage] slug manquant");
       return (
         <div className="min-h-screen flex items-center justify-center">
@@ -44,8 +47,8 @@ export default async function BoutiquePage({ params }: { params: { slug: string 
       );
     }
 
-    console.log(`[BoutiquePage] Début du chargement pour slug: "${params.slug}"`);
-    const shop = await getShopBySlug(params.slug);
+    console.log(`[BoutiquePage] Début du chargement pour slug: "${slug}"`);
+    const shop = await getShopBySlug(slug);
     console.log(`[BoutiquePage] Résultat de getShopBySlug:`, shop ? 'boutique trouvée' : 'null');
 
     if (!shop) {
@@ -57,8 +60,6 @@ export default async function BoutiquePage({ params }: { params: { slug: string 
     const reviews = shop.reviews || [];
     const tags = Array.isArray(shop.profile?.tags) ? shop.profile.tags : [];
     const profileImages = Array.isArray(shop.profile?.images) ? shop.profile.images : [];
-
-    console.log(`[BoutiquePage] Données préparées: tags=${tags.length}, images=${profileImages.length}`);
 
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-950 dark:to-gray-900 py-12 px-4">
@@ -156,7 +157,10 @@ export default async function BoutiquePage({ params }: { params: { slug: string 
                 )}
                 {shop.website && (
                   <p className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
-                    <Globe size={18} /> <a href={shop.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{shop.website}</a>
+                    <Globe size={18} />{" "}
+                    <a href={shop.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                      {shop.website}
+                    </a>
                   </p>
                 )}
               </div>
@@ -190,11 +194,15 @@ export default async function BoutiquePage({ params }: { params: { slug: string 
                   {reviews.map((review: any) => (
                     <div key={review.id} className="border-b border-gray-100 dark:border-gray-700 pb-4">
                       <div className="flex items-center gap-2">
-                        <span className="font-medium text-gray-800 dark:text-white">{review.user?.name || "Anonyme"}</span>
+                        <span className="font-medium text-gray-800 dark:text-white">
+                          {review.user?.name || "Anonyme"}
+                        </span>
                         <span className="text-yellow-500 flex items-center gap-0.5">
                           {"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}
                         </span>
-                        <span className="text-xs text-gray-400">{new Date(review.createdAt).toLocaleDateString("fr-FR")}</span>
+                        <span className="text-xs text-gray-400">
+                          {new Date(review.createdAt).toLocaleDateString("fr-FR")}
+                        </span>
                       </div>
                       {review.comment && <p className="text-gray-600 dark:text-gray-300 mt-1">{review.comment}</p>}
                     </div>
