@@ -6,6 +6,16 @@ import Link from "next/link";
 export const dynamic = "force-dynamic";
 
 export default async function DebugShopPage({ params }: { params: { slug: string } }) {
+  // Vérifier que le slug existe
+  if (!params?.slug) {
+    return (
+      <div className="p-8">
+        <h1 className="text-2xl font-bold text-red-600">Erreur : slug manquant</h1>
+        <p>Le paramètre de route n'a pas été fourni.</p>
+      </div>
+    );
+  }
+
   try {
     const shop = await prisma.shop.findUnique({
       where: { slug: params.slug },
