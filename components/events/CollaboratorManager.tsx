@@ -1,165 +1,165 @@
 "use client";
 
-import { useState, useTransition, useEffect } from "react";
-import { addCollaborator, removeCollaborator, getCollaborators } from "@/actions/collaborator-actions";
-import { UserPlus, Trash2, Mail, User } from "lucide-react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { addCollaborator, removeCollaborator } from "@/actions/collaborator-actions";
+import { Loader2, UserPlus, UserMinus, User } from "lucide-react";
 
 type Collaborator = {
   id: string;
   userId: string;
-  role: string;
-  user: {
-    id: string;
-    name: string | null;
-    email: string;
-    image: string | null;
-  };
+  name: string | null;
+  email: string | null;
+};
+
+type Owner = {
+  id: string;
+  name: string | null;
 };
 
 export default function CollaboratorManager({
   eventId,
   eventSlug,
   isOwner,
+  initialCollaborators = [],
+  initialOwner = null,
 }: {
   eventId: string;
   eventSlug: string;
   isOwner: boolean;
+  initialCollaborators: Collaborator[];
+  initialOwner: Owner | null;
 }) {
+  const router = useRouter();
+  const [collaborators, setCollaborators] = useState<Collaborator[]>(initialCollaborators);
+  const [owner, setOwner] = useState<Owner | null>(initialOwner);
   const [email, setEmail] = useState("");
-  const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
-  useEffect(() => {
-    loadCollaborators();
-  }, [eventId]);
-
-  const loadCollaborators = async () => {
+  const handleAdd = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim() || !isOwner) return;
     setLoading(true);
+    setError("");
+    setSuccess("");
     try {
-      const data = await getCollaborators(eventId);
-      setCollaborators(data || []);
+      await addCollaborator(eventId, email.trim());
+      const updated = await fetch(`/api/events/${eventId}/collaborators`).then((res) =>
+        res.json()
+      );
+      setCollaborators(updated.collaborators || []);
+      setOwner(updated.owner || null);
+      setEmail("");
+      setSuccess("Collaborateur ajouté avec succès !");
+      router.refresh();
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || "Erreur lors de l'ajout.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAdd = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setSuccess(null);
-    if (!email.trim()) return;
-
-    startTransition(async () => {
-      try {
-        await addCollaborator(eventId, email.trim());
-        setSuccess(`Collaborateur ajouté : ${email}`);
-        setEmail("");
-        await loadCollaborators();
-      } catch (err: any) {
-        setError(err.message);
-      }
-    });
-  };
-
-  const handleRemove = async (userId: string) => {
-    if (!confirm("Retirer ce collaborateur ?")) return;
-    startTransition(async () => {
-      try {
-        await removeCollaborator(eventId, userId);
-        await loadCollaborators();
-      } catch (err: any) {
-        setError(err.message);
-      }
-    });
+  const handleRemove = async (collaboratorId: string) => {
+    if (!isOwner || !window.confirm("Retirer ce collaborateur ?")) return;
+    setLoading(true);
+    setError("");
+    try {
+      await removeCollaborator(eventId, collaboratorId);
+      setCollaborators(collaborators.filter((c) => c.id !== collaboratorId));
+      setSuccess("Collaborateur retiré.");
+      router.refresh();
+    } catch (err: any) {
+      setError(err.message || "Erreur lors de la suppression.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-md border border-gray-200 dark:border-gray-800 p-6">
-      {error && (
-        <div className="mb-4 p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl text-red-600 dark:text-red-400 text-sm">
-          {error}
-        </div>
-      )}
-      {success && (
-        <div className="mb-4 p-3 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-xl text-green-600 dark:text-green-400 text-sm">
-          {success}
-        </div>
-      )}
+    <div className="space-y-6">
+      {error && <div className="bg-red-50 text-red-600 p-3 rounded-xl">{error}</div>}
+      {success && <div className="bg-green-50 text-green-600 p-3 rounded-xl">{success}</div>}
 
-      {isOwner && (
-        <form onSubmit={handleAdd} className="flex flex-col sm:flex-row gap-3 mb-6">
-          <div className="flex-1 relative">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-            <input
-              type="email"
-              placeholder="Email du collaborateur"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 border rounded-xl dark:bg-gray-800 dark:border-gray-700 focus:ring-2 focus:ring-primary-500"
-              required
-            />
+      {/* Propriétaire */}
+      {owner && (
+        <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+            <User size={20} className="text-primary-600 dark:text-primary-400" />
           </div>
-          <button
-            type="submit"
-            disabled={isPending}
-            className="inline-flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-6 py-3 rounded-xl transition disabled:opacity-50"
-          >
-            <UserPlus size={18} />
-            {isPending ? "Ajout..." : "Ajouter"}
-          </button>
-        </form>
+          <div>
+            <p className="font-medium text-gray-900 dark:text-white">
+              {owner.name || "Propriétaire"}
+            </p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Propriétaire de l'événement</p>
+          </div>
+        </div>
       )}
 
-      {loading ? (
-        <p className="text-center py-6 text-gray-500">Chargement...</p>
-      ) : collaborators.length === 0 ? (
-        <p className="text-center py-6 text-gray-500">Aucun collaborateur pour le moment.</p>
-      ) : (
-        <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-          {collaborators.map((collab) => (
-            <li key={collab.id} className="py-3 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                {collab.user.image ? (
-                  <img
-                    src={collab.user.image}
-                    alt={collab.user.name || ""}
-                    className="h-10 w-10 rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                    <User size={20} className="text-gray-500 dark:text-gray-400" />
+      {/* Liste des collaborateurs */}
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
+          Collaborateurs ({collaborators.length})
+        </h3>
+        {collaborators.length === 0 ? (
+          <p className="text-gray-500 dark:text-gray-400 text-sm">
+            Aucun collaborateur pour le moment.
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {collaborators.map((collab) => (
+              <div
+                key={collab.id}
+                className="flex items-center justify-between bg-white dark:bg-gray-900 rounded-xl p-3 border border-gray-200 dark:border-gray-800"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                    <User size={16} className="text-gray-500" />
                   </div>
-                )}
-                <div>
-                  <p className="font-medium text-gray-900 dark:text-white">
-                    {collab.user.name || "Utilisateur"}
-                  </p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">{collab.user.email}</p>
+                  <div>
+                    <p className="font-medium text-gray-900 dark:text-white">
+                      {collab.name || "Utilisateur"}
+                    </p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{collab.email}</p>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
-                  {collab.role}
-                </span>
                 {isOwner && (
                   <button
-                    onClick={() => handleRemove(collab.userId)}
-                    disabled={isPending}
-                    className="text-red-500 hover:text-red-700 transition disabled:opacity-50"
+                    onClick={() => handleRemove(collab.id)}
+                    disabled={loading}
+                    className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition"
                     title="Retirer"
                   >
-                    <Trash2 size={18} />
+                    <UserMinus size={18} />
                   </button>
                 )}
               </div>
-            </li>
-          ))}
-        </ul>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Formulaire d'ajout (uniquement pour le propriétaire) */}
+      {isOwner && (
+        <form onSubmit={handleAdd} className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-200 dark:border-gray-800">
+          <input
+            type="email"
+            placeholder="Email du collaborateur"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="flex-1 px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500"
+            required
+          />
+          <button
+            type="submit"
+            disabled={loading || !email.trim()}
+            className="px-6 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl transition disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            {loading ? <Loader2 size={18} className="animate-spin" /> : <UserPlus size={18} />}
+            Ajouter
+          </button>
+        </form>
       )}
     </div>
   );

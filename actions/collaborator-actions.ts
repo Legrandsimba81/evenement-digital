@@ -18,7 +18,7 @@ export async function addCollaborator(eventId: string, email: string) {
     throw new Error("Seul le propriétaire de l'événement peut ajouter des collaborateurs");
   }
 
-  // ✅ Limite de 2 collaborateurs
+  // Limite de 2 collaborateurs
   if (event.collaborators.length >= 2) {
     throw new Error("Vous ne pouvez ajouter que 2 collaborateurs maximum.");
   }
@@ -100,8 +100,9 @@ export async function getCollaborators(eventId: string) {
     select: { id: true, name: true },
   });
 
+  // ✅ Correction : `owner` est toujours un objet avec `id` défini ou `null`
   return {
-    owner: { id: owner?.id, name: owner?.name },
+    owner: owner ? { id: owner.id, name: owner.name } : null,
     collaborators: event.collaborators.map((c: any) => ({
       id: c.id,
       userId: c.userId,
