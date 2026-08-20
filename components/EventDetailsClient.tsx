@@ -182,7 +182,7 @@ export default function EventDetailsClient({ event }: { event: Event }) {
           </Link>
           <Link
             href={`/dashboard/event/${event.slug}/location`}
-            className="inline-flex items-center gap-2 bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-medium transition"
+            className="inline-flex items-center gap-1.5 bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1.5 rounded-full text-xs font-medium transition"
           >
             <MapPin size={16} /> Gérer le lieu
           </Link>
