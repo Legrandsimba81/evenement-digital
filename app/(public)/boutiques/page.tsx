@@ -88,20 +88,29 @@ export default async function BoutiquesPage({
                                                         </div>
                                                     )}
                                                 </div>
-                                                <div className="flex items-center gap-1.5 min-w-0">
-                                                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-primary-500 transition truncate">
-                                                        {shop.name}
-                                                    </h2>
-                                                    {shop.isVerified && (
-                                                        <BadgeCheck size={18} className="stroke-white fill-blue-600 flex-shrink-0" />
-                                                    )}
+                                                <div className="flex flex-col items-center gap-1 min-w-0">
+                                                    <div className="flex items-center gap-1.5 min-w-0">
+                                                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-primary-500 transition truncate">
+                                                            {shop.name}
+                                                        </h2>
+                                                        {shop.isVerified && (
+                                                            <BadgeCheck size={18} className="stroke-white fill-blue-600 flex-shrink-0" />
+                                                        )}
+                                                    </div>
+                                                    <span className="flex items-center gap-1 py-0.5 px-2 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-full">
+                                                        <Tag size={14} className="flex-shrink-0" />
+                                                        <span>{shop.category?.name || "Catégorie"}</span>
+                                                    </span>
                                                 </div>
                                             </div>
+                                            {/* Localisation avec séparateur */}
                                             <div className="mt-2 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                                                <span className="flex items-center gap-1 py-0.5 px-2 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-full">
-                                                    <Tag size={14} className="flex-shrink-0" />
-                                                    <span>{shop.category?.name || "Catégorie"}</span>
-                                                </span>
+                                                {shop.province && (
+                                                    <span className="flex items-center gap-1">
+                                                        {shop.province}
+                                                    </span>
+                                                )}
+                                                {shop.province && shop.city && <span className="text-gray-300">•</span>}
                                                 {shop.city && (
                                                     <span className="flex items-center gap-1">
                                                         <MapPin size={14} className="flex-shrink-0" /> {shop.city}
