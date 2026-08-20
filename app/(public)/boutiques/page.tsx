@@ -78,26 +78,39 @@ export default async function BoutiquesPage({
                                             </div>
                                         )}
                                         <div className="p-4">
-                                            <div className="flex items-center gap-1">
-                                                <div className="w-10 h-10 rounded-full bg-white dark:bg-gray-800 flex-shrink-0 overflow-hidden">
+                                            <div className="flex items-center gap-2">
+                                                {/* Avatar / Logo */}
+                                                <div className="w-10 h-10 rounded-full bg-white dark:bg-gray-800 flex-shrink-0 overflow-hidden shadow-sm">
                                                     {shop.logo ? (
-                                                        <img src={shop.logo} alt={shop.name} className="w-full h-full object-cover" />
+                                                        <img
+                                                            src={shop.logo}
+                                                            alt={shop.name}
+                                                            className="w-full h-full object-cover"
+                                                        />
                                                     ) : (
                                                         <div className="w-full h-full flex items-center justify-center text-2xl font-bold text-gray-400 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-gray-700 dark:to-gray-800">
                                                             {shop.name.charAt(0).toUpperCase()}
                                                         </div>
                                                     )}
                                                 </div>
-                                                <div className="flex flex-col items-center gap-1 min-w-0">
+
+                                                {/* Texte à droite */}
+                                                <div className="flex flex-col items-start min-w-0">
+                                                    {/* Ligne : Nom + Badge */}
                                                     <div className="flex items-center gap-1.5 min-w-0">
-                                                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-primary-500 transition truncate">
+                                                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-primary-500 transition-colors truncate">
                                                             {shop.name}
                                                         </h2>
                                                         {shop.isVerified && (
-                                                            <BadgeCheck size={18} className="stroke-white fill-blue-600 flex-shrink-0" />
+                                                            <BadgeCheck
+                                                                size={18}
+                                                                className="stroke-white fill-blue-600 flex-shrink-0"
+                                                            />
                                                         )}
                                                     </div>
-                                                    <span className="flex items-center gap-1 py-0.5 px-2 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-full">
+
+                                                    {/* Catégorie */}
+                                                    <span className="flex items-center gap-1 py-0.5 px-2 mt-0.5 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-full text-sm">
                                                         <Tag size={14} className="flex-shrink-0" />
                                                         <span>{shop.category?.name || "Catégorie"}</span>
                                                     </span>
