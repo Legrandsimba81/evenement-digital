@@ -1,3 +1,4 @@
+// app/(public)/invitation/[slug]/page.tsx
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -5,22 +6,43 @@ import InvitationCard from "@/components/invitation/InvitationCard";
 import MessageForm from "@/components/forms/MessageForm";
 import GuestVerificationForm from "@/components/invitation/GuestVerificationForm";
 import FloatingHearts from "@/components/invitation/FloatingHearts";
-import { Heart, UserX, Phone, ArrowLeft, Check } from "lucide-react";
+import {
+  Heart,
+  UserX,
+  Phone,
+  ArrowLeft,
+  Check,
+  MapPin,
+} from "lucide-react";
 import MessageSuggestions from "@/components/invitation/MessageSuggestions";
 import MessageItem from "@/components/invitation/MessageItem";
 
-// ✅ Métadonnées dynamiques (Open Graph, Twitter, etc.)
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+// ✅ Métadonnées dynamiques
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
   const { slug } = await params;
   const event = await prisma.event.findUnique({
     where: { slug },
-    select: { title: true, imageUrl: true, invitationText: true, date: true, location: true },
+    select: {
+      title: true,
+      imageUrl: true,
+      invitationText: true,
+      date: true,
+      location: true,
+      locationName: true,
+      locationAddress: true,
+    },
   });
   if (!event) return { title: "Invitation" };
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://evenement-digital.vercel.app";
   const imageUrl = event.imageUrl
-    ? (event.imageUrl.startsWith("http") ? event.imageUrl : `${baseUrl}${event.imageUrl}`)
+    ? event.imageUrl.startsWith("http")
+      ? event.imageUrl
+      : `${baseUrl}${event.imageUrl}`
     : `${baseUrl}/og-image.png`;
 
   return {
@@ -87,14 +109,47 @@ export default async function InvitationPage({
   const { slug } = await params;
   const { firstName, lastName } = await searchParams;
 
+  // ✅ Requête explicite avec tous les champs nécessaires
   const event = await prisma.event.findUnique({
     where: { slug },
-    include: { messages: true, guests: true },
+    select: {
+      id: true,
+      title: true,
+      type: true,
+      description: true,
+      invitationText: true,
+      program: true,
+      location: true,
+      date: true,
+      time: true,
+      imageUrl: true,
+      userId: true,
+      slug: true,
+      whatsappNumber: true,
+      createdAt: true,
+      updatedAt: true,
+      invitationImageUrl: true,
+      invitationNumber: true,
+      gateSecret: true,
+      theme: true,
+      thesisTitle: true,
+      format: true,
+      // ✅ Nouveaux champs de localisation
+      locationName: true,
+      locationAddress: true,
+      locationLat: true,
+      locationLng: true,
+      locationUrl: true,
+      // Relations
+      messages: {
+        orderBy: { createdAt: "desc" },
+      },
+      guests: true,
+    },
   });
 
   if (!event) return notFound();
 
-  // ✅ Déterminer si c'est un billet
   const isBillet = event.type === "AUTRE" && event.format === "BILLET";
 
   if (!firstName || !lastName) {
@@ -162,11 +217,11 @@ export default async function InvitationPage({
             </div>
           </div>
           <h1 className="text-2xl font-bold text-green-600">
-            {guest.title ? `${guest.title} ${guest.firstName} ${guest.lastName}` : `${guest.firstName} ${guest.lastName}`}
+            {guest.title
+              ? `${guest.title} ${guest.firstName} ${guest.lastName}`
+              : `${guest.firstName} ${guest.lastName}`}
           </h1>
-          <p className="mt-3 text-gray-600">
-            est déjà entré dans la salle.
-          </p>
+          <p className="mt-3 text-gray-600">est déjà entré dans la salle.</p>
           <p className="mt-1 text-sm text-gray-500">
             Profitez bien de l'événement !
           </p>
@@ -179,16 +234,18 @@ export default async function InvitationPage({
   const eventType = event.type as keyof typeof messageSuggestions;
   const suggestions = messageSuggestions[eventType] || messageSuggestions["AUTRE"];
 
-  const messagesLove = event.messages.filter((m) =>
-    m.content.toLowerCase().includes("amour") ||
-    m.content.toLowerCase().includes("❤") ||
-    m.content.toLowerCase().includes("love")
+  const messagesLove = event.messages.filter(
+    (m) =>
+      m.content.toLowerCase().includes("amour") ||
+      m.content.toLowerCase().includes("❤") ||
+      m.content.toLowerCase().includes("love")
   );
 
   let themeValue = null;
   if (event.theme) {
     try {
-      themeValue = typeof event.theme === 'string' ? event.theme : JSON.stringify(event.theme);
+      themeValue =
+        typeof event.theme === "string" ? event.theme : JSON.stringify(event.theme);
     } catch {
       themeValue = null;
     }
@@ -200,8 +257,21 @@ export default async function InvitationPage({
     theme: themeValue,
   };
 
+  // Construction des URLs de navigation
+  const googleMapsUrl =
+    event.locationLat && event.locationLng
+      ? `https://www.google.com/maps?q=${event.locationLat},${event.locationLng}`
+      : event.locationUrl ||
+        `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+          event.locationAddress || event.locationName || event.location || ""
+        )}`;
+
+  const wazeUrl =
+    event.locationLat && event.locationLng
+      ? `https://waze.com/ul?ll=${event.locationLat},${event.locationLng}&navigate=yes`
+      : null;
+
   return (
-    // ✅ Conteneur principal avec style clair forcé (background blanc, texte noir)
     <div className="relative min-h-screen bg-white text-gray-900 py-8 px-4 sm:py-12 sm:px-6">
       <FloatingHearts />
       <div className="max-w-3xl mx-auto relative z-10 space-y-6">
@@ -211,8 +281,54 @@ export default async function InvitationPage({
           guestTitle={guest.title || undefined}
           guestId={guest.id}
           guestInvitationType={guest.invitationType}
-          guestLevel={guest.guestLevel || null} // ✅ correction ici
+          guestLevel={guest.guestLevel || null}
         />
+
+        {/* --- SECTION LOCALISATION --- */}
+        {(event.locationName ||
+          event.locationAddress ||
+          event.locationLat ||
+          event.locationLng ||
+          event.locationUrl ||
+          event.location) && (
+          <div className="bg-white/70 rounded-2xl p-5 shadow-sm backdrop-blur-sm border border-gray-200">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 flex items-center gap-2">
+              <MapPin size={24} className="text-primary-500" />
+              Lieu de l'événement
+            </h2>
+            {event.locationName && (
+              <p className="text-lg font-semibold text-gray-800">
+                {event.locationName}
+              </p>
+            )}
+            {event.locationAddress && (
+              <p className="text-gray-600 mt-1">{event.locationAddress}</p>
+            )}
+            {!event.locationName && !event.locationAddress && event.location && (
+              <p className="text-gray-600">{event.location}</p>
+            )}
+            <div className="mt-4 flex flex-wrap gap-3">
+              <a
+                href={googleMapsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition"
+              >
+                <MapPin size={16} /> Voir sur Google Maps
+              </a>
+              {wazeUrl && (
+                <a
+                  href={wazeUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition"
+                >
+                  <MapPin size={16} /> Waze
+                </a>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Messages d'amour pour les mariages (uniquement si ce n'est pas un billet) */}
         {!isBillet && event.type === "MARIAGE" && messagesLove.length > 0 && (
@@ -224,9 +340,7 @@ export default async function InvitationPage({
             <div className="mt-4 space-y-4">
               {messagesLove.map((msg) => (
                 <div key={msg.id} className="bg-white/70 p-4 rounded-xl shadow-sm">
-                  <p className="font-semibold text-gray-900">
-                    {msg.guestName}
-                  </p>
+                  <p className="font-semibold text-gray-900">{msg.guestName}</p>
                   <p className="text-gray-700 mt-1">{msg.content}</p>
                 </div>
               ))}

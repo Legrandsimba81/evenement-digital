@@ -92,6 +92,11 @@ model Event {
   updatedAt          DateTime            @updatedAt
   invitationImageUrl String?
   invitationNumber   String?
+  locationAddress String?  // Adresse textuelle
+  locationLat     Float?   // Latitude
+  locationLng     Float?   // Longitude
+  locationName    String?  // Nom du lieu (ex: "Salle des fêtes La Fontaine")
+  locationUrl     String?  // Lien externe (ex: Google Maps)
   gateSecret         String?
   theme              Json?
   thesisTitle        String?

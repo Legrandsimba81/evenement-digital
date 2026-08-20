@@ -181,6 +181,12 @@ export default function EventDetailsClient({ event }: { event: Event }) {
             <Users size={14} /> Collab.
           </Link>
           <Link
+            href={`/dashboard/event/${event.slug}/location`}
+            className="inline-flex items-center gap-2 bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-medium transition"
+          >
+            <MapPin size={16} /> Gérer le lieu
+          </Link>
+          <Link
             href={`/dashboard/${event.slug}/logs`}
             className="inline-flex items-center gap-1.5 bg-gray-500 hover:bg-gray-600 text-white px-3 py-1.5 rounded-full text-xs font-medium transition"
           >
@@ -190,7 +196,7 @@ export default function EventDetailsClient({ event }: { event: Event }) {
             href="/guide-dashboard"
             className="inline-flex items-center gap-1.5 bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50 px-3 py-1.5 rounded-full text-xs font-medium transition"
           >
-            <BookOpen size={14} /> Lire le guide "Comment utiliser le tableau de bord ?" 
+            <BookOpen size={14} /> Lire le guide "Comment utiliser le tableau de bord ?"
           </Link>
         </div>
       </div>

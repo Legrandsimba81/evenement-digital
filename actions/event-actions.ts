@@ -8,7 +8,50 @@ import { randomUUID, randomBytes } from "crypto";
 import { canManageEvent } from "@/lib/permissions";
 import { createLog } from "@/actions/log-actions";
 import { notifyEventCreated, createNotification } from "@/lib/notifications";
+import { z } from "zod";
 
+// ---------- Schéma de validation pour la création ----------
+const EventCreateSchema = z.object({
+  title: z.string().min(1, "Titre requis"),
+  type: z.string().min(1, "Type requis"),
+  description: z.string().optional().nullable(),
+  invitationText: z.string().optional().nullable(),
+  program: z.string().optional().nullable(),
+  location: z.string().min(1, "Lieu requis"),
+  date: z.string().or(z.date()),
+  time: z.string().optional().nullable(),
+  whatsappNumber: z.string().optional().nullable(),
+  imageUrl: z.string().url().optional().nullable(),
+  invitationImageUrl: z.string().url().optional().nullable(),
+  thesisTitle: z.string().optional().nullable(),
+  theme: z.any().optional().nullable(),
+  format: z.string().optional().nullable(),
+});
+
+// ---------- Schéma de validation pour la mise à jour ----------
+const EventUpdateSchema = z.object({
+  title: z.string().min(1, "Titre requis").optional(),
+  type: z.string().min(1, "Type requis").optional(),
+  description: z.string().optional().nullable(),
+  invitationText: z.string().optional().nullable(),
+  program: z.string().optional().nullable(),
+  location: z.string().min(1, "Lieu requis").optional(),
+  date: z.string().or(z.date()).optional(),
+  time: z.string().optional().nullable(),
+  whatsappNumber: z.string().optional().nullable(),
+  imageUrl: z.string().url().optional().nullable(),
+  invitationImageUrl: z.string().url().optional().nullable(),
+  thesisTitle: z.string().optional().nullable(),
+  theme: z.any().optional().nullable(),
+  // Nouveaux champs de localisation (optionnels)
+  locationName: z.string().optional().nullable(),
+  locationAddress: z.string().optional().nullable(),
+  locationLat: z.number().optional().nullable(),
+  locationLng: z.number().optional().nullable(),
+  locationUrl: z.string().url().optional().nullable(),
+});
+
+// ---------- Création ----------
 export async function createEvent(data: any) {
   try {
     const session = await auth();
@@ -22,8 +65,8 @@ export async function createEvent(data: any) {
       throw new Error("Votre compte est désactivé. Vous ne pouvez pas créer d'événement.");
     }
 
-    const eventType = data.type;
-    if (!eventType) throw new Error("Le type d'événement est requis.");
+    const validated = EventCreateSchema.parse(data);
+    const eventType = validated.type;
 
     const limits = user.eventLimits as Record<string, number | null> | null;
     const limit = limits?.[eventType] ?? 5;
@@ -43,67 +86,57 @@ export async function createEvent(data: any) {
       );
     }
 
-    const allowedFields = [
-      "title",
-      "type",
-      "description",
-      "invitationText",
-      "program",
-      "location",
-      "date",
-      "time",
-      "whatsappNumber",
-      "imageUrl",
-      "invitationImageUrl",
-      "thesisTitle",
-      "theme",
-      "format",
-    ];
-
-    const cleanData: any = {};
-    for (const key of allowedFields) {
-      if (data[key] !== undefined && data[key] !== null) {
-        cleanData[key] = data[key];
-      }
-    }
-
-    if (!cleanData.date) throw new Error("La date est requise");
-    cleanData.date = new Date(cleanData.date);
-    if (isNaN(cleanData.date.getTime())) throw new Error("Date invalide");
+    const eventDate = typeof validated.date === 'string' ? new Date(validated.date) : validated.date;
+    if (isNaN(eventDate.getTime())) throw new Error("Date invalide");
 
     const slug = randomUUID();
     const gateSecret = randomBytes(32).toString("hex");
 
     let themeValue = null;
-    if (data.theme) {
+    if (validated.theme) {
       try {
-        themeValue = typeof data.theme === 'string' ? data.theme : JSON.stringify(data.theme);
+        themeValue = typeof validated.theme === 'string' ? validated.theme : JSON.stringify(validated.theme);
       } catch {
         themeValue = null;
       }
     }
 
-    const eventData = {
-      ...cleanData,
+    const eventData: any = {
+      title: validated.title,
+      type: validated.type,
+      description: validated.description || undefined,
+      invitationText: validated.invitationText || undefined,
+      program: validated.program || undefined,
+      location: validated.location,
+      date: eventDate,
+      time: validated.time || undefined,
+      whatsappNumber: validated.whatsappNumber || undefined,
+      imageUrl: validated.imageUrl || undefined,
+      invitationImageUrl: validated.invitationImageUrl || undefined,
+      thesisTitle: validated.thesisTitle || undefined,
+      theme: themeValue,
+      format: validated.format || "INVITATION",
       userId: session.user.id,
       slug,
       gateSecret,
-      theme: themeValue,
     };
 
     const event = await prisma.event.create({ data: eventData });
 
-    // ✅ Notification de création
     await notifyEventCreated(session.user.id, event.title, event.slug);
 
     revalidatePath("/dashboard");
     return { success: true, event };
   } catch (error: any) {
     console.error("❌ Erreur createEvent:", error);
+    if (error.name === "ZodError") {
+      throw new Error(error.errors.map((e: any) => e.message).join(", "));
+    }
     throw new Error(error.message || "Erreur lors de la création");
   }
 }
 
+// ---------- Mise à jour ----------
 export async function updateEvent(slug: string, data: any) {
   try {
     const session = await auth();
@@ -115,52 +148,61 @@ export async function updateEvent(slug: string, data: any) {
     const hasAccess = await canManageEvent(event.id, session.user.id);
     if (!hasAccess) throw new Error("Non autorisé");
 
-    const allowedFields = [
-      "title",
-      "type",
-      "description",
-      "invitationText",
-      "program",
-      "location",
-      "date",
-      "time",
-      "whatsappNumber",
-      "imageUrl",
-      "invitationImageUrl",
-      "thesisTitle",
-      "theme",
-    ];
+    const validated = EventUpdateSchema.parse(data);
 
-    const cleanData: any = {};
-    for (const key of allowedFields) {
-      if (data[key] !== undefined && data[key] !== null) {
-        cleanData[key] = data[key];
-      }
+    // Construction explicite de l'objet de mise à jour
+    const updateData: any = {};
+
+    // Champs de base
+    if (validated.title !== undefined && validated.title !== null) updateData.title = validated.title;
+    if (validated.type !== undefined && validated.type !== null) updateData.type = validated.type;
+    if (validated.description !== undefined && validated.description !== null) updateData.description = validated.description;
+    if (validated.invitationText !== undefined && validated.invitationText !== null) updateData.invitationText = validated.invitationText;
+    if (validated.program !== undefined && validated.program !== null) updateData.program = validated.program;
+    if (validated.location !== undefined && validated.location !== null) updateData.location = validated.location;
+    if (validated.time !== undefined && validated.time !== null) updateData.time = validated.time;
+    if (validated.whatsappNumber !== undefined && validated.whatsappNumber !== null) updateData.whatsappNumber = validated.whatsappNumber;
+    if (validated.imageUrl !== undefined && validated.imageUrl !== null) updateData.imageUrl = validated.imageUrl;
+    if (validated.invitationImageUrl !== undefined && validated.invitationImageUrl !== null) updateData.invitationImageUrl = validated.invitationImageUrl;
+    if (validated.thesisTitle !== undefined && validated.thesisTitle !== null) updateData.thesisTitle = validated.thesisTitle;
+
+    // Date
+    if (validated.date !== undefined && validated.date !== null) {
+      const eventDate = typeof validated.date === 'string' ? new Date(validated.date) : validated.date;
+      if (isNaN(eventDate.getTime())) throw new Error("Date invalide");
+      updateData.date = eventDate;
     }
 
-    if (cleanData.date) {
-      cleanData.date = new Date(cleanData.date);
-      if (isNaN(cleanData.date.getTime())) throw new Error("Date invalide");
-    }
-
-    let themeValue = null;
-    if (data.theme) {
+    // Theme
+    if (validated.theme !== undefined && validated.theme !== null) {
+      let themeValue = null;
       try {
-        themeValue = typeof data.theme === 'string' ? data.theme : JSON.stringify(data.theme);
+        themeValue = typeof validated.theme === 'string' ? validated.theme : JSON.stringify(validated.theme);
       } catch {
         themeValue = null;
       }
+      updateData.theme = themeValue;
     }
-    cleanData.theme = themeValue;
+
+    // ✅ Champs de localisation avancée
+    if (validated.locationName !== undefined && validated.locationName !== null) updateData.locationName = validated.locationName;
+    if (validated.locationAddress !== undefined && validated.locationAddress !== null) updateData.locationAddress = validated.locationAddress;
+    if (validated.locationLat !== undefined && validated.locationLat !== null) updateData.locationLat = validated.locationLat;
+    if (validated.locationLng !== undefined && validated.locationLng !== null) updateData.locationLng = validated.locationLng;
+    if (validated.locationUrl !== undefined && validated.locationUrl !== null) updateData.locationUrl = validated.locationUrl;
+
+    // Si aucun champ n'est à mettre à jour, on peut retourner une erreur
+    if (Object.keys(updateData).length === 0) {
+      throw new Error("Aucune donnée à mettre à jour.");
+    }
 
     const updated = await prisma.event.update({
       where: { slug },
-      data: cleanData,
+      data: updateData,
     });
 
     await createLog(event.id, session.user.id, "UPDATED_EVENT", `Modification de l'événement "${event.title}"`);
 
-    // ✅ Notification de modification
     await createNotification({
       userId: session.user.id,
       type: "info",
@@ -173,10 +215,14 @@ export async function updateEvent(slug: string, data: any) {
     return { success: true, event: updated };
   } catch (error: any) {
     console.error("❌ Erreur updateEvent:", error);
+    if (error.name === "ZodError") {
+      throw new Error(error.errors.map((e: any) => e.message).join(", "));
+    }
     throw new Error(error.message || "Erreur lors de la mise à jour");
   }
 }
 
+// ---------- Suppression ----------
 export async function deleteEvent(slug: string) {
   try {
     const session = await auth();
@@ -192,7 +238,6 @@ export async function deleteEvent(slug: string) {
 
     await prisma.event.delete({ where: { slug } });
 
-    // ✅ Notification de suppression
     await createNotification({
       userId: session.user.id,
       type: "warning",
@@ -208,6 +253,7 @@ export async function deleteEvent(slug: string) {
   }
 }
 
+// ---------- Suppression par admin ----------
 export async function deleteEventAsAdmin(slug: string) {
   try {
     const session = await auth();
@@ -223,7 +269,6 @@ export async function deleteEventAsAdmin(slug: string) {
 
     await prisma.event.delete({ where: { slug } });
 
-    // ✅ Notification au propriétaire
     await createNotification({
       userId: ownerId,
       type: "error",
