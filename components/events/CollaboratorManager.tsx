@@ -32,7 +32,7 @@ export default function CollaboratorManager({
 }) {
   const router = useRouter();
   const [collaborators, setCollaborators] = useState<Collaborator[]>(initialCollaborators);
-  const [owner, setOwner] = useState<Owner | null>(initialOwner);
+  const [owner] = useState<Owner | null>(initialOwner);
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -45,15 +45,16 @@ export default function CollaboratorManager({
     setError("");
     setSuccess("");
     try {
-      await addCollaborator(eventId, email.trim());
-      const updated = await fetch(`/api/events/${eventId}/collaborators`).then((res) =>
-        res.json()
-      );
-      setCollaborators(updated.collaborators || []);
-      setOwner(updated.owner || null);
-      setEmail("");
-      setSuccess("Collaborateur ajouté avec succès !");
-      router.refresh();
+      const result = await addCollaborator(eventId, email.trim());
+      if (result.success && result.collaborator) {
+        // Ajouter le collaborateur à la liste locale
+        setCollaborators((prev) => [...prev, result.collaborator as Collaborator]);
+        setEmail("");
+        setSuccess("Collaborateur ajouté avec succès !");
+        router.refresh();
+      } else {
+        setError("Erreur lors de l'ajout.");
+      }
     } catch (err: any) {
       setError(err.message || "Erreur lors de l'ajout.");
     } finally {

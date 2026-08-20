@@ -41,14 +41,13 @@ export default async function CollaboratorsPage({
 
   if (!isOwner && !hasAccess) redirect("/dashboard");
 
-  // Récupérer les collaborateurs
   let collaborators: Collaborator[] = [];
   let owner: Owner | null = null;
 
   try {
     const data = await getCollaborators(event.id);
     collaborators = data.collaborators || [];
-    owner = data.owner; // ✅ type correct : { id: string; name: string | null } | null
+    owner = data.owner;
   } catch (error) {
     console.error("Erreur chargement collaborateurs:", error);
   }

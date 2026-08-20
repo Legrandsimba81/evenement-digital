@@ -25,7 +25,7 @@ export async function addCollaborator(eventId: string, email: string) {
 
   const user = await prisma.user.findUnique({
     where: { email },
-    select: { id: true, canCreateEvents: true },
+    select: { id: true, name: true, email: true, canCreateEvents: true },
   });
   if (!user) throw new Error("Utilisateur non trouvé");
   if (!user.canCreateEvents) {
@@ -40,17 +40,27 @@ export async function addCollaborator(eventId: string, email: string) {
     throw new Error("Cet utilisateur est déjà collaborateur");
   }
 
-  await prisma.eventCollaborator.create({
+  const created = await prisma.eventCollaborator.create({
     data: {
       eventId,
       userId: user.id,
       role: "admin",
     },
+    include: { user: { select: { id: true, name: true, email: true } } },
   });
 
   revalidatePath(`/dashboard/${event.slug}`);
   revalidatePath(`/dashboard/${event.slug}/admin`);
-  return { success: true };
+
+  return {
+    success: true,
+    collaborator: {
+      id: created.id,
+      userId: created.userId,
+      name: created.user.name,
+      email: created.user.email,
+    },
+  };
 }
 
 export async function removeCollaborator(eventId: string, collaboratorId: string) {
@@ -100,7 +110,6 @@ export async function getCollaborators(eventId: string) {
     select: { id: true, name: true },
   });
 
-  // ✅ Correction : `owner` est toujours un objet avec `id` défini ou `null`
   return {
     owner: owner ? { id: owner.id, name: owner.name } : null,
     collaborators: event.collaborators.map((c: any) => ({
