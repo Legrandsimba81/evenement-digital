@@ -1,12 +1,13 @@
 // app/api/algolia/webhook/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { shopsIndex } from "@/lib/algolia";
+import { algoliaClient } from "@/lib/algolia"; // On importe le client global v5
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { event, shopId } = body;
+    const indexName = process.env.ALGOLIA_INDEX_NAME!;
 
     if (event === "CREATE" || event === "UPDATE") {
       // Récupérer la boutique mise à jour
@@ -24,8 +25,8 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Boutique non trouvée" }, { status: 404 });
       }
 
-      // Indexer la boutique
-      await shopsIndex.saveObject({
+      // Préparer les données pour Algolia
+      const algoliaRecord = {
         objectID: shop.id,
         name: shop.name,
         slug: shop.slug,
@@ -53,16 +54,26 @@ export async function POST(req: NextRequest) {
           : 0,
         reviewCount: shop.reviews.length,
         createdAt: shop.createdAt.getTime(),
+      };
+
+      // Indexer la boutique (Syntaxe v5 avec "body")
+      await algoliaClient.saveObject({
+        indexName,
+        body: algoliaRecord,
       });
     }
 
     if (event === "DELETE") {
-      await shopsIndex.deleteObject(shopId);
+      // Supprimer la boutique (Syntaxe v5 avec "objectID")
+      await algoliaClient.deleteObject({
+        indexName,
+        objectID: shopId,
+      });
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Erreur webhook Algolia:", error);
-    return NextResponse.json({ error: "Erreur" }, { status: 500 });
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
