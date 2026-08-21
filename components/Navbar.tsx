@@ -11,7 +11,7 @@ import {
   Home,
   LayoutGrid,
   LogOut,
-  Menu, // Ajout de l'icône Menu
+  Menu,
   Moon,
   Newspaper,
   PlusCircle,
@@ -29,9 +29,46 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // État et ref pour le menu hamburger mobile
   const [mobileDropdownOpen, setMobileDropdownOpen] = useState(false);
   const mobileDropdownRef = useRef<HTMLDivElement>(null);
+
+  // État pour la visibilité de la barre mobile (masquage au scroll)
+  const [isMobileNavVisible, setIsMobileNavVisible] = useState(true);
+  const lastScrollY = useRef(0);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Détecter la taille d'écran pour n'appliquer le comportement qu'en mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768); // correspond à md
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  // Gestion du scroll pour masquer/afficher la barre mobile
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      if (currentScrollY > lastScrollY.current && currentScrollY > 80) {
+        // Descend : masquer
+        setIsMobileNavVisible(false);
+      } else {
+        // Monte ou en haut : afficher
+        setIsMobileNavVisible(true);
+      }
+      lastScrollY.current = currentScrollY;
+    };
+
+    if (isMobile) {
+      window.addEventListener("scroll", handleScroll, { passive: true });
+    } else {
+      setIsMobileNavVisible(true); // sur desktop toujours visible
+    }
+
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [isMobile]);
 
   useEffect(() => {
     const storedTheme = window.localStorage.getItem("theme") as "light" | "dark" | null;
@@ -76,7 +113,7 @@ export default function Navbar() {
     { href: "/dashboard", label: "Mes événements", icon: LayoutGrid },
     { href: "/dashboard/event/new", label: "Créer", icon: PlusCircle },
     { href: "/tarifs", label: "Tarifs", icon: Tag },
-    // { href: "/boutiques", label: "Prestataires", icon: Store }, // conservé en commentaire pour le desktop
+    // { href: "/boutiques", label: "Prestataires", icon: Store },
     { href: "/blog", label: "Blog", icon: Newspaper },
   ];
 
@@ -163,7 +200,8 @@ export default function Navbar() {
                 </button>
 
                 {menuOpen && (
-                  <div className="absolute right-0 mt-2 w-64 rounded-2xl border border-gray-200 bg-white p-2 shadow-xl dark:border-gray-800 dark:bg-gray-950">
+                  // Ajout de z-[100] pour être au-dessus de tout
+                  <div className="absolute right-0 mt-2 w-64 rounded-2xl border border-gray-200 bg-white p-2 shadow-xl dark:border-gray-800 dark:bg-gray-950 z-[100]">
                     <div className="rounded-xl border border-gray-100 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-900/70">
                       <p className="text-sm font-semibold text-gray-900 dark:text-white">
                         {userName}
@@ -224,10 +262,14 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile navigation - remplacement du premier lien par un menu hamburger */}
-      <div className="border-t border-gray-100 bg-white/90 dark:border-gray-900 dark:bg-gray-950 md:hidden">
+      {/* Mobile navigation - avec animation de masquage */}
+      <div
+        className={`border-t border-gray-100 bg-white/90 dark:border-gray-900 dark:bg-gray-950 md:hidden transition-transform duration-300 ${
+          isMobileNavVisible ? "translate-y-0" : "-translate-y-full"
+        }`}
+      >
         <nav className="relative mx-auto flex max-w-7xl justify-around gap-1 px-2 py-2 sm:px-4">
-          {/* Bouton hamburger avec dropdown */}
+          {/* Bouton hamburger avec dropdown (s'ouvre vers le bas) */}
           <div className="relative" ref={mobileDropdownRef}>
             <button
               onClick={() => setMobileDropdownOpen((prev) => !prev)}
@@ -239,7 +281,8 @@ export default function Navbar() {
             </button>
 
             {mobileDropdownOpen && (
-              <div className="absolute bottom-full left-0 mb-2 w-48 rounded-2xl border border-gray-200 bg-white p-2 shadow-xl dark:border-gray-800 dark:bg-gray-950">
+              // Dropdown s'ouvre vers le bas : top-full (au lieu de bottom-full)
+              <div className="absolute top-full left-0 mt-2 w-48 rounded-2xl border border-gray-200 bg-white p-2 shadow-xl dark:border-gray-800 dark:bg-gray-950 z-[100]">
                 <Link
                   href="/"
                   onClick={() => setMobileDropdownOpen(false)}
@@ -260,7 +303,7 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* Les autres liens de navigation (sans "Accueil") */}
+          {/* Les autres liens de navigation */}
           {navLinks.slice(1).map((link) => {
             const Icon = link.icon;
             return (
