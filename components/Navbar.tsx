@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
+import { usePathname } from "next/navigation"; // ← ajout
 
 import {
   BellRing,
@@ -32,44 +33,21 @@ export default function Navbar() {
   const [mobileDropdownOpen, setMobileDropdownOpen] = useState(false);
   const mobileDropdownRef = useRef<HTMLDivElement>(null);
 
-  // État pour la visibilité de la barre mobile (masquage au scroll)
-  const [isMobileNavVisible, setIsMobileNavVisible] = useState(true);
-  const lastScrollY = useRef(0);
+  // Détection mobile
   const [isMobile, setIsMobile] = useState(false);
+  const pathname = usePathname(); // ← récupération du chemin
 
-  // Détecter la taille d'écran pour n'appliquer le comportement qu'en mobile
+  // Détecter la taille d'écran
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768); // correspond à md
+      setIsMobile(window.innerWidth < 768);
     };
     checkMobile();
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  // Gestion du scroll pour masquer/afficher la barre mobile
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      if (currentScrollY > lastScrollY.current && currentScrollY > 80) {
-        // Descend : masquer
-        setIsMobileNavVisible(false);
-      } else {
-        // Monte ou en haut : afficher
-        setIsMobileNavVisible(true);
-      }
-      lastScrollY.current = currentScrollY;
-    };
-
-    if (isMobile) {
-      window.addEventListener("scroll", handleScroll, { passive: true });
-    } else {
-      setIsMobileNavVisible(true); // sur desktop toujours visible
-    }
-
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [isMobile]);
-
+  // Thème (inchangé)
   useEffect(() => {
     const storedTheme = window.localStorage.getItem("theme") as "light" | "dark" | null;
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -132,9 +110,14 @@ export default function Navbar() {
     .toUpperCase();
   const isAdmin = session?.user?.role === "ADMIN";
 
+  // Condition pour cacher la barre mobile sur /boutiques
+  const isBoutiquesPage = pathname === "/boutiques";
+  const hideMobileNav = isMobile && isBoutiquesPage;
+
   return (
     <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/95 backdrop-blur dark:border-gray-800 dark:bg-gray-950/95">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
           <div className="flex h-10 w-10 items-center justify-center rounded-full">
             <Image
@@ -151,6 +134,7 @@ export default function Navbar() {
         </Link>
 
         <div className="flex">
+          {/* Navigation desktop */}
           <nav className="hidden md:flex md:items-center md:gap-2">
             {navLinks.map((link) => {
               const Icon = link.icon;
@@ -168,6 +152,7 @@ export default function Navbar() {
           </nav>
 
           <div className="flex items-center gap-2 sm:gap-3">
+            {/* Bouton thème */}
             <button
               type="button"
               aria-label="Basculer le thème"
@@ -177,6 +162,7 @@ export default function Navbar() {
               {theme === "light" ? <Moon size={18} /> : <Sun size={18} />}
             </button>
 
+            {/* Session utilisateur */}
             {session ? (
               <div className="relative" ref={menuRef}>
                 <button
@@ -200,7 +186,6 @@ export default function Navbar() {
                 </button>
 
                 {menuOpen && (
-                  // Ajout de z-[100] pour être au-dessus de tout
                   <div className="absolute right-0 mt-2 w-64 rounded-2xl border border-gray-200 bg-white p-2 shadow-xl dark:border-gray-800 dark:bg-gray-950 z-[100]">
                     <div className="rounded-xl border border-gray-100 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-900/70">
                       <p className="text-sm font-semibold text-gray-900 dark:text-white">
@@ -262,63 +247,60 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile navigation - avec animation de masquage */}
-      <div
-        className={`border-t border-gray-100 bg-white/90 dark:border-gray-900 dark:bg-gray-950 md:hidden transition-transform duration-300 ${
-          isMobileNavVisible ? "translate-y-0" : "-translate-y-full"
-        }`}
-      >
-        <nav className="relative mx-auto flex max-w-7xl justify-around gap-1 px-2 py-2 sm:px-4">
-          {/* Bouton hamburger avec dropdown (s'ouvre vers le bas) */}
-          <div className="relative" ref={mobileDropdownRef}>
-            <button
-              onClick={() => setMobileDropdownOpen((prev) => !prev)}
-              className="flex flex-col items-center gap-0.5 rounded-full px-2 py-1 text-xs font-normal text-gray-700 transition hover:bg-gray-50 hover:text-primary dark:text-gray-400 dark:hover:bg-gray-900 dark:hover:text-white"
-              aria-label="Menu"
-            >
-              <Menu size={18} />
-              <span className="text-[10px] leading-tight">Menu</span>
-            </button>
-
-            {mobileDropdownOpen && (
-              // Dropdown s'ouvre vers le bas : top-full (au lieu de bottom-full)
-              <div className="absolute top-full left-0 mt-2 w-48 rounded-2xl border border-gray-200 bg-white p-2 shadow-xl dark:border-gray-800 dark:bg-gray-950 z-[100]">
-                <Link
-                  href="/"
-                  onClick={() => setMobileDropdownOpen(false)}
-                  className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-gray-700 transition hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-900"
-                >
-                  <Home size={16} className="text-primary" />
-                  Accueil
-                </Link>
-                <Link
-                  href="/boutiques"
-                  onClick={() => setMobileDropdownOpen(false)}
-                  className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-gray-700 transition hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-900"
-                >
-                  <Store size={16} className="text-primary" />
-                  Prestataires
-                </Link>
-              </div>
-            )}
-          </div>
-
-          {/* Les autres liens de navigation */}
-          {navLinks.slice(1).map((link) => {
-            const Icon = link.icon;
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
+      {/* Mobile navigation - affichée sauf sur /boutiques en mobile */}
+      {!hideMobileNav && (
+        <div className="border-t border-gray-100 bg-white/90 dark:border-gray-900 dark:bg-gray-950 md:hidden">
+          <nav className="relative mx-auto flex max-w-7xl justify-around gap-1 px-2 py-2 sm:px-4">
+            {/* Bouton hamburger avec dropdown */}
+            <div className="relative" ref={mobileDropdownRef}>
+              <button
+                onClick={() => setMobileDropdownOpen((prev) => !prev)}
                 className="flex flex-col items-center gap-0.5 rounded-full px-2 py-1 text-xs font-normal text-gray-700 transition hover:bg-gray-50 hover:text-primary dark:text-gray-400 dark:hover:bg-gray-900 dark:hover:text-white"
+                aria-label="Menu"
               >
-                <Icon size={18} />
-                <span className="text-[10px] leading-tight">{link.label}</span>
-              </Link>
-            );
-          })}
-        </nav>
-      </div>
+                <Menu size={18} />
+                <span className="text-[10px] leading-tight">Menu</span>
+              </button>
+
+              {mobileDropdownOpen && (
+                <div className="absolute top-full left-0 mt-2 w-48 rounded-2xl border border-gray-200 bg-white p-2 shadow-xl dark:border-gray-800 dark:bg-gray-950 z-[100]">
+                  <Link
+                    href="/"
+                    onClick={() => setMobileDropdownOpen(false)}
+                    className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-gray-700 transition hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-900"
+                  >
+                    <Home size={16} className="text-primary" />
+                    Accueil
+                  </Link>
+                  <Link
+                    href="/boutiques"
+                    onClick={() => setMobileDropdownOpen(false)}
+                    className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-gray-700 transition hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-900"
+                  >
+                    <Store size={16} className="text-primary" />
+                    Prestataires
+                  </Link>
+                </div>
+              )}
+            </div>
+
+            {/* Les autres liens de navigation (sauf le premier "Accueil" déjà dans le menu) */}
+            {navLinks.slice(1).map((link) => {
+              const Icon = link.icon;
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="flex flex-col items-center gap-0.5 rounded-full px-2 py-1 text-xs font-normal text-gray-700 transition hover:bg-gray-50 hover:text-primary dark:text-gray-400 dark:hover:bg-gray-900 dark:hover:text-white"
+                >
+                  <Icon size={18} />
+                  <span className="text-[10px] leading-tight">{link.label}</span>
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
+      )}
     </header>
   );
 }

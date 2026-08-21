@@ -184,7 +184,7 @@ export default function AlgoliaSearch() {
           {/* Contenu principal */}
           <div className="flex-1 min-w-0">
             {/* Barre de recherche sticky avec marges négatives contrôlées */}
-            <div className="sticky top-16 z-10 bg-white/80 dark:bg-gray-950/80 backdrop-blur-sm py-3 -mx-4 px-4 lg:static lg:bg-transparent lg:backdrop-blur-none lg:py-0 lg:mx-0 lg:px-0 lg:top-auto lg:z-auto">
+            <div className="sticky top-20 z-40 bg-white/80 dark:bg-gray-950/80 backdrop-blur-sm py-3 -mx-4 px-4 lg:bg-transparent lg:backdrop-blur-none lg:py-3 lg:mx-0 lg:px-0">
               <div className="flex items-center gap-3 max-w-full">
                 {/* Bouton filtre mobile */}
                 <button
