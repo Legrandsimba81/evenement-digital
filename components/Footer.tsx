@@ -1,15 +1,16 @@
 "use client";
 
+import { MailOpen } from "lucide-react";
 import Link from "next/link";
-import { 
-  FaHeart, 
-  FaEnvelope, 
-  FaPhone, 
-  FaMapMarkerAlt, 
-  FaGithub, 
-  FaTwitter, 
-  FaFacebook, 
-  FaInstagram 
+import {
+  FaHeart,
+  FaEnvelope,
+  FaPhone,
+  FaMapMarkerAlt,
+  FaGithub,
+  FaTwitter,
+  FaFacebook,
+  FaInstagram
 } from "react-icons/fa";
 
 export default function Footer() {
@@ -74,9 +75,17 @@ export default function Footer() {
           <div>
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider">Contact</h3>
             <ul className="mt-4 space-y-2">
+              {/* Lien vers votre formulaire avec Lucide MailOpen */}
+              <li className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                <MailOpen size={16} className="text-primary" />
+                <Link href="/contact" className="hover:text-primary transition font-medium">
+                  Nous écrire (Formulaire)
+                </Link>
+              </li>
+
               <li className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                 <FaEnvelope size={16} />
-                <a href="mailto:contact@simba-event.com" className="hover:text-primary-500 transition">
+                <a href="mailto:legrasimba81@gmail.com" className="hover:text-primary-500 transition">
                   legrasimba81@gmail.com
                 </a>
               </li>
@@ -92,6 +101,7 @@ export default function Footer() {
               </li>
             </ul>
           </div>
+
 
           {/* Colonne 4 - À propos */}
           <div>
