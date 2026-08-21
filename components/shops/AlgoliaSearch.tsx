@@ -44,25 +44,23 @@ const HitComponent = ({ hit }: { hit: any }) => (
             </h2>
             {hit.isVerified && <BadgeCheck size={18} className="stroke-white fill-blue-600 flex-shrink-0" />}
           </div>
-          <span className="flex items-center gap-1 mt-0.5 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-full text-sm">
+          <span className="flex items-center gap-1 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-full text-sm">
             <Tag size={14} className="flex-shrink-0" />
             <span>{hit.category?.name || "Catégorie"}</span>
           </span>
         </div>
       </div>
-      <div className="mt-2 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-        {hit.province && <span>{hit.province}</span>}
-        {hit.province && hit.city && <span className="text-gray-300">•</span>}
-        {hit.city && (
-          <span className="flex items-center gap-1">
-            <MapPin size={14} className="flex-shrink-0" /> {hit.city}
-          </span>
-        )}
-      </div>
-      <div className="mt-3 flex items-center justify-between">
-        <span className="text-sm text-gray-600 dark:text-gray-300">
-          {hit.priceRange || "Prix sur demande"}
-        </span>
+
+      <div className="mt-3 flex flex-wrap items-center justify-between">
+        <div className="mt-2 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+          {hit.province && <span>{hit.province}</span>}
+          {hit.province && hit.city && <span className="text-gray-300">•</span>}
+          {hit.city && (
+            <span className="flex items-center gap-1">
+              <MapPin size={14} className="flex-shrink-0" /> {hit.city}
+            </span>
+          )}
+        </div>
         <span className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
           <Star size={16} className="text-yellow-500" />
           {hit.averageRating ? hit.averageRating.toFixed(1) : "N/A"} ({hit.reviewCount})
@@ -184,7 +182,7 @@ export default function AlgoliaSearch() {
           {/* Contenu principal */}
           <div className="flex-1 min-w-0">
             {/* Barre de recherche sticky avec marges négatives contrôlées */}
-            <div className="sticky top-20 z-40 bg-white/80 dark:bg-gray-950/80 backdrop-blur-sm py-3 -mx-4 px-4 lg:bg-transparent lg:backdrop-blur-none lg:py-3 lg:mx-0 lg:px-0">
+            <div className="sticky top-20 z-40 bg-white/80 dark:bg-gray-950/80 backdrop-blur-sm py-3 -m-4 px-4 lg:bg-transparent lg:backdrop-blur-none lg:pb-3 lg:mx-0 lg:px-0">
               <div className="flex items-center gap-3 max-w-full">
                 {/* Bouton filtre mobile */}
                 <button
