@@ -51,7 +51,7 @@ const HitComponent = ({ hit }: { hit: any }) => (
         </div>
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center justify-between">
+      <div className="mt-2 flex flex-wrap items-center justify-between">
         <div className="mt-2 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
           {hit.province && <span>{hit.province}</span>}
           {hit.province && hit.city && <span className="text-gray-300">•</span>}
@@ -182,7 +182,7 @@ export default function AlgoliaSearch() {
           {/* Contenu principal */}
           <div className="flex-1 min-w-0">
             {/* Barre de recherche sticky avec marges négatives contrôlées */}
-            <div className="sticky top-20 z-40 bg-white/80 dark:bg-gray-950/80 backdrop-blur-sm py-3 -mx-4 -mt-4 mb-4 px-4 lg:bg-transparent lg:backdrop-blur-none lg:pb-3 lg:mx-0 lg:px-0">
+            <div className="sticky top-20 z-40 bg-white/80 dark:bg-gray-950/80 backdrop-blur-sm py-3 -mx-4 -mt-6 lg:-mt-3 mb-4 lg:mb-0 px-4 lg:bg-transparent lg:backdrop-blur-none lg:pb-3 lg:mx-0 lg:px-0">
               <div className="flex items-center gap-3 max-w-full">
                 {/* Bouton filtre mobile */}
                 <button
