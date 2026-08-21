@@ -135,3 +135,31 @@ input, select, textarea {
 .ignore-transition * {
   transition: none !important;
 }
+/* Personnalisation des styles Algolia */
+.ais-RefinementList {
+  @apply space-y-1;
+}
+
+.ais-RefinementList-item {
+  @apply flex items-center gap-2;
+}
+
+.ais-RefinementList-label {
+  @apply text-sm text-gray-700 dark:text-gray-300 cursor-pointer flex items-center gap-2;
+}
+
+.ais-RefinementList-checkbox {
+  @apply w-4 h-4 rounded border-gray-300 dark:border-gray-700 text-primary-500 focus:ring-primary-500;
+}
+
+.ais-RefinementList-count {
+  @apply text-xs text-gray-400 ml-auto;
+}
+
+.ais-Pagination-link {
+  @apply px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition;
+}
+
+.ais-Pagination-item--selected .ais-Pagination-link {
+  @apply bg-primary-500 text-white border-primary-500 hover:bg-primary-600;
+}

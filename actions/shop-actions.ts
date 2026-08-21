@@ -85,6 +85,19 @@ function normalizeProfile(profile: any) {
   };
 }
 
+// ---------- Synchronisation Algolia ----------
+async function syncToAlgolia(event: "CREATE" | "UPDATE" | "DELETE", shopId: string) {
+  try {
+    await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/algolia/webhook`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ event, shopId }),
+    });
+  } catch (error) {
+    console.error("Erreur synchro Algolia:", error);
+  }
+}
+
 // ---------- Liste ----------
 export async function getShops(params: ShopFilterParams = {}) {
   // 🔍 LOG pour vérifier les paramètres reçus (visible dans les logs Vercel)
@@ -214,6 +227,9 @@ export async function createShop(data: z.infer<typeof ShopCreateSchema>) {
       include: { profile: true },
     });
 
+    // Synchronisation Algolia
+    await syncToAlgolia("CREATE", shop.id);
+
     revalidatePath("/boutiques");
     revalidatePath("/dashboard/shops");
     return { success: true, shop };
@@ -275,6 +291,10 @@ export async function updateShop(slug: string, data: z.infer<typeof ShopUpdateSc
       data: updateData,
       include: { profile: true },
     });
+
+    // Synchronisation Algolia
+    await syncToAlgolia("UPDATE", updated.id);
+
     revalidatePath(`/boutiques/${slug}`);
     revalidatePath("/boutiques");
     revalidatePath("/dashboard/shops");
@@ -294,8 +314,13 @@ export async function deleteShop(slug: string) {
   if (existing.userId !== session.user.id && session.user.role !== "ADMIN") {
     throw new Error("Permission insuffisante.");
   }
+
   try {
     await prisma.shop.delete({ where: { slug } });
+
+    // Synchronisation Algolia
+    await syncToAlgolia("DELETE", existing.id);
+
     revalidatePath("/boutiques");
     revalidatePath("/dashboard/shops");
     return { success: true };
@@ -314,8 +339,13 @@ export async function toggleShopActive(slug: string, isActive: boolean) {
   if (existing.userId !== session.user.id && session.user.role !== "ADMIN") {
     throw new Error("Permission insuffisante.");
   }
+
   try {
     await prisma.shop.update({ where: { slug }, data: { isActive } });
+
+    // Synchronisation Algolia
+    await syncToAlgolia("UPDATE", existing.id);
+
     revalidatePath("/boutiques");
     revalidatePath(`/boutiques/${slug}`);
     return { success: true };
@@ -331,8 +361,13 @@ export async function certifyShop(slug: string, isVerified: boolean) {
   if (!session?.user || session.user.role !== "ADMIN") {
     throw new Error("Accès administrateur requis.");
   }
+
   try {
     await prisma.shop.update({ where: { slug }, data: { isVerified } });
+
+    // Synchronisation Algolia
+    await syncToAlgolia("UPDATE", (await prisma.shop.findUnique({ where: { slug } }))!.id);
+
     revalidatePath("/admin/shops");
     revalidatePath(`/boutiques/${slug}`);
     revalidatePath("/boutiques");

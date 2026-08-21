@@ -6,10 +6,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BackButtonFloating from "@/components/ui/BackButtonFloating";
 
-
 const inter = Inter({ subsets: ["latin"] });
-
-
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://evenement-digital.vercel.app"),
@@ -77,13 +74,10 @@ export const metadata: Metadata = {
     statusBarStyle: "black-translucent",
   },
   applicationName: "Octavia",
+  // Correction ici :
   icons: {
-    icons: {
-      icon: "/icon.png",
-    },
-    apple: [
-      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
-    ],
+    icon: "/icon.png",
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
     shortcut: [{ url: "/icon.png" }],
   },
   manifest: "/manifest.json",
