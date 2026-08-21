@@ -11,6 +11,7 @@ import {
   Home,
   LayoutGrid,
   LogOut,
+  Menu, // Ajout de l'icône Menu
   Moon,
   Newspaper,
   PlusCircle,
@@ -28,6 +29,10 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
+  // État et ref pour le menu hamburger mobile
+  const [mobileDropdownOpen, setMobileDropdownOpen] = useState(false);
+  const mobileDropdownRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     const storedTheme = window.localStorage.getItem("theme") as "light" | "dark" | null;
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -42,10 +47,23 @@ export default function Navbar() {
     window.localStorage.setItem("theme", theme);
   }, [theme]);
 
+  // Fermeture du menu utilisateur (clic extérieur)
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Fermeture du menu hamburger mobile (clic extérieur)
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (mobileDropdownRef.current && !mobileDropdownRef.current.contains(event.target as Node)) {
+        setMobileDropdownOpen(false);
       }
     };
 
@@ -58,7 +76,7 @@ export default function Navbar() {
     { href: "/dashboard", label: "Mes événements", icon: LayoutGrid },
     { href: "/dashboard/event/new", label: "Créer", icon: PlusCircle },
     { href: "/tarifs", label: "Tarifs", icon: Tag },
-    // { href: "/boutiques", label: "Prestataires", icon: Store },
+    // { href: "/boutiques", label: "Prestataires", icon: Store }, // conservé en commentaire pour le desktop
     { href: "/blog", label: "Blog", icon: Newspaper },
   ];
 
@@ -81,19 +99,19 @@ export default function Navbar() {
     <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/95 backdrop-blur dark:border-gray-800 dark:bg-gray-950/95">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-2">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full">
-        <Image 
-          src="/logo-octavia-png.png" 
-          alt="Logo OctaviaEvent" 
-          width={40} 
-          height={40}
-          className="object-contain"
-        />
-      </div>
-        <span className="text-lg font-semibold tracking-tight text-gray-900 dark:text-white">
-          Octavia<span className="text-primary">Event</span>
-        </span>
-      </Link>
+          <div className="flex h-10 w-10 items-center justify-center rounded-full">
+            <Image
+              src="/logo-octavia-png.png"
+              alt="Logo OctaviaEvent"
+              width={40}
+              height={40}
+              className="object-contain"
+            />
+          </div>
+          <span className="text-lg font-semibold tracking-tight text-gray-900 dark:text-white">
+            Octavia<span className="text-primary">Event</span>
+          </span>
+        </Link>
 
         <div className="flex">
           <nav className="hidden md:flex md:items-center md:gap-2">
@@ -206,10 +224,44 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile navigation - tous les liens sur une ligne avec icônes et texte réduit */}
+      {/* Mobile navigation - remplacement du premier lien par un menu hamburger */}
       <div className="border-t border-gray-100 bg-white/90 dark:border-gray-900 dark:bg-gray-950 md:hidden">
-        <nav className="mx-auto flex max-w-7xl justify-around gap-1 px-2 py-2 sm:px-4">
-          {navLinks.map((link) => {
+        <nav className="relative mx-auto flex max-w-7xl justify-around gap-1 px-2 py-2 sm:px-4">
+          {/* Bouton hamburger avec dropdown */}
+          <div className="relative" ref={mobileDropdownRef}>
+            <button
+              onClick={() => setMobileDropdownOpen((prev) => !prev)}
+              className="flex flex-col items-center gap-0.5 rounded-full px-2 py-1 text-xs font-normal text-gray-700 transition hover:bg-gray-50 hover:text-primary dark:text-gray-400 dark:hover:bg-gray-900 dark:hover:text-white"
+              aria-label="Menu"
+            >
+              <Menu size={18} />
+              <span className="text-[10px] leading-tight">Menu</span>
+            </button>
+
+            {mobileDropdownOpen && (
+              <div className="absolute bottom-full left-0 mb-2 w-48 rounded-2xl border border-gray-200 bg-white p-2 shadow-xl dark:border-gray-800 dark:bg-gray-950">
+                <Link
+                  href="/"
+                  onClick={() => setMobileDropdownOpen(false)}
+                  className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-gray-700 transition hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-900"
+                >
+                  <Home size={16} className="text-primary" />
+                  Accueil
+                </Link>
+                <Link
+                  href="/boutiques"
+                  onClick={() => setMobileDropdownOpen(false)}
+                  className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-gray-700 transition hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-900"
+                >
+                  <Store size={16} className="text-primary" />
+                  Prestataires
+                </Link>
+              </div>
+            )}
+          </div>
+
+          {/* Les autres liens de navigation (sans "Accueil") */}
+          {navLinks.slice(1).map((link) => {
             const Icon = link.icon;
             return (
               <Link
