@@ -1,6 +1,6 @@
 // scripts/sync-algolia.ts
-import { prisma } from "@/lib/prisma";
-import { shopsIndex, configureAlgoliaIndex } from "@/lib/algolia";
+import { prisma } from "../lib/prisma"; // Ajustez le chemin selon votre structure si nécessaire
+import { algoliaClient, configureAlgoliaIndex } from "../lib/algolia";
 
 async function syncShopsToAlgolia() {
   console.log("Début de la synchronisation Algolia...");
@@ -17,6 +17,11 @@ async function syncShopsToAlgolia() {
     });
 
     console.log(`${shops.length} boutiques à indexer`);
+
+    if (shops.length === 0) {
+      console.log("Aucune boutique active trouvée dans la base de données.");
+      return;
+    }
 
     // Transformer les données pour Algolia
     const objects = shops.map((shop) => ({
@@ -49,13 +54,16 @@ async function syncShopsToAlgolia() {
       createdAt: shop.createdAt.getTime(),
     }));
 
-    // Indexation par lots
-    await shopsIndex.saveObjects(objects);
+    // Indexation par lots (Nouvelle syntaxe v5)
+    await algoliaClient.saveObjects({
+      indexName: process.env.ALGOLIA_INDEX_NAME!,
+      objects: objects,
+    });
 
-    // Configuration de l'index
+    // Configuration des paramètres de pertinence et des filtres de l'index
     await configureAlgoliaIndex();
 
-    console.log("Synchronisation Algolia terminée !");
+    console.log("Synchronisation Algolia terminée avec succès !");
   } catch (error) {
     console.error("Erreur de synchronisation:", error);
   } finally {

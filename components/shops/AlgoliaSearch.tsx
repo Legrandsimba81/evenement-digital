@@ -1,10 +1,9 @@
 // components/shops/AlgoliaSearch.tsx
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { InstantSearch, SearchBox, Hits, RefinementList, Pagination, Configure } from "react-instantsearch";
-import { searchClient } from "@/lib/algolia";
+import { InstantSearchNext } from "react-instantsearch-nextjs";
+import { SearchBox, Hits, RefinementList, Pagination, Configure } from "react-instantsearch";
+import { searchClient } from "@/lib/algolia-search";
 import { MapPin, Star, BadgeCheck, Tag } from "lucide-react";
 import Link from "next/link";
 
@@ -73,11 +72,12 @@ const HitComponent = ({ hit }: { hit: any }) => (
 );
 
 export default function AlgoliaSearch() {
-  const router = useRouter();
-  const [searchQuery, setSearchQuery] = useState("");
-
   return (
-    <InstantSearch searchClient={searchClient} indexName={process.env.NEXT_PUBLIC_ALGOLIA_INDEX_NAME!}>
+    <InstantSearchNext
+      searchClient={searchClient}
+      indexName={process.env.NEXT_PUBLIC_ALGOLIA_INDEX_NAME!}
+      future={{ preserveSharedStateOnUnmount: true }}
+    >
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Sidebar des filtres */}
         <aside className="lg:w-64 flex-shrink-0">
@@ -166,6 +166,6 @@ export default function AlgoliaSearch() {
           </div>
         </div>
       </div>
-    </InstantSearch>
+    </InstantSearchNext>
   );
 }
