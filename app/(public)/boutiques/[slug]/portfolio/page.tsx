@@ -1,4 +1,3 @@
-// app/(public)/boutiques/[slug]/portfolio/page.tsx
 import { getShopBySlug } from "@/actions/shop-actions";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -12,7 +11,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!shop) return { title: "Portfolio" };
   return {
     title: `Portfolio de ${shop.name} - Octavia Event`,
-    description: `Découvrez les réalisations de ${shop.name}.`,
+    description: `Découvrez toutes les réalisations et photos de l'événementiel de ${shop.name}.`,
   };
 }
 
@@ -59,20 +58,20 @@ export default async function PortfolioPage({ params }: { params: Promise<{ slug
                 <p className="mt-4 text-gray-500 dark:text-gray-400">Aucune image dans le portfolio.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              /* Changement ici : Grille Masonry fluide à 2, 3 puis 4 colonnes */
+              <div className="columns-2 sm:columns-3 md:columns-4 gap-4 space-y-4">
                 {images.map((img: any, index: number) => {
-                  const isPortrait = img.orientation === 'portrait';
                   return (
                     <div
                       key={index}
-                      className={`group rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 hover:shadow-lg transition ${
-                        isPortrait ? 'aspect-[3/4]' : 'aspect-[4/3]'
-                      }`}
+                      className="break-inside-avoid rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 hover:shadow-lg transition duration-300"
                     >
+                      {/* w-full h-auto et object-contain affichent l'image sans aucun zoom */}
                       <img
                         src={img.url}
-                        alt={`${shop.name} - ${index + 1}`}
-                        className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                        /* Optimisation SEO : texte descriptif clair pour Google */
+                        alt={`Réalisation de ${shop.name} - Photo ${index + 1}`}
+                        className="w-full h-auto object-contain block hover:scale-[1.03] transition duration-300"
                       />
                     </div>
                   );

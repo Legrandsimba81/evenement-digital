@@ -92,7 +92,7 @@ export default function Navbar() {
     { href: "/dashboard", label: "Mes événements", icon: LayoutGrid },
     { href: "/dashboard/event/new", label: "Créer", icon: PlusCircle },
     { href: "/tarifs", label: "Tarifs", icon: Tag },
-    // { href: "/boutiques", label: "Prestataires", icon: Store },
+    { href: "/boutiques", label: "Prestataires", icon: Store },
     { href: "/blog", label: "Blog", icon: Newspaper },
   ];
 
@@ -294,20 +294,22 @@ export default function Navbar() {
               )}
             </div>
 
-            {/* Les autres liens de navigation (sauf le premier "Accueil" déjà dans le menu) */}
-            {navLinks.slice(1).map((link) => {
-              const Icon = link.icon;
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="flex flex-col items-center gap-0.5 rounded-full px-2 py-1 text-xs font-normal text-gray-700 transition hover:bg-gray-50 hover:text-primary dark:text-gray-400 dark:hover:bg-gray-900 dark:hover:text-white"
-                >
-                  <Icon size={18} />
-                  <span className="text-[10px] leading-tight">{link.label}</span>
-                </Link>
-              );
-            })}
+            {/* Les autres liens de navigation (sauf "Accueil" et "Prestataires") */}
+            {navLinks
+              .filter((link) => link.href !== "/" && link.href !== "/boutiques")
+              .map((link) => {
+                const Icon = link.icon;
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className="flex flex-col items-center gap-0.5 rounded-full px-2 py-1 text-xs font-normal text-gray-700 transition hover:bg-gray-50 hover:text-primary dark:text-gray-400 dark:hover:bg-gray-900 dark:hover:text-white"
+                  >
+                    <Icon size={18} />
+                    <span className="text-[10px] leading-tight">{link.label}</span>
+                  </Link>
+                );
+              })}
           </nav>
         </div>
       )}

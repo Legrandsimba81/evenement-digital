@@ -394,7 +394,7 @@ export default function ProfileClient({ user }: ProfileClientProps) {
                   {user.shops.map((shop) => (
                     <Link
                       key={shop.id}
-                      href={`/boutiques/${shop.slug}`}
+                      href={`/dashboard/shops/${shop.slug}`}
                       className="block bg-gray-50 dark:bg-gray-800 rounded-xl p-4 hover:shadow-md transition border border-gray-200 dark:border-gray-700"
                     >
                       <div className="flex items-center gap-3">

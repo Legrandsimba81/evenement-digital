@@ -144,6 +144,12 @@ export default async function DashboardShopsPage() {
                   >
                     Portfolio
                   </Link>
+                  <Link
+                    href={`/dashboard/shops/${shop.slug}`}
+                    className="text-sm text-purple-600 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-300"
+                  >
+                    stats
+                  </Link>
                   <span className="text-gray-300 dark:text-gray-600">|</span>
                   <Link
                     href={`/dashboard/shops/${shop.slug}/edit`}

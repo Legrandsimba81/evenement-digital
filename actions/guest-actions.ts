@@ -73,14 +73,14 @@ export async function addGuest(
     },
   });
 
-  // Notification à l'organisateur
-  await createNotification({
-    userId: owner.id,
-    type: "info",
-    title: "Nouvel invité ajouté",
-    message: `${firstName} ${lastName} a été ajouté à l'événement "${event.title}".`,
-    link: `/dashboard/${event.slug}/guests`,
-  });
+  // // Notification à l'organisateur
+  // await createNotification({
+  //   userId: owner.id,
+  //   type: "info",
+  //   title: "Nouvel invité ajouté",
+  //   message: `${firstName} ${lastName} a été ajouté à l'événement "${event.title}".`,
+  //   link: `/dashboard/${event.slug}/guests`,
+  // });
 
   // Envoyer l'invitation si phone ou email est renseigné
   if (phone || email) {

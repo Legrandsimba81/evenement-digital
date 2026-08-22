@@ -143,23 +143,30 @@ export default async function BoutiquePage({ params }: { params: Promise<{ slug:
                                     {profileImages.length > 0 && (
                                         <div>
                                             <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Portfolio</h2>
-                                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
+
+                                            {/* Grille style Pinterest (Masonry) utilisant les colonnes CSS */}
+                                            <div className="columns-2 sm:columns-3 gap-2 space-y-2 mt-2">
                                                 {profileImages.slice(0, 6).map((img: any, idx: number) => {
-                                                    const isPortrait = img.orientation === 'portrait';
                                                     return (
                                                         <div
                                                             key={idx}
-                                                            className={`overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 hover:scale-[1.02] transition duration-200 ${isPortrait ? 'aspect-[3/4]' : 'aspect-[4/3]'
-                                                                }`}
+                                                            className="break-inside-avoid overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 hover:scale-[1.02] transition duration-200"
                                                         >
-                                                            <img src={img.url} alt={`Portfolio ${idx + 1}`} className="w-full h-full object-cover" />
+                                                            {/* object-contain et h-auto respectent les proportions d'origine de l'image */}
+                                                            <img
+                                                                src={img.url}
+                                                                alt={`Portfolio ${idx + 1}`}
+                                                                className="w-full h-auto object-contain block"
+                                                            />
                                                         </div>
                                                     );
                                                 })}
+
+                                                {/* Bouton "Voir tout" adapté au flux vertical */}
                                                 {profileImages.length > 6 && (
                                                     <Link
                                                         href={`/boutiques/${shop.slug}/portfolio`}
-                                                        className="aspect-square rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 flex items-center justify-center text-sm text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+                                                        className="break-inside-avoid flex flex-col aspect-video rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 items-center justify-center text-sm text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
                                                     >
                                                         Voir tout ({profileImages.length})
                                                     </Link>
@@ -167,6 +174,7 @@ export default async function BoutiquePage({ params }: { params: Promise<{ slug:
                                             </div>
                                         </div>
                                     )}
+
 
                                     {tags.length > 0 && (
                                         <div>

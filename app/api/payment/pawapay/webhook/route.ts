@@ -1,3 +1,4 @@
+// app/api/payment/pawapay/webhook/route.ts
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyPawaPayPayment } from "@/lib/pawapay";
@@ -36,10 +37,23 @@ export async function POST(request: Request) {
         data: { balance: { increment: transaction.amount } },
       });
 
-      // Mettre à jour les limites de l'utilisateur (si le plan est un abonnement ou un événement)
-      // Ici, vous pouvez implémenter la logique pour définir les limites selon le plan
-      // Exemple : si plan.eventType, définir la limite correspondante dans eventLimits
-      // Pour l'instant, on se contente de créditer le solde
+      // ✅ Activer la vérification de la boutique si le paiement est un abonnement
+      if (transaction.type === "subscription") {
+        // Extraire le shopSlug depuis la description
+        // Format attendu : "Abonnement Essentiel - ma-boutique"
+        const match = transaction.description?.match(/-\s*([a-zA-Z0-9-]+)$/);
+        const shopSlug = match ? match[1] : null;
+
+        if (shopSlug) {
+          await prisma.shop.update({
+            where: { slug: shopSlug },
+            data: { isVerified: true },
+          });
+          console.log(`✅ Boutique "${shopSlug}" vérifiée suite au paiement de l'abonnement.`);
+        } else {
+          console.warn(`⚠️ Impossible d'extraire le shopSlug de la description: ${transaction.description}`);
+        }
+      }
     }
 
     return NextResponse.json({ success: true });

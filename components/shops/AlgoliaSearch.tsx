@@ -52,7 +52,7 @@ const HitComponent = ({ hit }: { hit: any }) => (
       </div>
 
       <div className="mt-2 flex flex-wrap items-center justify-between">
-        <div className="mt-2 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+        <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
           {hit.province && <span>{hit.province}</span>}
           {hit.province && hit.city && <span className="text-gray-300">•</span>}
           {hit.city && (
@@ -73,19 +73,8 @@ const HitComponent = ({ hit }: { hit: any }) => (
 export default function AlgoliaSearch() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const filterPanelRef = useRef<HTMLDivElement>(null);
-  const [isMobile, setIsMobile] = useState(false);
 
-  // Détection mobile (taille < 1024px)
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 1024);
-    };
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
-
-  // Gestion du tiroir : clic extérieur et fermeture automatique en desktop
+  // Gestion du clic extérieur pour fermer le tiroir
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (filterPanelRef.current && !filterPanelRef.current.contains(event.target as Node)) {
@@ -93,12 +82,7 @@ export default function AlgoliaSearch() {
       }
     };
 
-    // Si on repasse en desktop, fermer le tiroir
-    if (!isMobile && isFilterOpen) {
-      setIsFilterOpen(false);
-    }
-
-    if (isFilterOpen && isMobile) {
+    if (isFilterOpen) {
       document.addEventListener("mousedown", handleClickOutside);
       document.body.style.overflow = "hidden";
     } else {
@@ -109,7 +93,7 @@ export default function AlgoliaSearch() {
       document.removeEventListener("mousedown", handleClickOutside);
       document.body.style.overflow = "";
     };
-  }, [isFilterOpen, isMobile]);
+  }, [isFilterOpen]);
 
   const toggleFilter = () => setIsFilterOpen(!isFilterOpen);
   const closeFilter = () => setIsFilterOpen(false);
@@ -165,29 +149,20 @@ export default function AlgoliaSearch() {
       indexName={process.env.NEXT_PUBLIC_ALGOLIA_INDEX_NAME!}
       future={{ preserveSharedStateOnUnmount: true }}
     >
-      {/* Configuration : hitsPerPage fixé à 12 pour tous les écrans */}
       <Configure hitsPerPage={12} />
 
       <div className="relative">
-        {/* Layout desktop : sidebar + contenu */}
-        <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
-          {/* Sidebar desktop (cachée en mobile) */}
-          <aside className="hidden lg:block lg:w-64 flex-shrink-0">
-            <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 p-4 sticky top-20">
-              <h3 className="font-semibold text-gray-900 dark:text-white mb-3">Filtres</h3>
-              <FilterContent />
-            </div>
-          </aside>
-
+        {/* Layout : pas de sidebar fixe, seulement le contenu principal */}
+        <div className="flex flex-col gap-4">
           {/* Contenu principal */}
           <div className="flex-1 min-w-0">
-            {/* Barre de recherche sticky avec marges négatives contrôlées */}
+            {/* Barre de recherche sticky avec le bouton filtre toujours visible */}
             <div className="sticky top-20 z-40 py-3 -mx-4 -mt-8 lg:-mt-3 mb-4 lg:mb-0 px-4 lg:bg-transparent lg:backdrop-blur-none lg:pb-3 lg:mx-0 lg:px-0">
               <div className="flex items-center gap-3 max-w-full">
-                {/* Bouton filtre mobile */}
+                {/* Bouton filtre visible sur tous les écrans */}
                 <button
                   onClick={toggleFilter}
-                  className="lg:hidden flex items-center justify-center w-10 h-10 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition flex-shrink-0"
+                  className="flex items-center justify-center w-10 h-10 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition flex-shrink-0"
                   aria-label="Filtrer"
                 >
                   <SlidersHorizontal size={20} />
@@ -206,17 +181,17 @@ export default function AlgoliaSearch() {
               </div>
             </div>
 
-            {/* Résultats - grille responsive avec espacements adaptés */}
+            {/* Résultats - grille 4 colonnes sur desktop (lg) */}
             <Hits
               hitComponent={HitComponent}
               classNames={{
-                root: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6",
+                root: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6",
                 list: "contents",
                 item: "contents",
               }}
             />
 
-            {/* Pagination responsive : boutons plus petits sur mobile et wrap */}
+            {/* Pagination responsive */}
             <div className="mt-8 flex justify-center">
               <Pagination
                 classNames={{
@@ -230,8 +205,8 @@ export default function AlgoliaSearch() {
           </div>
         </div>
 
-        {/* Tiroir mobile (overlay) */}
-        {isFilterOpen && isMobile && (
+        {/* Tiroir mobile/desktop (overlay) */}
+        {isFilterOpen && (
           <div className="fixed inset-0 z-50 flex">
             {/* Fond sombre */}
             <div className="absolute inset-0 bg-black/50" onClick={closeFilter}></div>
