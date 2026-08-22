@@ -95,7 +95,7 @@ export default async function DashboardShopDetail({
                 {shop.name}
               </h1>
               {shop.isVerified ? (
-                <BadgeCheck className="w-6 h-6 text-blue-600 fill-blue-600 dark:text-blue-500 dark:fill-blue-500 flex-shrink-0" />
+                <BadgeCheck className="w-6 h-6 stroke-white fill-blue-600 dark:stroke-white dark:fill-blue-500 flex-shrink-0" />
               ) : (
                 <span className="text-xs bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-1 rounded-full">
                   Non vérifié
@@ -406,7 +406,7 @@ export default async function DashboardShopDetail({
                       className={`text-sm font-medium ${shop.isVerified ? "text-blue-600" : "text-gray-500"
                         }`}
                     >
-                      {shop.isVerified ? "✅ Vérifié" : "❌ Non vérifié"}
+                      {shop.isVerified ? "Certifié" : "Non certifié"}
                     </span>
                   </div>
                 </div>
