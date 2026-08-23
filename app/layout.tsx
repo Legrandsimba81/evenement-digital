@@ -9,25 +9,34 @@ import BackButtonFloating from "@/components/ui/BackButtonFloating";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://evenement-digital.vercel.app"),
+  // 🚀 URL de base mise à jour vers votre domaine .com officiel
+  metadataBase: new URL("https://octaviaevent.com"),
   title: {
-    default: "Octavia - Gestion d'événements",
-    template: "%s | Octavia",
+    default: "Octavia Event | Invitations & Gestion d'événements numériques en RDC",
+    template: "%s | Octavia Event",
   },
   description:
-    "Créez, gérez et partagez vos invitations en ligne. Simple, rapide et élégant.",
+    "Créez, gérez et partagez vos invitations numériques en quelques clics en RDC. Vos événements pour Mariage, Soutenance, Anniversaire et Fête, simples, rapides et élégants.",
   keywords: [
-    "invitation",
-    "événement",
-    "mariage",
-    "anniversaire",
-    "soutenance",
+    "invitation numérique",
+    "invitation en ligne",
     "gestion d'événements",
+    "mariage RDC",
+    "soutenance Kinshasa",
+    "anniversaire",
+    "faire-part électronique",
+    "Octavia Event",
     "Octavia",
   ],
-  authors: [{ name: "Octavia", url: "https://evenement-digital.vercel.app" }],
-  creator: "Octavia",
-  publisher: "Octavia",
+  authors: [{ name: "Octavia Event", url: "https://octaviaevent.com" }],
+  creator: "Octavia Event",
+  publisher: "Octavia Event",
+  
+  // 🔐 Clé de vérification Google Search Console intégrée nativement dans les métadonnées
+  verification: {
+    google: "K3mCpK58xHzlJbOkuwCsrHYAP_J0pO24FNGIjSAA3Pw",
+  },
+
   robots: {
     index: true,
     follow: true,
@@ -39,20 +48,20 @@ export const metadata: Metadata = {
     },
   },
   alternates: {
-    canonical: "https://evenement-digital.vercel.app",
+    canonical: "https://octaviaevent.com",
   },
   openGraph: {
-    title: "Octavia - Gestion d'événements",
+    title: "Octavia Event - Gestion d'événements numériques",
     description:
-      "Créez, gérez et partagez vos invitations en ligne. Simple, rapide et élégant.",
-    url: "https://evenement-digital.vercel.app",
-    siteName: "Octavia",
+      "Créez, gérez et partagez vos invitations en ligne. Plus besoin d'imprimer, tout est numérique, élégant et efficace.",
+    url: "https://octaviaevent.com",
+    siteName: "Octavia Event",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Octavia - Gestion d'événements",
+        alt: "Octavia Event - Aperçu de la plateforme de gestion d'invitations",
         type: "image/png",
       },
     ],
@@ -61,20 +70,19 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Octavia - Gestion d'événements",
+    title: "Octavia Event - Gestion d'événements numériques",
     description:
       "Créez, gérez et partagez vos invitations en ligne. Simple, rapide et élégant.",
     images: ["/og-image.png"],
-    creator: "@octavia",
-    site: "@octavia",
+    creator: "@octaviaevent",
+    site: "@octaviaevent",
   },
   appleWebApp: {
     capable: true,
-    title: "Octavia",
+    title: "Octavia Event",
     statusBarStyle: "black-translucent",
   },
-  applicationName: "Octavia",
-  // Correction ici :
+  applicationName: "Octavia Event",
   icons: {
     icon: "/icon.png",
     apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
@@ -106,7 +114,7 @@ export default function RootLayout({
     <html lang="fr" suppressHydrationWarning>
       <body className={inter.className}>
         <SessionProvider>
-          <div className="min-h-screen flex flex-col">
+          <div className="min-h-screen flex flex-col bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-50">
             <Navbar />
             <BackButtonFloating />
             <main className="flex-1">{children}</main>
