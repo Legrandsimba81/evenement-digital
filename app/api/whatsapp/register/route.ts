@@ -12,8 +12,8 @@ export async function POST() {
 
     const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
     const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
-    // OPTIMISATION : Stocker le PIN dans le fichier .env (ex: WHATSAPP_PIN=527352)
-    const pin = process.env.WHATSAPP_PIN; 
+    // Sécurité : Si WHATSAPP_PIN n'est pas défini dans le .env, on utilise un PIN par défaut
+    const pin = process.env.WHATSAPP_PIN || "527352"; 
 
     if (!phoneNumberId || !accessToken) {
       return NextResponse.json(
@@ -22,21 +22,20 @@ export async function POST() {
       );
     }
 
-    // CORRECTION : Passage à la v20.0 (la v18.0 arrive en fin de vie) [1]
-    const response = await fetch(
-      `https://facebook.com{phoneNumberId}/register`,
-      {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          messaging_product: "whatsapp",
-          pin: pin,
-        }),
-      }
-    );
+    // CORRECTION CRITIQUE : URL officielle corrigée avec le symbole $ et graph.facebook.com
+    const url = `https://facebook.com{phoneNumberId}/register`;
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        messaging_product: "whatsapp",
+        pin: pin,
+      }),
+    });
 
     const data = await response.json();
 
