@@ -68,7 +68,7 @@ export async function createCandidatePost(data: {
   return newEntry;
 }
 
-// 2. Approbation par l'administrateur (+ crédite les 2$ de départ)
+// 2. Approbation par l'administrateur (+ crédite les 1$ de départ)
 export async function approvePost(slug: string) {
   const session = await auth();
   if (session?.user?.role !== "ADMIN") throw new Error("Action réservée aux administrateurs.");
@@ -81,7 +81,7 @@ export async function approvePost(slug: string) {
   if (!entry) throw new Error("Article introuvable.");
   if (entry.status === "APPROVED") return;
 
-  // Transaction : Approuve l'article et ajoute 2$ au solde de l'auteur
+  // Transaction : Approuve l'article et ajoute 1$ au solde de l'auteur
   await db.$transaction([
     db.competitionEntry.update({
       where: { slug },
@@ -89,13 +89,13 @@ export async function approvePost(slug: string) {
         status: "APPROVED",
         published: true,
         publishedAt: new Date(),
-        rewardAmount: { increment: 2.0 },
+        rewardAmount: { increment: 1.0 },
       },
     }),
     db.user.update({
       where: { id: entry.authorId },
       data: {
-        balance: { increment: 2.0 },
+        balance: { increment: 1.0 },
       },
     }),
   ]);
@@ -170,7 +170,8 @@ export async function toggleLikePost(slug: string) {
     let extraReward = 0;
 
     // Si l'article atteint 1000 likes pour la première fois
-    if (updatedLikesCount >= 1000 && !entry.rankWinner) {
+    // Attribution des rangs et récompenses en 7 likes pour le test
+    if (updatedLikesCount >= 7 && !entry.rankWinner) {
       const previousWinnersCount = await db.competitionEntry.count({
         where: { rankWinner: { not: null } },
       });

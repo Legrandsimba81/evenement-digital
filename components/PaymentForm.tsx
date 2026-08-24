@@ -1,10 +1,9 @@
-// components/PaymentForm.tsx
 "use client";
 
 import { useState, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Loader2, Upload, CheckCircle, AlertCircle, Zap, CreditCard } from "lucide-react";
+import { Loader2, Upload, CheckCircle, AlertCircle, Zap, CreditCard, Info } from "lucide-react";
 import PawaPayPaymentForm from "./PawaPayPaymentForm";
 import { Plan } from "@/types";
 
@@ -15,21 +14,22 @@ interface PaymentFormProps {
 
 // Opérateurs pour la RDC uniquement
 const CONGO_OPERATORS = [
-  { id: "airtel", name: "Airtel Money", logo: "📱" },
-  { id: "orange", name: "Orange Money", logo: "📲" },
-  { id: "vodacom", name: "Vodacom M-Pesa", logo: "📶" },
+  { id: "airtel", name: "Airtel Money", logo: "" },
+  { id: "orange", name: "Orange Money", logo: "" },
+  { id: "vodacom", name: "Vodacom M-Pesa", logo: "" },
 ];
 
 const MANUAL_DEPOSIT_NUMBERS = {
   airtel: "+243 992 598 826",
-  orange: "+243 827 733 286",
-  vodacom: "+243 828 123 456",
+  vodacom: "+243 827 733 286",
 };
 
 export default function PaymentForm({ plan, onSuccess }: PaymentFormProps) {
   const router = useRouter();
   const { data: session } = useSession();
-  const [paymentMode, setPaymentMode] = useState<"manual" | "auto">("auto");
+  
+  // 1. Mode par défaut défini sur "manual"
+  const [paymentMode, setPaymentMode] = useState<"manual" | "auto">("manual");
   const [isManualLoading, setIsManualLoading] = useState(false);
   const [isManualSuccess, setIsManualSuccess] = useState(false);
   const [manualError, setManualError] = useState("");
@@ -112,24 +112,9 @@ export default function PaymentForm({ plan, onSuccess }: PaymentFormProps) {
     return MANUAL_DEPOSIT_NUMBERS[manualData.operator as keyof typeof MANUAL_DEPOSIT_NUMBERS] || "Numéro non disponible";
   };
 
-  const handleAutoSuccess = (plan: Plan) => {
-    onSuccess(plan);
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <button
-          type="button"
-          onClick={() => setPaymentMode("auto")}
-          className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 text-sm font-medium transition ${
-            paymentMode === "auto"
-              ? "bg-blue-600 text-white"
-              : "bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
-          }`}
-        >
-          <Zap size={18} /> Paiement automatique
-        </button>
         <button
           type="button"
           onClick={() => setPaymentMode("manual")}
@@ -141,13 +126,41 @@ export default function PaymentForm({ plan, onSuccess }: PaymentFormProps) {
         >
           <CreditCard size={18} /> Paiement manuel
         </button>
+        <button
+          type="button"
+          onClick={() => setPaymentMode("auto")}
+          className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 text-sm font-medium transition ${
+            paymentMode === "auto"
+              ? "bg-blue-600 text-white"
+              : "bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+          }`}
+        >
+          <Zap size={18} /> Paiement automatique
+        </button>
       </div>
 
+      {/* 2. Affichage conditionnel avec message d'indisponibilité pour le mode automatique */}
       {paymentMode === "auto" ? (
-        <PawaPayPaymentForm plan={plan} onSuccess={handleAutoSuccess} />
+        <div className="p-6 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-2xl text-center space-y-3">
+          <div className="w-12 h-12 bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400 rounded-full flex items-center justify-center mx-auto">
+            <Info size={24} />
+          </div>
+          <h3 className="text-base font-bold text-amber-900 dark:text-amber-200">
+            Méthode temporairement indisponible
+          </h3>
+          <p className="text-sm text-amber-700 dark:text-amber-400 max-w-sm mx-auto">
+            Le paiement automatique Mobile Money n'est pas pris en charge pour le moment. Veuillez utiliser l'onglet <strong>Paiement manuel</strong> pour effectuer votre règlement.
+          </p>
+          <button
+            type="button"
+            onClick={() => setPaymentMode("manual")}
+            className="mt-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-medium text-xs rounded-xl transition"
+          >
+            Passer au paiement manuel
+          </button>
+        </div>
       ) : (
         <form onSubmit={handleManualSubmit} className="space-y-4">
-          {/* Contenu du formulaire manuel... (inchangé) */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Montant à payer</label>
             <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 rounded-xl text-2xl font-bold text-gray-900 dark:text-white">

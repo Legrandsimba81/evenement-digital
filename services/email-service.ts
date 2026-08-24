@@ -50,7 +50,7 @@ export async function sendSubmissionConfirmation({ to, authorName, title }: { to
   const html = emailTemplate(`
     <h2>Bonjour ${authorName},</h2>
     <p>Votre article <strong>"${title}"</strong> a bien été enregistré.</p>
-    <p>Dès sa validation par l'équipe administrative, vous recevrez votre prime initiale de <strong>2$</strong> et votre article sera ouvert aux votes.</p>
+    <p>Dès sa validation par l'équipe administrative, vous recevrez votre prime initiale de <strong>1$</strong> et votre article sera ouvert aux votes.</p>
     <p><strong>Structure des prix (Seuil : 1000 likes) :</strong></p>
     <ul>
       <li>🥇 1er Gagnant : <strong>50$</strong></li>
@@ -61,12 +61,12 @@ export async function sendSubmissionConfirmation({ to, authorName, title }: { to
   await sendEmail(to, subject, html);
 }
 
-// 2. Notification d'approbation (+2$)
+// 2. Notification d'approbation (+1$)
 export async function sendApprovalEmail({ to, authorName, title, link }: { to: string; authorName: string; title: string; link: string }) {
-  const subject = `Bravo ! Votre article est approuvé (+2$)`;
+  const subject = `Bravo ! Votre article est approuvé (+1$)`;
   const html = emailTemplate(`
     <h2>Félicitations ${authorName} !</h2>
-    <p>Votre article <strong>"${title}"</strong> a été validé. Un crédit de <strong>2$</strong> a été ajouté à votre solde.</p>
+    <p>Votre article <strong>"${title}"</strong> a été validé. Un crédit de <strong>1$</strong> a été ajouté à votre solde.</p>
     <p>Vous pouvez dès maintenant partager votre lien pour atteindre les 1000 likes :</p>
     <p style="text-align: center; margin: 24px 0;">
       <a href="${link}" style="padding: 12px 24px; background: #2563eb; color: white; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">Voir et partager mon article</a>

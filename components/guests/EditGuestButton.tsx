@@ -137,18 +137,18 @@ export default function EditGuestButton({ guest }: { guest: any }) {
         />
       )}
 
-      <input
+      {/* <input
         value={phone}
         onChange={(e) => setPhone(e.target.value)}
         placeholder="Téléphone (optionnel)"
         className="p-1.5 border border-gray-300 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-900"
       />
-      {errors.phone && <p className="text-red-500 text-xs">{errors.phone}</p>}
+      {errors.phone && <p className="text-red-500 text-xs">{errors.phone}</p>} */}
 
       <input
         value={email}
         onChange={(e) => setEmail(e.target.value)}
-        placeholder="Email (optionnel)"
+        placeholder="Email de l'invité pour l'envoie automatique"
         type="email"
         className="p-1.5 border border-gray-300 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-900"
       />

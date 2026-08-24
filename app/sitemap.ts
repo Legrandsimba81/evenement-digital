@@ -2,12 +2,13 @@ import { db } from "@/lib/db";
 import { MetadataRoute } from "next";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://octaviaevent.com";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.octaviaevent.com";
 
   // 1. Pages statiques
   const staticPages: MetadataRoute.Sitemap = [
     { url: `${baseUrl}/`, lastModified: new Date(), priority: 1.0, changeFrequency: "daily" },
     { url: `${baseUrl}/concours`, lastModified: new Date(), priority: 0.9, changeFrequency: "daily" },
+    { url: `${baseUrl}/concours/regles`, lastModified: new Date(), priority: 0.9, changeFrequency: "weekly" }, // 👈 Ajouté pour l'indexation directe
     { url: `${baseUrl}/boutiques`, lastModified: new Date(), priority: 0.8, changeFrequency: "weekly" },
     { url: `${baseUrl}/blog`, lastModified: new Date(), priority: 0.8, changeFrequency: "weekly" },
     { url: `${baseUrl}/tarifs`, lastModified: new Date(), priority: 0.8, changeFrequency: "monthly" },
@@ -19,7 +20,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/politique-confidentialite`, lastModified: new Date(), priority: 0.3, changeFrequency: "yearly" },
   ];
 
-  // 2. Articles de concours approuvés (Champs ajustés sans updatedAt)
+  // 2. Articles de concours approuvés
   let competitionPages: MetadataRoute.Sitemap = [];
   try {
     const competitions = await db.competitionEntry.findMany({

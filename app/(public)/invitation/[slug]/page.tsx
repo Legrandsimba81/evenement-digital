@@ -284,51 +284,72 @@ export default async function InvitationPage({
           guestLevel={guest.guestLevel || null}
         />
 
-        {/* --- SECTION LOCALISATION --- */}
-        {(event.locationName ||
-          event.locationAddress ||
-          event.locationLat ||
-          event.locationLng ||
-          event.locationUrl ||
-          event.location) && (
-          <div className="bg-white/70 rounded-2xl p-5 shadow-sm backdrop-blur-sm border border-gray-200">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 flex items-center gap-2">
-              <MapPin size={24} className="text-primary-500" />
-              Lieu de l'événement
-            </h2>
-            {event.locationName && (
-              <p className="text-lg font-semibold text-gray-800">
-                {event.locationName}
-              </p>
-            )}
-            {event.locationAddress && (
-              <p className="text-gray-600 mt-1">{event.locationAddress}</p>
-            )}
-            {!event.locationName && !event.locationAddress && event.location && (
-              <p className="text-gray-600">{event.location}</p>
-            )}
-            <div className="mt-4 flex flex-wrap gap-3">
-              <a
-                href={googleMapsUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition"
-              >
-                <MapPin size={16} /> Voir sur Google Maps
-              </a>
-              {wazeUrl && (
-                <a
-                  href={wazeUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition"
-                >
-                  <MapPin size={16} /> Waze
-                </a>
-              )}
-            </div>
-          </div>
-        )}
+       {/* --- SECTION LOCALISATION --- */}
+{(event.locationName ||
+  event.locationAddress ||
+  event.locationLat ||
+  event.locationLng ||
+  event.locationUrl ||
+  event.location) && (
+  <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-100 hover:shadow-md transition-all duration-300">
+    <div className="flex items-start gap-4">
+      {/* Badge Icône */}
+      <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl flex-shrink-0">
+        <MapPin size={26} strokeWidth={2.2} />
+      </div>
+
+      <div className="flex-1 min-w-0">
+        <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+          Lieu de l'événement
+        </h2>
+
+        {/* Détails du lieu */}
+        <div className="mt-2 space-y-1">
+          {event.locationName && (
+            <p className="text-lg font-semibold text-slate-800 leading-snug">
+              {event.locationName}
+            </p>
+          )}
+
+          {event.locationAddress && (
+            <p className="text-sm sm:text-base text-slate-600 font-medium">
+              {event.locationAddress}
+            </p>
+          )}
+
+          {!event.locationName && !event.locationAddress && event.location && (
+            <p className="text-sm sm:text-base text-slate-600 font-medium">
+              {event.location}
+            </p>
+          )}
+        </div>
+
+        {/* Boutons d'action (Navigation) */}
+        <div className="mt-5 flex flex-wrap items-center gap-3">
+          <a
+            href={googleMapsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm shadow-blue-500/20"
+          >
+            <MapPin size={16} /> Google Maps
+          </a>
+
+          {wazeUrl && (
+            <a
+              href={wazeUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 bg-slate-100 hover:bg-slate-200 active:scale-[0.98] text-slate-700 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all border border-slate-200/60"
+            >
+              <MapPin size={16} className="text-slate-500" /> Waze
+            </a>
+          )}
+        </div>
+      </div>
+    </div>
+  </div>
+)}
 
         {/* Messages d'amour pour les mariages (uniquement si ce n'est pas un billet) */}
         {!isBillet && event.type === "MARIAGE" && messagesLove.length > 0 && (

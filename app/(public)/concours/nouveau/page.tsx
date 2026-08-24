@@ -41,7 +41,7 @@ export default async function NewCandidatePostPage() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Participer au Concours</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Candidats enregistrés : <span className="font-semibold text-blue-600">{totalCandidates}/10</span>. Une fois approuvé, gagnez 2$ immédiatement + jusqu'à 50$ aux 1000 likes !
+            Candidats enregistrés : <span className="font-semibold text-blue-600">{totalCandidates}/10</span>. Une fois approuvé, gagnez 1$ immédiatement + jusqu'à 50$ aux 1000 likes !
           </p>
         </div>
         <Link

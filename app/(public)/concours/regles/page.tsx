@@ -12,6 +12,37 @@ import {
   Megaphone,
 } from "lucide-react";
 
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Participer au Concours de Rédaction | Octavia Event",
+  description: "Participer au concours de rédaction d'Octavia Event et tentez de gagner jusqu'à 50$. Soumettez votre article dès maintenant !",
+  keywords: [
+    "participer au concours d'octavia",
+    "concours octavia event",
+    "concours de rédaction octavia",
+    "gagner de l'argent rédaction"
+  ],
+  robots: {
+    index: true,
+    follow: true,
+    nocache: false,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  openGraph: {
+    title: "Participer au Concours d'Octavia Event - Gagniez 50$",
+    description: "Inscrivez-vous au concours de rédaction, publiez votre article et accumulez des gains.",
+    url: "https://www.octaviaevent.com/concours/regles",
+    siteName: "Octavia Event",
+    type: "website",
+  },
+};
+
 const rules = [
   {
     icon: Megaphone,
@@ -38,7 +69,7 @@ const rules = [
     icon: Award,
     title: "4. Gain initial à l'approbation",
     description:
-      "Une fois votre article vérifié et approuvé par l'équipe de modération, une prime de bienvenue de 2$ est automatiquement créditée sur votre cagnotte candidat.",
+      "Une fois votre article vérifié et approuvé par l'équipe de modération, une prime de bienvenue de 1$ est automatiquement créditée sur votre cagnotte candidat.",
     action: { label: "Consulter la liste", href: "/concours" },
   },
   {
@@ -68,8 +99,8 @@ export default function ConcoursRulesPage() {
             <ShieldCheck className="w-4 h-4" /> Règlement officiel
           </div>
           {/* Titre ajusté sur mobile (text-3xl) mais grand sur desktop (md:text-5xl) */}
-          <h1 className="text-3xl md:text-5xl font-bold text-gray-900 dark:text-white mb-3 leading-snug">
-            Règles & Conditions du Concours
+          <h1 className="text-2xl md:text-5xl font-bold text-gray-900 dark:text-white mb-3 leading-snug">
+            Comment participer au concours d'Octavia Event ?
           </h1>
           <p className="text-base md:text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
             Rédigez un article captivant valorisant <strong>Octavia Event</strong>, attirez des organisateurs d'événements et remportez jusqu'à 50$ en Mobile Money !

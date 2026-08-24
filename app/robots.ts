@@ -1,17 +1,21 @@
 import { MetadataRoute } from "next";
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://octaviaevent.com";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.octaviaevent.com";
 
   return {
     rules: {
       userAgent: "*",
-      allow: "/",
+      allow: [
+        "/",
+        "/concours",
+        "/concours/*",
+      ],
       disallow: [
-        "/api/",          // Interdit d'indexer vos routes d'API internes
-        "/admin/",        // Interdit d'indexer votre espace d'administration
-        "/tableau-de-bord/", // Interdit d'indexer les pages privées des utilisateurs
-        "/mon-profil/",   // Interdit d'indexer les profils utilisateur privés
+        "/api/",
+        "/admin/",
+        "/tableau-de-bord/",
+        "/mon-profil/",
       ],
     },
     sitemap: `${baseUrl}/sitemap.xml`,

@@ -64,11 +64,11 @@ export default function GuestList({
       query === ""
         ? guests
         : guests.filter(
-            (g) =>
-              g.firstName.toLowerCase().includes(query) ||
-              g.lastName.toLowerCase().includes(query) ||
-              g.invitationNumber?.toLowerCase().includes(query)
-          )
+          (g) =>
+            g.firstName.toLowerCase().includes(query) ||
+            g.lastName.toLowerCase().includes(query) ||
+            g.invitationNumber?.toLowerCase().includes(query)
+        )
     );
   };
 
@@ -99,6 +99,7 @@ export default function GuestList({
 
   return (
     <div className="mt-4">
+
       <div className="relative mb-4">
         <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
         <input
@@ -207,6 +208,12 @@ export default function GuestList({
           </table>
         </div>
       )}
+      <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800 mt-4 text-sm text-blue-700 dark:text-blue-300">
+        <p className="text-sm">
+          une fois l'invité ajouté, pour copier le lien d'invitation, cliquez sur l'icône de copie à côté de l'invité. 
+          Le lien sera copié dans votre presse-papiers et vous pourrez le partager avec l'invité.
+        </p>
+      </div>
     </div>
   );
 }

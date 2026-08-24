@@ -160,7 +160,7 @@ export default function GuestForm({ eventId }: { eventId: string }) {
           />
         )}
 
-        <div>
+        {/* <div>
           <input
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
@@ -168,13 +168,13 @@ export default function GuestForm({ eventId }: { eventId: string }) {
             className="w-full p-2.5 border border-gray-300 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
           />
           {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
-        </div>
+        </div> */}
 
         <div>
           <input
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email (optionnel)"
+            placeholder="Email de l'invité pour l'envoie automatique"
             type="email"
             className="w-full p-2.5 border border-gray-300 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
           />

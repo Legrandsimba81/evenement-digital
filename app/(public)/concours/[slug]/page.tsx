@@ -126,7 +126,7 @@ export default async function CompetitionPostPage({ params }: Props) {
               <img
                 src={post.author.image || "/default-avatar.png"}
                 alt={post.author.name || "Auteur"}
-                className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover ring-2 ring-blue-500/30"
+                className="w-10 h-10 sm:w-14 sm:h-14 rounded-full object-cover"
               />
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
@@ -150,7 +150,7 @@ export default async function CompetitionPostPage({ params }: Props) {
 
             <div className="text-right ml-auto sm:ml-0 bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-800/50 px-3 py-1.5 rounded-2xl">
               <span className="text-[10px] uppercase tracking-wider font-semibold text-green-700 dark:text-green-400 block">
-                Cagnotte Candidat
+                Cagnotte <br /> Candidat
               </span>
               <span className="text-lg sm:text-xl font-black text-green-600 dark:text-green-400 flex items-center justify-end gap-1">
                 <Award size={18} /> {post.rewardAmount}$
