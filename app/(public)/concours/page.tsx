@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import Link from "next/link";
-import { BadgeCheck, Heart, Eye, Trophy, PlusCircle, ArrowRight } from "lucide-react";
+import { BadgeCheck, Heart, Eye, Trophy, PlusCircle, ArrowRight, PenTool } from "lucide-react";
 
 export const revalidate = 0; // Contenu dynamique toujours à jour
 
@@ -34,15 +34,22 @@ export default async function CompetitionListPage() {
             </p>
           </div>
 
-          {totalCandidates < 10 && (
-            <Link
-              href="/concours/nouveau"
-              className="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-3.5 rounded-2xl shadow-lg shadow-blue-500/20 transition-all active:scale-95 shrink-0"
-            >
-              <PlusCircle size={20} />
-              Participer ({totalCandidates}/10)
-            </Link>
-          )}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            {/* Bouton Participer & Créer un article */}
+            {totalCandidates < 10 ? (
+              <Link
+                href="/concours/nouveau"
+                className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold px-6 py-3.5 rounded-2xl shadow-lg shadow-blue-500/25 transition-all active:scale-95 shrink-0"
+              >
+                <PenTool size={20} />
+                <span>Rédiger un article ({totalCandidates}/10)</span>
+              </Link>
+            ) : (
+              <div className="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 rounded-2xl text-xs font-semibold text-center border border-gray-200 dark:border-gray-700">
+                Inscriptions fermées (10/10)
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Grille des articles */}
@@ -50,9 +57,19 @@ export default async function CompetitionListPage() {
           <div className="text-center py-20 bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-sm p-8 max-w-lg mx-auto">
             <Trophy size={48} className="mx-auto text-amber-500 mb-4 opacity-80" />
             <h3 className="text-xl font-bold text-gray-900 dark:text-white">Aucun article publié pour le moment</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-              Les candidatures sont en cours de modération. Soyez le premier à publier !
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 mb-6">
+              Les candidatures sont en cours de modération. Soyez le premier à poster votre rédaction !
             </p>
+
+            {totalCandidates < 10 && (
+              <Link
+                href="/concours/nouveau"
+                className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-3 rounded-2xl transition-all shadow-md shadow-blue-600/20"
+              >
+                <PlusCircle size={18} />
+                Participer au concours
+              </Link>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">

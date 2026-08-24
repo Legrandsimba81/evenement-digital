@@ -13,6 +13,7 @@ import {
   LayoutGrid,
   LogOut,
   Menu,
+  Trophy,
   Moon,
   Newspaper,
   PlusCircle,
@@ -94,6 +95,7 @@ export default function Navbar() {
     { href: "/tarifs", label: "Tarifs", icon: Tag },
     { href: "/boutiques", label: "Prestataires", icon: Store },
     { href: "/blog", label: "Blog", icon: Newspaper },
+    { href: "/concours", label: "Concours", icon: Trophy },
   ];
 
   const handleSignOut = async () => {
@@ -260,7 +262,7 @@ export default function Navbar() {
                 aria-label="Menu"
               >
                 <Menu size={18} />
-                <span className="text-[10px] leading-tight">Menu</span>
+                {/* <span className="text-[10px] leading-tight">Menu</span> */}
               </button>
 
               {mobileDropdownOpen && (
@@ -281,6 +283,17 @@ export default function Navbar() {
                     <Store size={16} className="text-primary" />
                     Prestataires
                   </Link>
+
+                  {/* Nouveau lien vers le concours */}
+                  <Link
+                    href="/concours"
+                    onClick={() => setMobileDropdownOpen(false)}
+                    className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-gray-700 transition hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-900"
+                  >
+                    <Trophy size={16} className="text-primary" />
+                    Concours
+                  </Link>
+
                   <Link
                     href="/contact"
                     onClick={() => setMobileDropdownOpen(false)}
@@ -289,7 +302,6 @@ export default function Navbar() {
                     <Mail size={16} className="text-primary" />
                     Contact
                   </Link>
-
                 </div>
               )}
             </div>

@@ -1,14 +1,14 @@
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import CandidatePostForm from "@/components/competition/CandidatePostForm";
-import { Lock } from "lucide-react";
+import NewCandidatePostClient from "@/components/competition/NewCandidatePostClient";
+import { Lock, BookOpen } from "lucide-react";
+import Link from "next/link";
 
 export default async function NewCandidatePostPage() {
   const session = await auth();
   if (!session?.user) redirect("/login?callbackUrl=/concours/nouveau");
 
-  // Remplacement de db.blogPost par db.competitionEntry
   const totalCandidates = await db.competitionEntry.count({
     where: { status: { in: ["PENDING", "APPROVED"] } },
   });
@@ -21,9 +21,15 @@ export default async function NewCandidatePostPage() {
             <Lock size={32} />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Inscriptions Fermées</h1>
-          <p className="text-gray-600 dark:text-gray-400 text-sm">
+          <p className="text-gray-600 dark:text-gray-400 text-sm mb-6">
             Le nombre maximal de 10 candidats pour le concours de rédaction a été atteint. Suivez les publications et votez pour vos articles préférés !
           </p>
+          <Link
+            href="/concours/regles"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-blue-600 hover:underline"
+          >
+            <BookOpen size={16} /> Lire le règlement du concours
+          </Link>
         </div>
       </div>
     );
@@ -31,13 +37,23 @@ export default async function NewCandidatePostPage() {
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      <div className="mb-8 border-b border-gray-200 dark:border-gray-800 pb-4">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Participer au Concours</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          Candidats enregistrés : <span className="font-semibold text-blue-600">{totalCandidates}/10</span>. Une fois approuvé, gagnez 2$ immédiatement + jusqu'à 50$ aux 1000 likes !
-        </p>
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-8 border-b border-gray-200 dark:border-gray-800 pb-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Participer au Concours</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            Candidats enregistrés : <span className="font-semibold text-blue-600">{totalCandidates}/10</span>. Une fois approuvé, gagnez 2$ immédiatement + jusqu'à 50$ aux 1000 likes !
+          </p>
+        </div>
+        <Link
+          href="/concours/regles"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs font-bold hover:bg-blue-100 transition-colors"
+        >
+          <BookOpen size={14} /> Voir le Règlement
+        </Link>
       </div>
-      <CandidatePostForm />
+
+      {/* Composant Client gérant le Formulaire et la Pop-up */}
+      <NewCandidatePostClient user={{ name: session.user.name, email: session.user.email }} />
     </div>
   );
 }
