@@ -26,6 +26,7 @@ model User {
   comments           BlogComment[]
   likes              BlogLike[]
   posts              BlogPost[]
+  competitionEntries CompetitionEntry[]  // 👈 AJOUTÉ ICI pour lier avec le modèle CompetitionEntry
   emailVerifications EmailVerification[]
   events             Event[]
   collaborators      EventCollaborator[]
@@ -370,4 +371,33 @@ model Review {
 
   @@index([shopId])
   @@index([userId])
+}
+
+enum PostStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model CompetitionEntry {
+  id               String     @id @default(cuid())
+  title            String
+  slug             String     @unique
+  content          String
+  excerpt          String?
+  imageUrl         String?
+  imageOrientation String?    @default("landscape")
+  images           String[]
+  tags             String[]
+  published        Boolean    @default(false)
+  status           PostStatus @default(PENDING)
+  views            Int        @default(0)
+  likes            Int        @default(0)
+  rewardAmount     Float      @default(0.0) // Cumul des gains ($2 + $50/$20/$10)
+  rankWinner       Int?       // 1, 2, ou 3 selon l'ordre d'atteinte des 1000 likes
+  createdAt        DateTime   @default(now())
+  publishedAt      DateTime?
+
+  authorId         String
+  author           User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
 }

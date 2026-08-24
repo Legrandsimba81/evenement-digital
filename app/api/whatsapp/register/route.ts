@@ -23,7 +23,7 @@ export async function POST() {
     }
 
     // CORRECTION CRITIQUE : URL officielle corrigée avec le symbole $ et graph.facebook.com
-    const url = `https://facebook.com{phoneNumberId}/register`;
+    const url = `https://graph.facebook.com/v18.0/${phoneNumberId}/register`;
 
     const response = await fetch(url, {
       method: "POST",
@@ -60,3 +60,15 @@ export async function POST() {
     );
   }
 }
+
+
+
+
+
+// curl -X POST "https://graph.facebook.com/v18.0/1162289156975901/register" \
+//   -H "Authorization: Bearer EAAeqoHwtUGcBSbGRCTPrLK2diRxZAA35DtMXRqqhsebdxsg8hPZBYpD0BGMvJlw3KnZAdDUkp20hZBtyeXaQjutuQB7YqGjusm5fFfnsWzMxZAuZCp86seCs6gb48G5nwBbso9jDeyCUtd8FGJpoDB23k6o4F0pKZCtzR2NL0bm8aUZAveAbBeb8zr8v8PmhAkBDdgZDZD" \
+//   -H "Content-Type: application/json" \
+//   -d '{
+//     "messaging_product": "whatsapp",
+//     "pin": "527352"
+//   }'

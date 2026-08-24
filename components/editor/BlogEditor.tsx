@@ -37,7 +37,7 @@ export default function BlogEditor({ initialContent = "", onChange }: BlogEditor
     const current = editor.getHTML();
     const next = initialContent || "<p></p>";
     if (current !== next) {
-      editor.commands.setContent(next, false);
+      editor.commands.setContent(next, { emitUpdate: false });
     }
   }, [editor, initialContent]);
 
