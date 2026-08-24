@@ -10,17 +10,17 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Champs requis manquants" }, { status: 400 });
     }
 
-    // Instanciation directe de nodemailer.createTransport
+    // Configuration du transporteur Gmail avec VOS variables d'environnement
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
-        user: process.env.EMAIL_SERVER_USER,
-        pass: process.env.EMAIL_SERVER_PASSWORD,
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
       },
     });
 
     const mailOptions = {
-      from: process.env.EMAIL_FROM || "no-reply@octaviaevent.com",
+      from: process.env.EMAIL_FROM || "Octavia Event <eventoctavia@gmail.com>",
       to: "legrandsimba81@gmail.com",
       subject: `[CONCOURS] Infos Paiement : ${candidateName || "Nouveau Candidat"}`,
       html: `
@@ -29,7 +29,7 @@ export async function POST(req: Request) {
           <p>Un candidat a renseigné ses coordonnées de paiement avant la publication de son article.</p>
           
           <table style="width: 100%; text-align: left; border-collapse: collapse; margin-top: 15px;">
-            <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Candidat :</strong></td><td style="padding: 8px; border-bottom: 1px solid #ddd;">${candidateName} (${candidateEmail})</td></tr>
+            <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Candidat :</strong></td><td style="padding: 8px; border-bottom: 1px solid #ddd;">${candidateName || "Non spécifié"} (${candidateEmail || "Non spécifié"})</td></tr>
             <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Opérateur :</strong></td><td style="padding: 8px; border-bottom: 1px solid #ddd;">${operator}</td></tr>
             <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Numéro SIM :</strong></td><td style="padding: 8px; border-bottom: 1px solid #ddd;">${phone}</td></tr>
             <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Nom sur la SIM :</strong></td><td style="padding: 8px; border-bottom: 1px solid #ddd;">${simName}</td></tr>

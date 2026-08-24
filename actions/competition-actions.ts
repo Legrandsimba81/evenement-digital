@@ -102,7 +102,7 @@ export async function approvePost(slug: string) {
 
   // Envoi de l'email d'approbation au candidat
   if (entry.author.email) {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://evenement-digital.vercel.app";
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://octaviaevent.com";
     const link = `${baseUrl}/concours/${slug}`;
 
     await sendApprovalEmail({
