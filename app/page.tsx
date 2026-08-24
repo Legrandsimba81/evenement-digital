@@ -22,6 +22,7 @@ import {
   TrendingUp,
   Zap,
   ExternalLink,
+  PlusCircle,
 } from "lucide-react";
 import type { EventWithGuests } from "@/types";
 import Image from "next/image";
@@ -119,6 +120,13 @@ export default function HomePage() {
                 </Link>
               ) : (
                 <>
+                  <Link
+                    href="/concours/regles"
+                    className="inline-flex items-center gap-2 rounded-full bg-primary-400 hover:bg-primary-700 text-white font-bold px-6 py-3 rounded-2xl transition-all shadow-md shadow-primary-600/20"
+                  >
+                    Participer au concours et gagner 50$ !
+                    {/* <ArrowRight className="h-4 w-4" /> */}
+                  </Link>
                   <Link
                     href="/register"
                     className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 font-semibold text-primary-600 transition hover:bg-gray-100"

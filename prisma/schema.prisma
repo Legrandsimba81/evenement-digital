@@ -27,6 +27,7 @@ model User {
   likes              BlogLike[]
   posts              BlogPost[]
   competitionEntries CompetitionEntry[]  // 👈 AJOUTÉ ICI pour lier avec le modèle CompetitionEntry
+  competitionLikes   CompetitionLike[]   // 👈 À AJOUTER
   emailVerifications EmailVerification[]
   events             Event[]
   collaborators      EventCollaborator[]
@@ -400,4 +401,18 @@ model CompetitionEntry {
 
   authorId         String
   author           User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  likesRecords     CompetitionLike[] // 👈 À AJOUTER
+}
+model CompetitionLike {
+  id        String           @id @default(cuid())
+  postId    String
+  userId    String
+  createdAt DateTime         @default(now())
+
+  post      CompetitionEntry @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId]) // Empêche un utilisateur d'aimer 2 fois le même article
+  @@index([postId])
+  @@index([userId])
 }

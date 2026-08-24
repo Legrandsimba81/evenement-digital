@@ -117,93 +117,141 @@ export async function approvePost(slug: string) {
   revalidatePath(`/concours/${slug}`);
 }
 
-// 3. Incrémentation des likes et attribution des prix ($50, $20, $10)
+// 3. Basculement (Toggle) des likes, mise à jour en BDD et attribution des prix ($50, $20, $10)
 export async function toggleLikePost(slug: string) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    throw new Error("Vous devez être connecté pour voter.");
+  }
+
+  const userId = session.user.id;
+
   const entry = await db.competitionEntry.findUnique({
     where: { slug },
     include: { author: true },
   });
 
-  if (!entry || entry.status !== "APPROVED") throw new Error("Article indisponible.");
-
-  const newLikes = entry.likes + 1;
-  let newRank = entry.rankWinner;
-  let extraReward = 0;
-
-  // Si l'article atteint 1000 likes pour la première fois
-  if (newLikes >= 1000 && !entry.rankWinner) {
-    const previousWinnersCount = await db.competitionEntry.count({
-      where: { rankWinner: { not: null } },
-    });
-
-    if (previousWinnersCount === 0) {
-      newRank = 1;
-      extraReward = 50.0; // 1er Gagnant
-    } else if (previousWinnersCount === 1) {
-      newRank = 2;
-      extraReward = 20.0; // 2ème Gagnant
-    } else if (previousWinnersCount === 2) {
-      newRank = 3;
-      extraReward = 10.0; // 3ème Gagnant
-    }
+  if (!entry || entry.status !== "APPROVED") {
+    throw new Error("Article indisponible.");
   }
 
-  // Transaction de mise à jour du classement et de la prime
-  await db.$transaction([
-    db.competitionEntry.update({
-      where: { slug },
-      data: {
-        likes: newLikes,
-        rankWinner: newRank,
-        rewardAmount: { increment: extraReward },
+  // Vérification de l'existence du vote pour l'utilisateur
+  const existingLike = await db.competitionLike.findUnique({
+    where: {
+      postId_userId: {
+        postId: entry.id,
+        userId: userId,
       },
-    }),
-    ...(extraReward > 0
-      ? [
-          db.user.update({
-            where: { id: entry.authorId },
-            data: { balance: { increment: extraReward } },
-          }),
-        ]
-      : []),
-  ]);
+    },
+  });
 
-  // Si un nouveau gagnant est désigné lors de ce like
-  if (newRank && extraReward > 0) {
-    // 1. Notifier le gagnant
-    if (entry.author.email) {
-      await sendWinnerNotification({
-        to: entry.author.email,
-        authorName: entry.author.name || "Candidat",
-        rank: newRank,
-        prize: extraReward,
-        title: entry.title,
+  let isLiked = false;
+  let updatedLikesCount = entry.likes;
+
+  if (existingLike) {
+    // --- SUPPRESSION DU LIKE (UNLIKE) ---
+    updatedLikesCount = Math.max(0, entry.likes - 1);
+
+    await db.$transaction([
+      db.competitionLike.delete({
+        where: { id: existingLike.id },
+      }),
+      db.competitionEntry.update({
+        where: { id: entry.id },
+        data: { likes: { decrement: 1 } },
+      }),
+    ]);
+
+    isLiked = false;
+  } else {
+    // --- AJOUT DU LIKE ---
+    updatedLikesCount = entry.likes + 1;
+    let newRank = entry.rankWinner;
+    let extraReward = 0;
+
+    // Si l'article atteint 1000 likes pour la première fois
+    if (updatedLikesCount >= 1000 && !entry.rankWinner) {
+      const previousWinnersCount = await db.competitionEntry.count({
+        where: { rankWinner: { not: null } },
       });
+
+      if (previousWinnersCount === 0) {
+        newRank = 1;
+        extraReward = 50.0; // 1er Gagnant
+      } else if (previousWinnersCount === 1) {
+        newRank = 2;
+        extraReward = 20.0; // 2ème Gagnant
+      } else if (previousWinnersCount === 2) {
+        newRank = 3;
+        extraReward = 10.0; // 3ème Gagnant
+      }
     }
 
-    // 2. Informer tous les autres participants
-    const otherParticipants = await db.user.findMany({
-      where: {
-        id: { not: entry.authorId },
-        competitionEntries: { some: { status: "APPROVED" } },
-      },
-      select: { email: true },
-    });
+    // Transaction pour lier le like à l'utilisateur, incrémenter le compteur et attribuer les récompenses
+    await db.$transaction([
+      db.competitionLike.create({
+        data: {
+          postId: entry.id,
+          userId: userId,
+        },
+      }),
+      db.competitionEntry.update({
+        where: { id: entry.id },
+        data: {
+          likes: { increment: 1 },
+          rankWinner: newRank,
+          rewardAmount: { increment: extraReward },
+        },
+      }),
+      ...(extraReward > 0
+        ? [
+            db.user.update({
+              where: { id: entry.authorId },
+              data: { balance: { increment: extraReward } },
+            }),
+          ]
+        : []),
+    ]);
 
-    const otherEmails = otherParticipants.map((p) => p.email).filter(Boolean) as string[];
+    isLiked = true;
 
-    if (otherEmails.length > 0) {
-      await notifyParticipantsAboutWinner({
-        participantsEmails: otherEmails,
-        winnerName: entry.author.name || "Un candidat",
-        rank: newRank,
-        prize: extraReward,
+    // Notification par e-mail en cas d'attribution d'un rang gagnant
+    if (newRank && extraReward > 0) {
+      if (entry.author.email) {
+        await sendWinnerNotification({
+          to: entry.author.email,
+          authorName: entry.author.name || "Candidat",
+          rank: newRank,
+          prize: extraReward,
+          title: entry.title,
+        });
+      }
+
+      const otherParticipants = await db.user.findMany({
+        where: {
+          id: { not: entry.authorId },
+          competitionEntries: { some: { status: "APPROVED" } },
+        },
+        select: { email: true },
       });
+
+      const otherEmails = otherParticipants.map((p) => p.email).filter(Boolean) as string[];
+
+      if (otherEmails.length > 0) {
+        await notifyParticipantsAboutWinner({
+          participantsEmails: otherEmails,
+          winnerName: entry.author.name || "Un candidat",
+          rank: newRank,
+          prize: extraReward,
+        });
+      }
     }
   }
 
   revalidatePath(`/concours/${slug}`);
   revalidatePath("/admin/concours");
+
+  return { liked: isLiked, likes: updatedLikesCount };
 }
 
 // 4. Action de clôture du concours et envoi du bilan final
@@ -241,4 +289,26 @@ export async function closeCompetitionAndNotify() {
   });
 
   return { success: true, count: validParticipants.length };
+}
+
+export async function deleteCandidatePost(id: string) {
+  const session = await auth();
+  if (session?.user?.role !== "ADMIN") {
+    throw new Error("Action réservée aux administrateurs.");
+  }
+
+  // Suppression en transaction pour garantir l'intégrité des données
+  await db.$transaction([
+    // 1. Suppression des likes associés en premier
+    db.competitionLike.deleteMany({
+      where: { postId: id },
+    }),
+    // 2. Suppression du post
+    db.competitionEntry.delete({
+      where: { id },
+    }),
+  ]);
+
+  revalidatePath("/admin/concours");
+  return { success: true };
 }
