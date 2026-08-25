@@ -9,7 +9,7 @@ export default function ShareModal({ postSlug, title }: { postSlug: string; titl
   const [copied, setCopied] = useState(false);
   const panelRef = useRef<HTMLDivElement | null>(null);
 
-  const url = `${process.env.NEXT_PUBLIC_BASE_URL || "https://evenement-digital.vercel.app"}/concours/${postSlug}`;
+  const url = `${process.env.NEXT_PUBLIC_BASE_URL || "https://octaviaevent.com"}/concours/${postSlug}`;
 
   useEffect(() => {
     if (!open) return;
@@ -40,7 +40,7 @@ export default function ShareModal({ postSlug, title }: { postSlug: string; titl
   };
 
   return (
-    <div className="relative" ref={panelRef}>
+    <div className="relative inline-block" ref={panelRef}>
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
@@ -50,7 +50,7 @@ export default function ShareModal({ postSlug, title }: { postSlug: string; titl
       </button>
 
       {open && (
-        <div className="absolute left-0 sm:left-auto sm:right-0 top-full mt-2 w-72 sm:w-80 rounded-2xl bg-white dark:bg-gray-900 shadow-2xl border border-gray-200 dark:border-gray-800 p-4 z-50 animate-in fade-in zoom-in-95 duration-150">
+        <div className="absolute left-0 bottom-full mb-2 w-72 sm:w-80 rounded-2xl bg-white dark:bg-gray-900 shadow-2xl border border-gray-200 dark:border-gray-800 p-4 z-50 animate-in fade-in zoom-in-95 duration-150">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-bold text-gray-900 dark:text-white">Partager cet article</h3>
             <button
