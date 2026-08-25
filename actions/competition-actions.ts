@@ -409,3 +409,67 @@ export async function deleteCandidatePost(id: string) {
     revalidatePath("/admin/concours");
     return { success: true };
 }
+
+// -----------------------------------------------------------------------------
+// 8. Modification d'une candidature par l'auteur ou l'admin
+// -----------------------------------------------------------------------------
+export async function updateCandidatePost(
+    slug: string,
+    data: {
+        title: string;
+        content: string;
+        excerpt?: string;
+        imageUrl?: string;
+        imageOrientation?: string;
+        images?: string[];
+        tags?: string[];
+    }
+) {
+    const session = await auth();
+    if (!session?.user?.id) {
+        throw new Error("Non autorisé. Veuillez vous connecter.");
+    }
+
+    const entry = await db.competitionEntry.findUnique({
+        where: { slug },
+    });
+
+    if (!entry) {
+        throw new Error("Article introuvable.");
+    }
+
+    // Vérification des permissions : seul l'auteur ou un admin peut modifier
+    const isAuthor = entry.authorId === session.user.id;
+    const isAdmin = session.user.role === "ADMIN";
+
+    if (!isAuthor && !isAdmin) {
+        throw new Error("Vous n'êtes pas autorisé à modifier cet article.");
+    }
+
+    // Si on modifie le titre, on peut choisir de recalculer le slug ou de le garder.
+    // Généralement, il est préférable de GARDER le même slug pour ne pas casser les liens existants.
+    
+    await db.competitionEntry.update({
+        where: { slug },
+        data: {
+            title: data.title,
+            content: data.content,
+            excerpt: data.excerpt,
+            imageUrl: data.imageUrl,
+            imageOrientation: data.imageOrientation,
+            images: data.images ? data.images : undefined,
+            tags: data.tags || [],
+            // Optionnel: Si l'article était approuvé et qu'un utilisateur (non-admin) le modifie,
+            // vous pourriez vouloir le repasser en "PENDING" pour re-modération.
+            // Si c'est le cas, décommentez la ligne suivante :
+            // status: isAdmin ? entry.status : "PENDING", 
+        },
+    });
+
+    revalidatePath("/concours");
+    revalidatePath(`/concours/${slug}`);
+    revalidatePath(`/concours/preview/${slug}`); // Si la page preview est utilisée
+    revalidatePath("/admin/concours");
+
+    return { success: true, slug: entry.slug };
+}

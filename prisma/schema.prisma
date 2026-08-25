@@ -28,6 +28,7 @@ model User {
   posts              BlogPost[]
   competitionEntries CompetitionEntry[]  // 👈 AJOUTÉ ICI pour lier avec le modèle CompetitionEntry
   competitionLikes   CompetitionLike[]   // 👈 À AJOUTER
+  competitionComments CompetitionComment[]
   emailVerifications EmailVerification[]
   events             Event[]
   collaborators      EventCollaborator[]
@@ -400,10 +401,23 @@ model CompetitionEntry {
   rankWinner       Int?            // 1, 2, ou 3 selon l'ordre d'atteinte des 1000 likes
   createdAt        DateTime        @default(now())
   publishedAt      DateTime?
+  comments  CompetitionComment[] // Ajouter la relation
 
   authorId         String
   author           User            @relation(fields: [authorId], references: [id], onDelete: Cascade)
   likesRecords     CompetitionLike[]
+}
+
+model CompetitionComment {
+  id        String           @id @default(uuid())
+  content   String
+  createdAt DateTime         @default(now())
+  
+  postId    String
+  post      CompetitionEntry @relation(fields: [postId], references: [id], onDelete: Cascade)
+  
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model CompetitionLike {

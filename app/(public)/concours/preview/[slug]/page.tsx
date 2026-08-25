@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { notFound, redirect } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { Clock, ArrowLeft } from "lucide-react";
+import { Clock, ArrowLeft, Edit3 } from "lucide-react";
 
 interface PreviewPageProps {
   params: Promise<{ slug: string }>;
@@ -50,43 +50,74 @@ export default async function CompetitionPreviewPage({ params }: PreviewPageProp
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-8">
-      {/* Bannière de Statut En Attente */}
-      <div className="mb-8 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 flex items-start gap-3">
-        <Clock className="w-6 h-6 shrink-0 mt-0.5" />
-        <div>
-          <h3 className="font-semibold text-base">Candidature en cours de modération</h3>
-          <p className="text-sm opacity-90 mt-1">
-            Votre article a bien été reçu. Il est actuellement révisé par notre équipe.
-            Une fois approuvé, il sera publié officiellement et vous pourrez commencer à récolter des votes !
-          </p>
+      {/* Bannière de Statut En Attente avec bouton de modification */}
+      <div className="mb-8 p-5 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 text-amber-900 dark:text-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-start gap-3">
+          <Clock className="w-6 h-6 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+          <div>
+            <h3 className="font-bold text-base">Candidature en cours de modération</h3>
+            <p className="text-sm text-amber-800 dark:text-amber-300/90 mt-0.5">
+              Votre article a bien été reçu. Il est actuellement révisé par notre équipe. 
+              Vous pouvez encore modifier son contenu tant qu'il n'est pas validé.
+            </p>
+          </div>
         </div>
+
+        {/* Bouton de modification rapide */}
+        <Link
+          href={`/concours/edit/${entry.slug}`}
+          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-semibold text-sm transition shrink-0 shadow-sm"
+        >
+          <Edit3 className="w-4 h-4" />
+          Modifier l'article
+        </Link>
       </div>
 
-      {/* Navigation retour */}
-      <div className="mb-6">
+      {/* Navigation retour et action d'édition */}
+      <div className="flex items-center justify-between mb-6">
         <Link
           href="/concours"
-          className="inline-flex items-center text-sm text-gray-500 hover:text-gray-900 dark:hover:text-white transition"
+          className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-900 dark:hover:text-white transition"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Retour aux articles
         </Link>
+
+        <Link
+          href={`/concours/edit/${entry.slug}`}
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline"
+        >
+          <Edit3 className="w-4 h-4" />
+          Éditer
+        </Link>
       </div>
 
       {/* Rendu de l'article en aperçu */}
-      <article className="space-y-6 opacity-90">
-        <div className="space-y-2">
-          <span className="inline-block px-3 py-1 bg-amber-100 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 text-xs font-medium rounded-full">
+      <article className="space-y-6">
+        <div className="space-y-3">
+          <span className="inline-block px-3 py-1 bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 text-xs font-semibold rounded-full border border-amber-200 dark:border-amber-900/40">
             Aperçu avant publication
           </span>
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{entry.title}</h1>
-          <p className="text-gray-500 text-sm">
-            Par <span className="font-medium text-gray-700 dark:text-gray-300">{entry.author.name}</span>
-          </p>
+          <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl text-gray-900 dark:text-white">
+            {entry.title}
+          </h1>
+          
+          <div className="flex items-center gap-3 pt-1">
+            {entry.author.image && (
+              <img
+                src={entry.author.image}
+                alt={entry.author.name || "Auteur"}
+                className="w-8 h-8 rounded-full object-cover"
+              />
+            )}
+            <p className="text-gray-600 dark:text-gray-400 text-sm">
+              Par <span className="font-semibold text-gray-900 dark:text-white">{entry.author.name}</span>
+            </p>
+          </div>
         </div>
 
         {entry.imageUrl && (
-          <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-gray-100">
+          <div className="relative aspect-video w-full overflow-hidden rounded-2xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800">
             <Image
               src={entry.imageUrl}
               alt={entry.title}
@@ -97,8 +128,16 @@ export default async function CompetitionPreviewPage({ params }: PreviewPageProp
           </div>
         )}
 
+        {/* Extrait s'il existe */}
+        {entry.excerpt && (
+          <p className="text-lg font-medium text-gray-600 dark:text-gray-300 italic border-l-4 border-amber-500 pl-4 py-1">
+            {entry.excerpt}
+          </p>
+        )}
+
+        {/* Contenu Rich Text */}
         <div 
-          className="prose prose-neutral dark:prose-invert max-w-none"
+          className="prose prose-neutral dark:prose-invert max-w-none pt-4"
           dangerouslySetInnerHTML={{ __html: entry.content }}
         />
       </article>

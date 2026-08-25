@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
-import { auth } from "@/auth"; // Assurez-vous d'importer votre méthode d'auth (ex: auth, getServerSession)
+import { auth } from "@/auth";
 import { notFound } from "next/navigation";
-import { Calendar, Eye, Clock, Award, Trophy, BadgeCheck, PlusCircle } from "lucide-react";
+import { Calendar, Eye, Clock, Award, Trophy, BadgeCheck, PlusCircle, Edit3, MessageSquare } from "lucide-react";
 import CommentSection from "@/components/blog/CommentSection";
 import ShareModal from "@/components/competition/ShareModal";
 import LikeButton from "@/components/competition/LikeButton";
@@ -68,10 +68,20 @@ export default async function CompetitionPostPage({ params }: Props) {
 
     const post = await db.competitionEntry.findUnique({
         where: { slug },
-        include: { author: true },
+        include: { 
+            author: true,
+            comments: {
+                select: { id: true }
+            }
+        },
     });
 
     if (!post || post.status !== "APPROVED") return notFound();
+
+    // Vérification des droits du propriétaire ou admin
+    const isOwner = session?.user?.id === post.authorId;
+    const isAdmin = session?.user?.role === "ADMIN";
+    const canEdit = isOwner || isAdmin;
 
     // Vérifier si l'utilisateur connecté a déjà aimé cet article
     let likedByCurrentUser = false;
@@ -99,8 +109,11 @@ export default async function CompetitionPostPage({ params }: Props) {
         ? new Date(post.publishedAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })
         : "";
 
+    const commentsCount = post.comments?.length || 0;
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-gray-950 dark:via-gray-900 dark:to-slate-950 py-6 px-3 sm:py-12 sm:px-6 transition-colors">
+            {/* Bannière d'appel à participation */}
             <div className="max-w-4xl mx-auto mb-6 px-4 text-center">
                 <Link
                     href="/concours/regles"
@@ -110,8 +123,22 @@ export default async function CompetitionPostPage({ params }: Props) {
                     <span className="truncate">Participer au concours et gagner 50$ !</span>
                 </Link>
             </div>
+
             <article className="max-w-4xl mx-auto">
                 <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md rounded-3xl shadow-xl border border-gray-200/80 dark:border-gray-800 p-4 sm:p-8 md:p-10">
+
+                    {/* Option de modification pour l'auteur ou l'admin */}
+                    {canEdit && (
+                        <div className="mb-6 flex justify-end">
+                            <Link
+                                href={`/concours/edit/${post.slug}`}
+                                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900 text-blue-600 dark:text-blue-400 font-semibold text-sm hover:bg-blue-100 dark:hover:bg-blue-900/60 transition"
+                            >
+                                <Edit3 size={16} />
+                                Modifier l'article
+                            </Link>
+                        </div>
+                    )}
 
                     {/* Badge Gagnant */}
                     {post.rankWinner && (
@@ -170,15 +197,40 @@ export default async function CompetitionPostPage({ params }: Props) {
                         />
                     </div>
 
-                    {/* Titre & Vues */}
+                    {/* Titre, Extrait & Métriques */}
                     <header className="mb-6">
                         <h1 className="text-2xl sm:text-4xl md:text-5xl font-black text-gray-900 dark:text-white leading-tight">
                             {post.title}
                         </h1>
-                        <div className="flex items-center gap-4 text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-4">
-                            <span className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full">
-                                <Eye size={15} /> {post.views} vues
-                            </span>
+
+                        {post.excerpt && (
+                            <p className="mt-3 text-base sm:text-lg text-gray-600 dark:text-gray-300 leading-relaxed italic">
+                                {post.excerpt}
+                            </p>
+                        )}
+
+                        {/* Barre d'interaction immédiate (J'aime, Partage, Vues, Commentaires) */}
+                        <div className="flex flex-wrap items-center justify-between gap-4 mt-6 p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800">
+                            <div className="flex items-center gap-3">
+                                <LikeButton
+                                    postSlug={slug}
+                                    initialLikes={post.likes}
+                                    likedByCurrentUser={likedByCurrentUser}
+                                />
+                                <ShareModal postSlug={slug} title={post.title} />
+                            </div>
+
+                            <div className="flex items-center gap-4 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                                <span className="flex items-center gap-1.5 bg-white dark:bg-gray-900 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700">
+                                    <Eye size={16} /> {post.views} vues
+                                </span>
+                                <a
+                                    href="#comments"
+                                    className="flex items-center gap-1.5 bg-white dark:bg-gray-900 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 hover:text-blue-600 dark:hover:text-blue-400 transition"
+                                >
+                                    <MessageSquare size={16} /> {commentsCount} commentaires
+                                </a>
+                            </div>
                         </div>
                     </header>
 
@@ -199,18 +251,11 @@ export default async function CompetitionPostPage({ params }: Props) {
                         </div>
                     )}
 
-                    {/* Barre d'actions (Like & Partage) */}
-                    <div className="flex flex-wrap items-center justify-between gap-4 mt-10 border-t border-gray-200 dark:border-gray-800 pt-6">
-                        <LikeButton
-                            postSlug={slug}
-                            initialLikes={post.likes}
-                            likedByCurrentUser={likedByCurrentUser}
-                        />
-                        <ShareModal postSlug={slug} title={post.title} />
+                    {/* Section Commentaires en bas d'article */}
+                    <div id="comments" className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-800">
+                        <CommentSection postSlug={slug} comments={[]} />
                     </div>
 
-                    {/* Section Commentaires */}
-                    <CommentSection postSlug={slug} comments={[]} />
                 </div>
             </article>
         </div>

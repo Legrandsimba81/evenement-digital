@@ -2,31 +2,46 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createCandidatePost } from "@/actions/competition-actions";
+import { createCandidatePost, updateCandidatePost } from "@/actions/competition-actions";
 import BlogEditor from "@/components/editor/BlogEditor";
 import ImageGalleryUpload from "@/components/ui/ImageGalleryUpload";
-import { Loader2, Send, Upload, X, BadgeCheck } from "lucide-react";
+import { Loader2, Send, Upload, X, BadgeCheck, Save } from "lucide-react";
+
+interface InitialPostData {
+  slug: string;
+  title: string;
+  excerpt?: string | null;
+  content: string;
+  imageUrl?: string | null;
+  imageOrientation?: string | null;
+  images?: string[];
+  tags?: string[];
+}
 
 interface CandidatePostFormProps {
   authorName?: string;
   authorImage?: string;
+  initialData?: InitialPostData; // Données d'origine pour le mode édition
 }
 
-export default function CandidatePostForm({ authorName, authorImage }: CandidatePostFormProps) {
+export default function CandidatePostForm({ authorName, authorImage, initialData }: CandidatePostFormProps) {
   const router = useRouter();
+  const isEditing = Boolean(initialData);
+
   const [loading, setLoading] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
   const [error, setError] = useState("");
 
-  const [title, setTitle] = useState("");
-  const [excerpt, setExcerpt] = useState("");
-  const [content, setContent] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
-  const [imageOrientation, setImageOrientation] = useState<"landscape" | "portrait">("landscape");
-  const [images, setImages] = useState<string[]>([]);
-  const [tags, setTags] = useState("");
+  const [title, setTitle] = useState(initialData?.title || "");
+  const [excerpt, setExcerpt] = useState(initialData?.excerpt || "");
+  const [content, setContent] = useState(initialData?.content || "");
+  const [imageUrl, setImageUrl] = useState(initialData?.imageUrl || "");
+  const [imageOrientation, setImageOrientation] = useState<"landscape" | "portrait">(
+    (initialData?.imageOrientation as "landscape" | "portrait") || "landscape"
+  );
+  const [images, setImages] = useState<string[]>(initialData?.images || []);
+  const [tags, setTags] = useState(initialData?.tags ? initialData.tags.join(", ") : "");
 
-  // Upload de l'image de couverture
   const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -76,7 +91,7 @@ export default function CandidatePostForm({ authorName, authorImage }: Candidate
         .map((t) => t.trim())
         .filter(Boolean);
 
-      const result = await createCandidatePost({
+      const payload = {
         title: title.trim(),
         content,
         excerpt: excerpt.trim() || undefined,
@@ -84,26 +99,32 @@ export default function CandidatePostForm({ authorName, authorImage }: Candidate
         imageOrientation,
         images: images.length > 0 ? images : undefined,
         tags: tagsArray,
-      });
+      };
 
-      // Redirection vers la page de prévisualisation si le slug est retourné
-      if (result?.slug) {
-        router.push(`/concours/preview/${result.slug}`);
+      if (isEditing && initialData) {
+        const result = await updateCandidatePost(initialData.slug, payload);
+        if (result?.slug) {
+          router.push(`/concours/preview/${result.slug}`);
+        }
+      } else {
+        const result = await createCandidatePost(payload);
+        if (result?.slug) {
+          router.push(`/concours/preview/${result.slug}`);
+        }
       }
     } catch (err: any) {
-      setError(err.message || "Une erreur est survenue lors de la soumission.");
-    } finally {
+      setError(err.message || "Une erreur est survenue lors de l'enregistrement.");
       setLoading(false);
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 bg-white dark:bg-gray-900 p-6 md:p-8 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-sm">
-      {/* Profil du Candidat avec le BadgeCheck */}
+      {/* Profil du Candidat */}
       {authorName && (
         <div className="flex items-center gap-3 p-3 bg-blue-50/50 dark:bg-blue-950/30 rounded-2xl border border-blue-100 dark:border-blue-900/40 mb-6">
           <img
-            src={authorImage || "/default-avatar.png"}
+            src={authorImage && authorImage.trim() !== "" ? authorImage : "/default-avatar.png"}
             alt={authorName}
             className="w-10 h-10 rounded-full object-cover ring-2 ring-blue-500/30"
           />
@@ -150,7 +171,7 @@ export default function CandidatePostForm({ authorName, authorImage }: Candidate
         />
       </div>
 
-      {/* Éditeur Tiptap */}
+      {/* Éditeur Tiptap avec support HTML/Markdown */}
       <div>
         <label className="block text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2">
           Contenu de l'article *
@@ -232,7 +253,12 @@ export default function CandidatePostForm({ authorName, authorImage }: Candidate
           {loading ? (
             <>
               <Loader2 size={18} className="animate-spin" />
-              Soumission en cours...
+              {isEditing ? "Enregistrement..." : "Soumission en cours..."}
+            </>
+          ) : isEditing ? (
+            <>
+              <Save size={18} />
+              Enregistrer les modifications
             </>
           ) : (
             <>
