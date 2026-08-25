@@ -50,7 +50,7 @@ export default function ShareModal({ postSlug, title }: { postSlug: string; titl
       </button>
 
       {open && (
-        <div className="absolute -right-5 bottom-full mb-2 w-72 sm:w-80 rounded-2xl bg-white dark:bg-gray-900 shadow-2xl border border-gray-200 dark:border-gray-800 p-4 z-50 animate-in fade-in zoom-in-95 duration-150">
+        <div className="absolute -right-10 bottom-full mb-2 w-72 sm:w-80 rounded-2xl bg-white dark:bg-gray-900 shadow-2xl border border-gray-200 dark:border-gray-800 p-4 z-50 animate-in fade-in zoom-in-95 duration-150">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-bold text-gray-900 dark:text-white">Partager cet article</h3>
             <button
