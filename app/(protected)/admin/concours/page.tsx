@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import Link from "next/link";
-import { Eye, Heart, Trophy, CheckCircle, XCircle, Award, Users, Lock, Unlock } from "lucide-react";
+import { Eye, Heart, Trophy, CheckCircle, Award, Users, Lock, Unlock } from "lucide-react";
 import ApprovePostButton from "@/components/admin/ApprovePostButton";
 import DeletePostButton from "@/components/admin/DeletePostButton";
 
@@ -105,13 +105,21 @@ export default async function AdminCompetitionPage() {
               <tbody className="divide-y divide-slate-100 dark:divide-white/5">
                 {entries.map((entry) => {
                   const progressPercentage = Math.min(100, Math.round((entry.likes / 1000) * 100));
+                  const previewHref =
+                    entry.status === "PENDING"
+                      ? `/concours/preview/${entry.slug}`
+                      : `/concours/${entry.slug}`;
 
                   return (
                     <tr key={entry.id} className="hover:bg-slate-50/50 dark:hover:bg-white/5 transition">
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-3">
                           <img
-                            src={entry.author.image || "/default-avatar.png"}
+                            src={
+                              entry.author.image && entry.author.image.trim() !== ""
+                                ? entry.author.image
+                                : "/default-avatar.png"
+                            }
                             alt={entry.author.name || "Auteur"}
                             className="w-9 h-9 rounded-full object-cover border border-slate-200 dark:border-white/10"
                           />
@@ -145,7 +153,11 @@ export default async function AdminCompetitionPage() {
                               : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
                           }`}
                         >
-                          {entry.status === "APPROVED" ? "Approuvé (+2$)" : entry.status === "PENDING" ? "En attente" : "Refusé"}
+                          {entry.status === "APPROVED"
+                            ? "Approuvé (+1$)"
+                            : entry.status === "PENDING"
+                            ? "En attente"
+                            : "Refusé"}
                         </span>
                       </td>
 
@@ -186,15 +198,17 @@ export default async function AdminCompetitionPage() {
                           {/* Bouton pour Approuver / Rejeter */}
                           <ApprovePostButton slug={entry.slug} currentStatus={entry.status} />
 
+                          {/* Consulter l'article (Aperçu si PENDING, Article public si APPROVED) */}
                           <Link
-                            href={`/concours/${entry.slug}`}
+                            href={previewHref}
                             target="_blank"
                             className="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition"
-                            title="Voir l'article"
+                            title={entry.status === "PENDING" ? "Aperçu de la candidature" : "Voir l'article public"}
                           >
                             <Eye size={16} />
                           </Link>
 
+                          {/* Bouton pour Supprimer l'article */}
                           <DeletePostButton slug={entry.slug} title={entry.title} />
                         </div>
                       </td>
