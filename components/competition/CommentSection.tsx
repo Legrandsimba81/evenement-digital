@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { addCompetitionComment, updateCompetitionComment } from "@/actions/competition-actions";
 import { useSession } from "next-auth/react";
 import { Pencil, Check, X, MessageSquare, Send } from "lucide-react";
@@ -14,6 +15,7 @@ type Comment = {
 };
 
 export default function CommentSection({ postSlug, comments }: { postSlug: string; comments: Comment[] }) {
+  const router = useRouter();
   const { data: session } = useSession();
   const [name, setName] = useState("");
   const [content, setContent] = useState("");
@@ -53,6 +55,9 @@ export default function CommentSection({ postSlug, comments }: { postSlug: strin
         setLocalComments((prev) => [newComment, ...prev]);
         setContent("");
         if (!session?.user) setName("");
+        
+        // Rafraîchit les Server Components pour mettre à jour commentsCount en haut de page
+        router.refresh();
       }
     } catch (error) {
       console.error("Erreur lors de l'envoi du commentaire :", error);
