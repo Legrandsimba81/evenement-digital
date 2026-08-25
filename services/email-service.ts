@@ -39,7 +39,7 @@ const emailTemplate = (content: string) => `
       ${content}
     </div>
     <div style="background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 16px; text-align: center; font-size: 12px; color: #64748b;">
-      <p style="margin: 0;">Merci de participer à nos initiatives numériques.</p>
+      <p style="margin: 0;">Merci de participer aux initiatives d'Octavia Event.</p>
     </div>
   </div>
 `;
@@ -49,25 +49,25 @@ export async function sendSubmissionConfirmation({ to, authorName, title }: { to
   const subject = `Confirmation : Candidature enregistrée "${title}"`;
   const html = emailTemplate(`
     <h2>Bonjour ${authorName},</h2>
-    <p>Votre article <strong>"${title}"</strong> a bien été enregistré.</p>
-    <p>Dès sa validation par l'équipe administrative, vous recevrez votre prime initiale de <strong>1$</strong> et votre article sera ouvert aux votes.</p>
-    <p><strong>Structure des prix (Seuil : 1000 likes) :</strong></p>
+    <p>Votre article <strong>"${title}"</strong> a bien été enregistré et est en attente de validation administrative.</p>
+    <p>Une fois approuvé, votre article sera ouvert aux votes pour concourir au podium !</p>
+    <p><strong>Grandes Récompenses (Objectif : 1000 likes) :</strong></p>
     <ul>
-      <li>🥇 1er Gagnant : <strong>50$</strong></li>
-      <li>🥈 2ème Gagnant : <strong>20$</strong></li>
-      <li>🥉 3ème Gagnant : <strong>10$</strong></li>
+      <li>🥇 1ère Place : <strong>50$</strong></li>
+      <li>🥈 2ème Place : <strong>20$</strong></li>
+      <li>🥉 3ème Place : <strong>10$</strong></li>
     </ul>
   `);
   await sendEmail(to, subject, html);
 }
 
-// 2. Notification d'approbation (+1$)
+// 2. Notification d'approbation pour les 10 premiers (+1$)
 export async function sendApprovalEmail({ to, authorName, title, link }: { to: string; authorName: string; title: string; link: string }) {
   const subject = `Bravo ! Votre article est approuvé (+1$)`;
   const html = emailTemplate(`
     <h2>Félicitations ${authorName} !</h2>
-    <p>Votre article <strong>"${title}"</strong> a été validé. Un crédit de <strong>1$</strong> a été ajouté à votre solde.</p>
-    <p>Vous pouvez dès maintenant partager votre lien pour atteindre les 1000 likes :</p>
+    <p>Votre article <strong>"${title}"</strong> a été approuvé. Vous faites partie des 10 premiers candidats : une prime de bienvenue de <strong>1$</strong> a été créditée sur votre solde !</p>
+    <p>Partagez votre article dès maintenant pour accumuler des votes :</p>
     <p style="text-align: center; margin: 24px 0;">
       <a href="${link}" style="padding: 12px 24px; background: #2563eb; color: white; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">Voir et partager mon article</a>
     </p>
@@ -75,7 +75,42 @@ export async function sendApprovalEmail({ to, authorName, title, link }: { to: s
   await sendEmail(to, subject, html);
 }
 
-// 3. Notification personnelle au gagnant qui vient de débloquer un rang
+// 3. Notification d'approbation pour les candidats au-delà des 10 premiers (sans 1$)
+export async function sendPostReceivedNoBonusEmail({
+  to,
+  authorName,
+  title,
+  link,
+}: {
+  to: string;
+  authorName: string;
+  title: string;
+  link: string;
+}) {
+  const subject = `Article publié : "${title}" 🚀`;
+  const html = emailTemplate(`
+    <h2>Votre article est en ligne, ${authorName} !</h2>
+    <p>Félicitations ! Votre article <strong>"${title}"</strong> vient d'être approuvé et est officiellement ouvert aux votes.</p>
+    
+    <div style="background-color: #f3f4f6; padding: 12px 16px; border-radius: 8px; color: #4b5563; margin: 16px 0;">
+      <p style="margin: 0; font-size: 14px;">
+        <em>Remarque : La prime de bienvenue réservée aux 10 premiers inscrits a déjà été distribuée, mais vous restez entièrement éligible aux grands prix du podium (50$, 20$, 10$) !</em>
+      </p>
+    </div>
+
+    <p>Mobilisez votre réseau et accumulez les likes pour atteindre le cap des 1000 votes !</p>
+
+    <p style="text-align: center; margin: 24px 0;">
+      <a href="${link}" style="padding: 12px 24px; background: #2563eb; color: white; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">
+        Voir et partager mon article
+      </a>
+    </p>
+  `);
+
+  await sendEmail(to, subject, html);
+}
+
+// 4. Notification personnelle au gagnant qui vient de débloquer un rang
 export async function sendWinnerNotification({
   to,
   authorName,
@@ -90,20 +125,20 @@ export async function sendWinnerNotification({
   title: string;
 }) {
   const medals = ["🥇", "🥈", "🥉"];
-  const rankLabel = rank === 1 ? "1er" : `${rank}ème`;
+  const rankLabel = rank === 1 ? "1ère" : `${rank}ème`;
   const medal = medals[rank - 1] || "🏆";
 
-  const subject = `${medal} Félicitations ! Vous avez décroché la ${rankLabel} place !`;
+  const subject = `${medal} Félicitations ! Vous décrochez la ${rankLabel} place !`;
   const html = emailTemplate(`
     <h2>Exploit accompli, ${authorName} !</h2>
-    <p>Votre article <strong>"${title}"</strong> vient d'atteindre le cap des <strong>1000 likes</strong> !</p>
-    <p>Vous terminez à la <strong>${rankLabel} position (${medal})</strong> du concours et gagnez un prix supplémentaire de <strong>${prize}$</strong> !</p>
-    <p>Le montant a été crédité sur votre compte.</p>
+    <p>Votre article <strong>"${title}"</strong> vient de franchir la barre symbolique des <strong>1000 likes</strong> !</p>
+    <p>Vous décrochez la <strong>${rankLabel} position (${medal})</strong> du concours et remportez le prix de <strong>${prize}$</strong> !</p>
+    <p>Le montant a été crédité directement sur votre solde.</p>
   `);
   await sendEmail(to, subject, html);
 }
 
-// 4. Notification générale à tous les candidats quand un prix est remporté
+// 5. Notification générale à tous les candidats quand un prix est remporté
 export async function notifyParticipantsAboutWinner({
   participantsEmails,
   winnerName,
@@ -115,19 +150,18 @@ export async function notifyParticipantsAboutWinner({
   rank: number;
   prize: number;
 }) {
-  const rankLabel = rank === 1 ? "1er" : `${rank}ème`;
+  const rankLabel = rank === 1 ? "1ère" : `${rank}ème`;
   const subject = `📢 Mise à jour Concours : La ${rankLabel} place a été remportée !`;
   const html = emailTemplate(`
     <h2>Du nouveau dans la compétition !</h2>
-    <p>Le candidat <strong>${winnerName}</strong> vient d'atteindre la barre des 1000 likes et s'empare de la <strong>${rankLabel} place</strong> avec une récompense de <strong>${prize}$</strong> !</p>
-    <p>La compétition continue ! Mobilisez vos lecteurs et partagez votre article pour décrocher les places restantes.</p>
+    <p>Le candidat <strong>${winnerName}</strong> vient d'atteindre 1000 likes et s'empare de la <strong>${rankLabel} place</strong> avec une récompense de <strong>${prize}$</strong> !</p>
+    <p>La compétition continue ! Mobilisez vos lecteurs et partagez votre article pour décrocher les places restantes sur le podium.</p>
   `);
 
-  // Envoi groupé à l'ensemble des candidats
   await Promise.all(participantsEmails.map((email) => sendEmail(email, subject, html)));
 }
 
-// 5. Email de clôture et de remerciement envoyé à la fin du concours
+// 6. Email de clôture du concours
 export async function sendCompetitionClosingEmail({
   participants,
   winners,
@@ -147,15 +181,14 @@ export async function sendCompetitionClosingEmail({
   for (const participant of participants) {
     const html = emailTemplate(`
       <h2>Merci pour votre participation, ${participant.name} !</h2>
-      <p>Le concours de rédaction touche à sa fin. Nous tenons à féliciter chaleureusement l'ensemble des participants pour la qualité de leurs écrits.</p>
+      <p>Le concours de rédaction est maintenant officiellement clos. Nous félicitons chaleureusement l'ensemble des participants pour la qualité de leurs écrits.</p>
       
-      <h3>Voici les 3 grand(e)s gagnant(e)s de cette édition :</h3>
+      <h3>Voici les gagnants de cette édition :</h3>
       <ul>
         ${winnersListHtml}
       </ul>
 
-      <p>Même si vous n'avez pas atteint le podium cette fois-ci, votre implication contribue directement au rayonnement de la communauté.</p>
-      <p>Restez à l'affût, de prochains concours et événements seront annoncés très bientôt !</p>
+      <p>Restez à l'affût, de prochains concours et opportunités seront annoncés très bientôt !</p>
     `);
 
     await sendEmail(participant.email, subject, html);

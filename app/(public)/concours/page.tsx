@@ -27,7 +27,7 @@ export default async function CompetitionListPage() {
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12 border-b border-gray-200 dark:border-gray-800 pb-8">
                     <div>
                         <h1 className="text-2xl md:text-5xl font-black text-gray-900 dark:text-white tracking-tight">
-                            Concours de Rédaction 🏆
+                            Concours de Rédaction
                         </h1>
                         <p className="text-gray-600 dark:text-gray-400 mt-2 text-sm sm:text-base max-w-2xl">
                             Découvrez les articles des candidats retenus, lisez leurs productions et votez pour soutenir vos auteurs préférés !

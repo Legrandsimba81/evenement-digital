@@ -9,9 +9,11 @@ import {
   sendWinnerNotification,
   notifyParticipantsAboutWinner,
   sendCompetitionClosingEmail,
+  // Assurez-vous d'ajouter cette fonction dans votre email-service.ts
+  sendPostReceivedNoBonusEmail,
 } from "@/services/email-service";
 
-// 1. Soumission d'une candidature par un candidat
+// 1. Soumission d'une candidature par un candidat (Illimité)
 export async function createCandidatePost(data: {
   title: string;
   content: string;
@@ -24,15 +26,6 @@ export async function createCandidatePost(data: {
   const session = await auth();
   if (!session?.user?.id || !session.user.email) {
     throw new Error("Non autorisé. Veuillez vous connecter.");
-  }
-
-  // Vérification de la limite globale des 10 candidats
-  const totalApproved = await db.competitionEntry.count({
-    where: { status: { in: ["APPROVED", "PENDING"] } },
-  });
-
-  if (totalApproved >= 10) {
-    throw new Error("Le quota de 10 candidats pour ce concours est déjà atteint.");
   }
 
   // Génération d'un slug unique
@@ -68,7 +61,7 @@ export async function createCandidatePost(data: {
   return newEntry;
 }
 
-// 2. Approbation par l'administrateur (+ crédite les 1$ de départ)
+// 2. Approbation par l'administrateur (1$ seulement pour les 10 premiers)
 export async function approvePost(slug: string) {
   const session = await auth();
   if (session?.user?.role !== "ADMIN") throw new Error("Action réservée aux administrateurs.");
@@ -81,7 +74,16 @@ export async function approvePost(slug: string) {
   if (!entry) throw new Error("Article introuvable.");
   if (entry.status === "APPROVED") return;
 
-  // Transaction : Approuve l'article et ajoute 1$ au solde de l'auteur
+  // Compter le nombre d'articles déjà approuvés
+  const approvedCount = await db.competitionEntry.count({
+    where: { status: "APPROVED" },
+  });
+
+  // Déterminer si le candidat fait partie des 10 premiers
+  const isEligibleForWelcomeBonus = approvedCount < 10;
+  const bonusAmount = isEligibleForWelcomeBonus ? 1.0 : 0.0;
+
+  // Transaction : Approuve l'article et crédite 1$ SEULEMENT si < 10 candidats approuvés
   await db.$transaction([
     db.competitionEntry.update({
       where: { slug },
@@ -89,35 +91,48 @@ export async function approvePost(slug: string) {
         status: "APPROVED",
         published: true,
         publishedAt: new Date(),
-        rewardAmount: { increment: 1.0 },
+        rewardAmount: { increment: bonusAmount },
       },
     }),
-    db.user.update({
-      where: { id: entry.authorId },
-      data: {
-        balance: { increment: 1.0 },
-      },
-    }),
+    ...(bonusAmount > 0
+      ? [
+          db.user.update({
+            where: { id: entry.authorId },
+            data: {
+              balance: { increment: bonusAmount },
+            },
+          }),
+        ]
+      : []),
   ]);
 
-  // Envoi de l'email d'approbation au candidat
+  // Envoi de l'email adapté (avec ou sans bonus de bienvenue)
   if (entry.author.email) {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://octaviaevent.com";
     const link = `${baseUrl}/concours/${slug}`;
 
-    await sendApprovalEmail({
-      to: entry.author.email,
-      authorName: entry.author.name || "Candidat",
-      title: entry.title,
-      link,
-    });
+    if (isEligibleForWelcomeBonus) {
+      await sendApprovalEmail({
+        to: entry.author.email,
+        authorName: entry.author.name || "Candidat",
+        title: entry.title,
+        link,
+      });
+    } else {
+      await sendPostReceivedNoBonusEmail({
+        to: entry.author.email,
+        authorName: entry.author.name || "Candidat",
+        title: entry.title,
+        link,
+      });
+    }
   }
 
   revalidatePath("/admin/concours");
   revalidatePath(`/concours/${slug}`);
 }
 
-// 3. Basculement (Toggle) des likes, mise à jour en BDD et attribution des prix ($50, $20, $10)
+// 3. Basculement (Toggle) des likes et attribution des prix ($50, $20, $10)
 export async function toggleLikePost(slug: string) {
   const session = await auth();
   if (!session?.user?.id) {
@@ -135,7 +150,6 @@ export async function toggleLikePost(slug: string) {
     throw new Error("Article indisponible.");
   }
 
-  // Vérification de l'existence du vote pour l'utilisateur
   const existingLike = await db.competitionLike.findUnique({
     where: {
       postId_userId: {
@@ -169,26 +183,24 @@ export async function toggleLikePost(slug: string) {
     let newRank = entry.rankWinner;
     let extraReward = 0;
 
-    // Si l'article atteint 1000 likes pour la première fois
-    // Attribution des rangs et récompenses en 7 likes pour le test
-    if (updatedLikesCount >= 7 && !entry.rankWinner) {
+    // Si l'article atteint 1000 likes pour la première fois (Accessible à TOUS les candidats)
+    if (updatedLikesCount >= 1000 && !entry.rankWinner) {
       const previousWinnersCount = await db.competitionEntry.count({
         where: { rankWinner: { not: null } },
       });
 
       if (previousWinnersCount === 0) {
         newRank = 1;
-        extraReward = 50.0; // 1er Gagnant
+        extraReward = 50.0;
       } else if (previousWinnersCount === 1) {
         newRank = 2;
-        extraReward = 20.0; // 2ème Gagnant
+        extraReward = 20.0;
       } else if (previousWinnersCount === 2) {
         newRank = 3;
-        extraReward = 10.0; // 3ème Gagnant
+        extraReward = 10.0;
       }
     }
 
-    // Transaction pour lier le like à l'utilisateur, incrémenter le compteur et attribuer les récompenses
     await db.$transaction([
       db.competitionLike.create({
         data: {
@@ -216,7 +228,7 @@ export async function toggleLikePost(slug: string) {
 
     isLiked = true;
 
-    // Notification par e-mail en cas d'attribution d'un rang gagnant
+    // Notification par e-mail si un rang gagnant est atteint
     if (newRank && extraReward > 0) {
       if (entry.author.email) {
         await sendWinnerNotification({
@@ -260,13 +272,11 @@ export async function closeCompetitionAndNotify() {
   const session = await auth();
   if (session?.user?.role !== "ADMIN") throw new Error("Action réservée aux administrateurs.");
 
-  // Récupération de tous les candidats ayant participé
   const participants = await db.user.findMany({
     where: { competitionEntries: { some: { status: "APPROVED" } } },
     select: { email: true, name: true },
   });
 
-  // Récupération des gagnants (rangs 1, 2, 3)
   const winnersEntries = await db.competitionEntry.findMany({
     where: { rankWinner: { not: null } },
     orderBy: { rankWinner: "asc" },
@@ -292,19 +302,17 @@ export async function closeCompetitionAndNotify() {
   return { success: true, count: validParticipants.length };
 }
 
+// 5. Suppression d'une candidature
 export async function deleteCandidatePost(id: string) {
   const session = await auth();
   if (session?.user?.role !== "ADMIN") {
     throw new Error("Action réservée aux administrateurs.");
   }
 
-  // Suppression en transaction pour garantir l'intégrité des données
   await db.$transaction([
-    // 1. Suppression des likes associés en premier
     db.competitionLike.deleteMany({
       where: { postId: id },
     }),
-    // 2. Suppression du post
     db.competitionEntry.delete({
       where: { id },
     }),
