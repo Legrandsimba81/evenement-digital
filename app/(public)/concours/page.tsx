@@ -82,7 +82,7 @@ export default async function CompetitionListPage() {
                                 <div className="relative aspect-[16/9] w-full overflow-hidden bg-gray-100 dark:bg-gray-800">
                                     {post.imageUrl ? (
                                         <img
-                                            src={post.imageUrl}
+                                            src={post.imageUrl || "/images/default-cover.jpg"}
                                             alt={post.title}
                                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                         />
