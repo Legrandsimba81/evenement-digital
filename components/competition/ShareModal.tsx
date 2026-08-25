@@ -40,7 +40,7 @@ export default function ShareModal({ postSlug, title }: { postSlug: string; titl
   };
 
   return (
-    <div className="relative inline-block" ref={panelRef}>
+    <div className="relative inline-block">
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
@@ -50,51 +50,65 @@ export default function ShareModal({ postSlug, title }: { postSlug: string; titl
       </button>
 
       {open && (
-        <div className="absolute right-0 bottom-full mb-2 w-72 sm:w-80 rounded-2xl bg-white dark:bg-gray-900 shadow-2xl border border-gray-200 dark:border-gray-800 p-4 z-50 animate-in fade-in zoom-in-95 duration-150">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-bold text-gray-900 dark:text-white">Partager cet article</h3>
-            <button
-              type="button"
-              onClick={() => setOpen(false)}
-              className="p-1 rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-            >
-              <X size={16} />
-            </button>
-          </div>
+        <>
+          {/* Overlay sombre pour mobile */}
+          <div
+            className="fixed inset-0 bg-black/40 backdrop-blur-xs z-50 sm:hidden"
+            onClick={() => setOpen(false)}
+          />
 
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() => shareTo("whatsapp")}
-              className="p-2.5 bg-[#25D366] hover:bg-[#20bd5a] text-white rounded-xl flex items-center justify-center gap-2 text-xs font-bold transition cursor-pointer"
-            >
-              <SiWhatsapp size={16} /> WhatsApp
-            </button>
-            <button
-              type="button"
-              onClick={() => shareTo("facebook")}
-              className="p-2.5 bg-[#1877F2] hover:bg-[#166fe5] text-white rounded-xl flex items-center justify-center gap-2 text-xs font-bold transition cursor-pointer"
-            >
-              <SiFacebook size={16} /> Facebook
-            </button>
-          </div>
+          {/* Modal / Popover */}
+          <div
+            ref={panelRef}
+            className="fixed inset-x-0 bottom-0 z-50 w-full rounded-t-2xl bg-white p-5 shadow-2xl border-t border-gray-200 dark:bg-gray-900 dark:border-gray-800 sm:absolute sm:inset-auto sm:right-0 sm:bottom-full sm:mb-2 sm:w-80 sm:rounded-2xl sm:border sm:p-4 animate-in slide-in-from-bottom-5 sm:animate-in sm:fade-in sm:zoom-in-95 duration-150"
+          >
+            <div className="flex items-center justify-between mb-4 sm:mb-3">
+              <h3 className="text-base sm:text-sm font-bold text-gray-900 dark:text-white">
+                Partager cet article
+              </h3>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+              >
+                <X size={18} />
+              </button>
+            </div>
 
-          <div className="mt-3 flex items-center gap-2">
-            <input
-              readOnly
-              value={url}
-              className="flex-1 px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800/50 text-xs text-gray-600 dark:text-gray-300 outline-none truncate"
-            />
-            <button
-              type="button"
-              onClick={copyLink}
-              className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition cursor-pointer shrink-0"
-              title="Copier le lien"
-            >
-              {copied ? <Check size={16} /> : <Copy size={16} />}
-            </button>
+            <div className="grid grid-cols-2 gap-3 sm:gap-2">
+              <button
+                type="button"
+                onClick={() => shareTo("whatsapp")}
+                className="p-3 sm:p-2.5 bg-[#25D366] hover:bg-[#20bd5a] text-white rounded-xl flex items-center justify-center gap-2 text-xs font-bold transition cursor-pointer"
+              >
+                <SiWhatsapp size={18} /> WhatsApp
+              </button>
+              <button
+                type="button"
+                onClick={() => shareTo("facebook")}
+                className="p-3 sm:p-2.5 bg-[#1877F2] hover:bg-[#166fe5] text-white rounded-xl flex items-center justify-center gap-2 text-xs font-bold transition cursor-pointer"
+              >
+                <SiFacebook size={18} /> Facebook
+              </button>
+            </div>
+
+            <div className="mt-4 sm:mt-3 flex items-center gap-2">
+              <input
+                readOnly
+                value={url}
+                className="flex-1 px-3 py-2.5 sm:py-2 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800/50 text-xs text-gray-600 dark:text-gray-300 outline-none truncate"
+              />
+              <button
+                type="button"
+                onClick={copyLink}
+                className="p-2.5 sm:p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition cursor-pointer shrink-0"
+                title="Copier le lien"
+              >
+                {copied ? <Check size={18} /> : <Copy size={18} />}
+              </button>
+            </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );
