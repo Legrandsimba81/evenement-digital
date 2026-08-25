@@ -50,7 +50,7 @@ export default function ShareModal({ postSlug, title }: { postSlug: string; titl
       </button>
 
       {open && (
-        <div className="fixed inset-x-4 bottom-4 sm:absolute sm:inset-auto sm:right-0 sm:bottom-full sm:mb-2 w-auto sm:w-80 max-w-sm rounded-2xl bg-white dark:bg-gray-900 shadow-2xl border border-gray-200 dark:border-gray-800 p-4 z-50 animate-in fade-in zoom-in-95 duration-150">
+        <div className="absolute -right-5 bottom-full mb-2 w-72 sm:w-80 rounded-2xl bg-white dark:bg-gray-900 shadow-2xl border border-gray-200 dark:border-gray-800 p-4 z-50 animate-in fade-in zoom-in-95 duration-150">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-bold text-gray-900 dark:text-white">Partager cet article</h3>
             <button
@@ -83,7 +83,7 @@ export default function ShareModal({ postSlug, title }: { postSlug: string; titl
             <input
               readOnly
               value={url}
-              className="flex-1 px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800/50 text-xs text-gray-600 dark:text-gray-300 outline-none truncate min-w-0"
+              className="flex-1 px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800/50 text-xs text-gray-600 dark:text-gray-300 outline-none truncate"
             />
             <button
               type="button"
