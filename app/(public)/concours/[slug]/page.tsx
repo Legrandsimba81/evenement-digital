@@ -2,7 +2,7 @@ import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import { notFound } from "next/navigation";
 import { Calendar, Eye, Clock, Award, Trophy, BadgeCheck, PlusCircle, Edit3, MessageSquare } from "lucide-react";
-import CommentSection from "@/components/blog/CommentSection";
+import CommentSection from "@/components/competition/CommentSection";
 import ShareModal from "@/components/competition/ShareModal";
 import LikeButton from "@/components/competition/LikeButton";
 import { Metadata } from "next";
