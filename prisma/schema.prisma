@@ -380,29 +380,32 @@ enum PostStatus {
   REJECTED
 }
 
+
 model CompetitionEntry {
-  id               String     @id @default(cuid())
+  id               String          @id @default(cuid())
   title            String
-  slug             String     @unique
+  slug             String          @unique
   content          String
   excerpt          String?
   imageUrl         String?
-  imageOrientation String?    @default("landscape")
+  imageOrientation String?         @default("landscape")
   images           String[]
   tags             String[]
-  published        Boolean    @default(false)
-  status           PostStatus @default(PENDING)
-  views            Int        @default(0)
-  likes            Int        @default(0)
-  rewardAmount     Float      @default(0.0) // Cumul des gains ($2 + $50/$20/$10)
-  rankWinner       Int?       // 1, 2, ou 3 selon l'ordre d'atteinte des 1000 likes
-  createdAt        DateTime   @default(now())
+  published        Boolean         @default(false)
+  status           PostStatus      @default(PENDING)
+  views            Int             @default(0)
+  likes            Int             @default(0)
+  rewardAmount     Float           @default(0.0) // Cumul des gains ($1 bonus de bienvenue + $20 (200 likes) + $50/$20/$10)
+  firstTo200       Boolean         @default(false) // Indique si cet article a débloqué le bonus unique des 200 likes ($20)
+  rankWinner       Int?            // 1, 2, ou 3 selon l'ordre d'atteinte des 1000 likes
+  createdAt        DateTime        @default(now())
   publishedAt      DateTime?
 
   authorId         String
-  author           User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  likesRecords     CompetitionLike[] // 👈 À AJOUTER
+  author           User            @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  likesRecords     CompetitionLike[]
 }
+
 model CompetitionLike {
   id        String           @id @default(cuid())
   postId    String

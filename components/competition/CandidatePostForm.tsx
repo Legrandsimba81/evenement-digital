@@ -76,7 +76,7 @@ export default function CandidatePostForm({ authorName, authorImage }: Candidate
         .map((t) => t.trim())
         .filter(Boolean);
 
-      const createdPost = await createCandidatePost({
+      const result = await createCandidatePost({
         title: title.trim(),
         content,
         excerpt: excerpt.trim() || undefined,
@@ -86,7 +86,10 @@ export default function CandidatePostForm({ authorName, authorImage }: Candidate
         tags: tagsArray,
       });
 
-      router.push(`/concours/${createdPost.slug}?submitted=true`);
+      // Redirection vers la page de prévisualisation si le slug est retourné
+      if (result?.slug) {
+        router.push(`/concours/preview/${result.slug}`);
+      }
     } catch (err: any) {
       setError(err.message || "Une erreur est survenue lors de la soumission.");
     } finally {
