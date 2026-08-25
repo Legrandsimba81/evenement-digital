@@ -121,8 +121,8 @@ export default async function CompetitionPostPage({ params }: Props) {
                     )}
 
                     {/* En-tête Auteur & Cagnotte */}
-                    <div className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-200/70 dark:border-gray-800 pb-6 mb-6">
-                        <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                    <div className="flex flex-wrap items-center justify-between gap-1 md:gap-4 border-b border-gray-200/70 dark:border-gray-800 pb-6 mb-6">
+                        <div className="flex items-center gap-2 sm:gap-4 min-w-0">
                             <img
                                 src={post.author.image || "/default-avatar.png"}
                                 alt={post.author.name || "Auteur"}
@@ -164,7 +164,7 @@ export default async function CompetitionPostPage({ params }: Props) {
                             }`}
                     >
                         <img
-                            src={post.imageUrl || "/images/ "}
+                            src={post.imageUrl || "/images/default-cover.jpg"}
                             alt={post.title}
                             className="w-full h-full object-cover"
                         />
