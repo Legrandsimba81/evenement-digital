@@ -416,8 +416,8 @@ model CompetitionComment {
   postId    String
   post      CompetitionEntry @relation(fields: [postId], references: [id], onDelete: Cascade)
   
-  userId    String
-  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String? 
+  user      User?            @relation(fields: [userId], references: [id], onDelete: Cascade) // 👈 AJOUTER LE '?' ICI
 }
 
 model CompetitionLike {

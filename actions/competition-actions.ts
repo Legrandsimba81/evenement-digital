@@ -302,7 +302,7 @@ export async function toggleLikePost(slug: string) {
 }
 
 // -----------------------------------------------------------------------------
-// 5. Gestion des Commentaires (Ajout & Edition)
+// 5. Gestion des Commentaires (Ajout & Édition)
 // -----------------------------------------------------------------------------
 export async function addCompetitionComment(
     postSlug: string,
@@ -317,32 +317,39 @@ export async function addCompetitionComment(
 
     if (!entry) throw new Error("Article du concours introuvable.");
 
-    const comment = await db.blogComment.create({
+    // Envoi de undefined au lieu de null si authorId n'est pas fourni
+    const comment = await db.competitionComment.create({
         data: {
             content,
-            authorName,
-            authorId: authorId || null,
             postId: entry.id,
+            ...(authorId ? { userId: authorId } : {}),
         },
     });
 
     revalidatePath(`/concours/${postSlug}`);
-    return comment;
+
+    return {
+        id: comment.id,
+        content: comment.content,
+        authorName: authorName || "Anonyme",
+        authorId: comment.userId ?? null,
+        createdAt: comment.createdAt,
+    };
 }
 
 export async function updateCompetitionComment(commentId: string, content: string) {
     const session = await auth();
     if (!session?.user?.id) throw new Error("Non autorisé.");
 
-    const existingComment = await db.blogComment.findUnique({
+    const existingComment = await db.competitionComment.findUnique({
         where: { id: commentId },
     });
 
-    if (!existingComment || existingComment.authorId !== session.user.id) {
+    if (!existingComment || existingComment.userId !== session.user.id) {
         throw new Error("Vous ne pouvez pas modifier ce commentaire.");
     }
 
-    const updated = await db.blogComment.update({
+    const updated = await db.competitionComment.update({
         where: { id: commentId },
         data: { content },
     });
