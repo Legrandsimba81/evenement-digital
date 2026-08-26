@@ -2,9 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { addCompetitionComment, updateCompetitionComment } from "@/actions/competition-actions";
+import { 
+  addCompetitionComment, 
+  updateCompetitionComment, 
+  deleteCompetitionComment 
+} from "@/actions/competition-actions";
 import { useSession } from "next-auth/react";
-import { Pencil, Check, X, MessageSquare, Send } from "lucide-react";
+import { Pencil, Check, X, MessageSquare, Send, Trash2 } from "lucide-react";
 
 type Comment = {
   id: string;
@@ -24,12 +28,10 @@ export default function CommentSection({ postSlug, comments }: { postSlug: strin
   const [editingValue, setEditingValue] = useState("");
   const [localComments, setLocalComments] = useState<Comment[]>(comments);
 
-  // Synchronise les commentaires si les props changent
   useEffect(() => {
     setLocalComments(comments);
   }, [comments]);
 
-  // Met à jour le nom si l'utilisateur est connecté
   useEffect(() => {
     if (session?.user?.name) {
       setName(session.user.name);
@@ -40,23 +42,16 @@ export default function CommentSection({ postSlug, comments }: { postSlug: strin
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Détermine le nom de l'auteur
     const authorName = session?.user?.name?.trim() || name.trim();
-
-    // Vérifications avant envoi
     if (!authorName || !content.trim()) return;
 
     setLoading(true);
     try {
       const newComment = await addCompetitionComment(postSlug, authorName, content.trim(), currentUserId);
-      
       if (newComment) {
         setLocalComments((prev) => [newComment, ...prev]);
         setContent("");
         if (!session?.user) setName("");
-        
-        // Rafraîchit les Server Components pour mettre à jour commentsCount en haut de page
         router.refresh();
       }
     } catch (error) {
@@ -79,6 +74,17 @@ export default function CommentSection({ postSlug, comments }: { postSlug: strin
       }
     } catch (error) {
       console.error("Erreur mise à jour commentaire :", error);
+    }
+  };
+
+  const handleDelete = async (commentId: string) => {
+    if (!confirm("Voulez-vous vraiment supprimer ce commentaire ?")) return;
+    try {
+      await deleteCompetitionComment(commentId);
+      setLocalComments((prev) => prev.filter((comment) => comment.id !== commentId));
+      router.refresh();
+    } catch (error) {
+      console.error("Erreur suppression commentaire :", error);
     }
   };
 
@@ -157,16 +163,26 @@ export default function CommentSection({ postSlug, comments }: { postSlug: strin
                 </div>
 
                 {currentUserId && comment.authorId === currentUserId && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditingCommentId(comment.id);
-                      setEditingValue(comment.content);
-                    }}
-                    className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 dark:hover:text-blue-400 transition"
-                  >
-                    <Pencil size={13} /> Modifier
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingCommentId(comment.id);
+                        setEditingValue(comment.content);
+                      }}
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 dark:hover:text-blue-400 transition"
+                    >
+                      <Pencil size={13} /> Modifier
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(comment.id)}
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-rose-600 hover:text-rose-700 dark:hover:text-rose-400 transition"
+                    >
+                      <Trash2 size={13} /> Supprimer
+                    </button>
+                  </div>
                 )}
               </div>
 

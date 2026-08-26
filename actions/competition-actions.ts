@@ -357,6 +357,25 @@ export async function updateCompetitionComment(commentId: string, content: strin
     return updated;
 }
 
+export async function deleteCompetitionComment(commentId: string) {
+    const session = await auth();
+    if (!session?.user?.id) throw new Error("Non autorisé.");
+
+    const existingComment = await db.competitionComment.findUnique({
+        where: { id: commentId },
+    });
+
+    if (!existingComment || existingComment.userId !== session.user.id) {
+        throw new Error("Vous ne pouvez pas supprimer ce commentaire.");
+    }
+
+    await db.competitionComment.delete({
+        where: { id: commentId },
+    });
+
+    return { success: true };
+}
+
 // -----------------------------------------------------------------------------
 // 6. Action de clôture du concours et envoi du bilan final
 // -----------------------------------------------------------------------------
