@@ -8,12 +8,13 @@ import {
   deleteCompetitionComment 
 } from "@/actions/competition-actions";
 import { useSession } from "next-auth/react";
-import { Pencil, Check, X, MessageSquare, Send, Trash2 } from "lucide-react";
+import { Pencil, Check, X, MessageSquare, Send, Trash2, User } from "lucide-react";
 
 type Comment = {
   id: string;
   content: string;
   authorName: string;
+  authorImage?: string | null;
   authorId?: string | null;
   createdAt: Date | string;
 };
@@ -24,14 +25,17 @@ export default function CommentSection({ postSlug, comments }: { postSlug: strin
   const [name, setName] = useState("");
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState("");
   const [localComments, setLocalComments] = useState<Comment[]>(comments);
 
+  // Synchronise les commentaires si les props changent
   useEffect(() => {
     setLocalComments(comments);
   }, [comments]);
 
+  // Met à jour le nom si l'utilisateur est connecté
   useEffect(() => {
     if (session?.user?.name) {
       setName(session.user.name);
@@ -39,19 +43,28 @@ export default function CommentSection({ postSlug, comments }: { postSlug: strin
   }, [session?.user?.name]);
 
   const currentUserId = session?.user?.id;
+  const isAdmin = session?.user?.role === "ADMIN";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     const authorName = session?.user?.name?.trim() || name.trim();
+
     if (!authorName || !content.trim()) return;
 
     setLoading(true);
     try {
       const newComment = await addCompetitionComment(postSlug, authorName, content.trim(), currentUserId);
+      
       if (newComment) {
-        setLocalComments((prev) => [newComment, ...prev]);
+        const commentWithAvatar: Comment = {
+          ...newComment,
+          authorImage: session?.user?.image || null,
+        };
+        setLocalComments((prev) => [commentWithAvatar, ...prev]);
         setContent("");
         if (!session?.user) setName("");
+        
         router.refresh();
       }
     } catch (error) {
@@ -79,12 +92,16 @@ export default function CommentSection({ postSlug, comments }: { postSlug: strin
 
   const handleDelete = async (commentId: string) => {
     if (!confirm("Voulez-vous vraiment supprimer ce commentaire ?")) return;
+    
+    setDeletingId(commentId);
     try {
       await deleteCompetitionComment(commentId);
-      setLocalComments((prev) => prev.filter((comment) => comment.id !== commentId));
+      setLocalComments((prev) => prev.filter((c) => c.id !== commentId));
       router.refresh();
     } catch (error) {
-      console.error("Erreur suppression commentaire :", error);
+      console.error("Erreur lors de la suppression :", error);
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -142,85 +159,114 @@ export default function CommentSection({ postSlug, comments }: { postSlug: strin
         </p>
       ) : (
         <div className="space-y-4">
-          {localComments.map((comment) => (
-            <div
-              key={comment.id}
-              className="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-100 dark:border-gray-800 shadow-sm"
-            >
-              <div className="flex items-center justify-between gap-2 text-sm text-gray-500 dark:text-gray-400">
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold text-gray-900 dark:text-white">
-                    {comment.authorName}
-                  </span>
-                  <span>•</span>
-                  <time className="text-xs">
-                    {new Date(comment.createdAt).toLocaleDateString("fr-FR", {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                    })}
-                  </time>
+          {localComments.map((comment) => {
+            const canManage = currentUserId && (comment.authorId === currentUserId || isAdmin);
+
+            return (
+              <div
+                key={comment.id}
+                className="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-100 dark:border-gray-800 shadow-sm"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    {/* Avatar de l'utilisateur ou icône par défaut */}
+                    {comment.authorImage ? (
+                      <img
+                        src={comment.authorImage}
+                        alt={comment.authorName}
+                        className="w-9 h-9 rounded-full object-cover border border-gray-200 dark:border-gray-700"
+                      />
+                    ) : (
+                      <div className="w-9 h-9 rounded-full bg-blue-100 dark:bg-blue-950 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold border border-blue-200 dark:border-blue-800">
+                        <User size={18} />
+                      </div>
+                    )}
+
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-gray-900 dark:text-white text-sm">
+                          {comment.authorName}
+                        </span>
+                      </div>
+                      <time className="text-xs text-gray-500 dark:text-gray-400 block">
+                        {new Date(comment.createdAt).toLocaleDateString("fr-FR", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </time>
+                    </div>
+                  </div>
+
+                  {/* Actions de gestion : Édition et Suppression */}
+                  {canManage && (
+                    <div className="flex items-center gap-2">
+                      {comment.authorId === currentUserId && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingCommentId(comment.id);
+                            setEditingValue(comment.content);
+                          }}
+                          className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/50 transition"
+                          title="Modifier"
+                        >
+                          <Pencil size={15} />
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        disabled={deletingId === comment.id}
+                        onClick={() => handleDelete(comment.id)}
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/50 transition disabled:opacity-50"
+                        title="Supprimer"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                  )}
                 </div>
 
-                {currentUserId && comment.authorId === currentUserId && (
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setEditingCommentId(comment.id);
-                        setEditingValue(comment.content);
-                      }}
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 dark:hover:text-blue-400 transition"
-                    >
-                      <Pencil size={13} /> Modifier
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(comment.id)}
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-rose-600 hover:text-rose-700 dark:hover:text-rose-400 transition"
-                    >
-                      <Trash2 size={13} /> Supprimer
-                    </button>
+                {/* Zone de contenu ou de modification */}
+                {editingCommentId === comment.id ? (
+                  <div className="mt-3 space-y-3">
+                    <textarea
+                      value={editingValue}
+                      onChange={(e) => setEditingValue(e.target.value)}
+                      rows={3}
+                      className="w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    />
+                    <div className="flex gap-2 justify-end">
+                      <button
+                        type="button"
+                        onClick={() => handleEdit(comment.id)}
+                        className="inline-flex items-center gap-1 bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-700 transition"
+                      >
+                        <Check size={14} /> Enregistrer
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingCommentId(null);
+                          setEditingValue("");
+                        }}
+                        className="inline-flex items-center gap-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+                      >
+                        <X size={14} /> Annuler
+                      </button>
+                    </div>
                   </div>
+                ) : (
+                  <p className="mt-3 text-gray-700 dark:text-gray-300 text-sm leading-relaxed whitespace-pre-line pl-12">
+                    {comment.content}
+                  </p>
                 )}
               </div>
-
-              {editingCommentId === comment.id ? (
-                <div className="mt-3 space-y-3">
-                  <textarea
-                    value={editingValue}
-                    onChange={(e) => setEditingValue(e.target.value)}
-                    rows={3}
-                    className="w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  <div className="flex gap-2 justify-end">
-                    <button
-                      type="button"
-                      onClick={() => handleEdit(comment.id)}
-                      className="inline-flex items-center gap-1 bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-700 transition"
-                    >
-                      <Check size={14} /> Enregistrer
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setEditingCommentId(null);
-                        setEditingValue("");
-                      }}
-                      className="inline-flex items-center gap-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-gray-200 dark:hover:bg-gray-700 transition"
-                    >
-                      <X size={14} /> Annuler
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <p className="mt-2 text-gray-700 dark:text-gray-300 text-sm leading-relaxed whitespace-pre-line">
-                  {comment.content}
-                </p>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </section>
