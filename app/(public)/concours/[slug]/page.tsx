@@ -66,12 +66,22 @@ export default async function CompetitionPostPage({ params }: Props) {
     const { slug } = await params;
     const session = await auth();
 
+    // 💡 FIX 1: Sélection complète des champs du commentaire et de la relation user
     const post = await db.competitionEntry.findUnique({
         where: { slug },
         include: { 
             author: true,
             comments: {
-                select: { id: true }
+                orderBy: { createdAt: "desc" },
+                select: {
+                    id: true,
+                    content: true,
+                    createdAt: true,
+                    userId: true,
+                    user: {
+                        select: { name: true }
+                    }
+                }
             }
         },
     });
@@ -110,6 +120,15 @@ export default async function CompetitionPostPage({ params }: Props) {
         : "";
 
     const commentsCount = post.comments?.length || 0;
+
+    // 💡 FIX 2: Formater le tableau des commentaires pour correspondre à ce qu'attend CommentSection
+    const formattedComments = post.comments.map((c) => ({
+        id: c.id,
+        content: c.content,
+        authorName: c.user?.name || "Anonyme",
+        authorId: c.userId,
+        createdAt: c.createdAt,
+    }));
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-gray-950 dark:via-gray-900 dark:to-slate-950 py-6 px-3 sm:py-12 sm:px-6 transition-colors">
@@ -209,7 +228,7 @@ export default async function CompetitionPostPage({ params }: Props) {
                             </p>
                         )}
 
-                        {/* Barre d'interaction immédiate (J'aime, Partage, Vues, Commentaires) */}
+                        {/* Barre d'interaction immédiate */}
                         <div className="flex flex-wrap items-center justify-between gap-4 mt-6 p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800">
                             <div className="flex items-center gap-3">
                                 <LikeButton
@@ -240,7 +259,7 @@ export default async function CompetitionPostPage({ params }: Props) {
                         dangerouslySetInnerHTML={{ __html: post.content }}
                     />
 
-                    {/* Galerie d'images secondaires si présentes */}
+                    {/* Galerie d'images secondaires */}
                     {Array.isArray(post.images) && post.images.length > 0 && (
                         <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 gap-3">
                             {(post.images as string[]).map((imgUrl, idx) => (
@@ -253,7 +272,8 @@ export default async function CompetitionPostPage({ params }: Props) {
 
                     {/* Section Commentaires en bas d'article */}
                     <div id="comments" className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-800">
-                        <CommentSection postSlug={slug} comments={[]} />
+                        {/* 💡 FIX 3: Envoi du tableau formater les commentaires */}
+                        <CommentSection postSlug={slug} comments={formattedComments} />
                     </div>
 
                 </div>
