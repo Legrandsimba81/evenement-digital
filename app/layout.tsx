@@ -4,19 +4,16 @@ import "./globals.css";
 import { SessionProvider } from "next-auth/react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import BackButtonFloating from "@/components/ui/BackButtonFloating";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  // 🚀 URL de base mise à jour vers votre domaine .com officiel
   metadataBase: new URL("https://octaviaevent.com"),
   title: {
     default: "Octavia Event | Invitations & Gestion d'événements numériques en RDC",
     template: "%s | Octavia Event",
   },
-  description:
-    "Créez, gérez et partagez vos invitations numériques en quelques clics en RDC. Vos événements pour Mariage, Soutenance, Anniversaire et Fête, simples, rapides et élégants.",
+  description: "Créez, gérez et partagez vos invitations numériques en quelques clics en RDC. Vos événements pour Mariage, Soutenance, Anniversaire et Fête, simples, rapides et élégants.",
   keywords: [
     "invitation numérique",
     "invitation en ligne",
@@ -31,12 +28,9 @@ export const metadata: Metadata = {
   authors: [{ name: "Octavia Event", url: "https://octaviaevent.com" }],
   creator: "Octavia Event",
   publisher: "Octavia Event",
-  
-  // 🔐 Clé de vérification Google Search Console intégrée nativement dans les métadonnées
   verification: {
     google: "K3mCpK58xHzlJbOkuwCsrHYAP_J0pO24FNGIjSAA3Pw",
   },
-
   robots: {
     index: true,
     follow: true,
@@ -52,8 +46,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "Octavia Event - Gestion d'événements numériques",
-    description:
-      "Créez, gérez et partagez vos invitations en ligne. Plus besoin d'imprimer, tout est numérique, élégant et efficace.",
+    description: "Créez, gérez et partagez vos invitations en ligne. Plus besoin d'imprimer, tout est numérique, élégant et efficace.",
     url: "https://octaviaevent.com",
     siteName: "Octavia Event",
     images: [
@@ -71,8 +64,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Octavia Event - Gestion d'événements numériques",
-    description:
-      "Créez, gérez et partagez vos invitations en ligne. Simple, rapide et élégant.",
+    description: "Créez, gérez et partagez vos invitations en ligne. Simple, rapide et élégant.",
     images: ["/og-image.png"],
     creator: "@octaviaevent",
     site: "@octaviaevent",
@@ -107,16 +99,32 @@ export const viewport = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "Octavia Event",
+    "url": "https://octaviaevent.com",
+    "logo": "https://octaviaevent.com/icon.png",
+    "sameAs": [
+      "https://facebook.com/octaviaevent",
+      "https://twitter.com/octaviaevent"
+    ],
+    "description": "Plateforme de gestion et de création d'invitations numériques en RDC."
+  };
+
   return (
     <html lang="fr" suppressHydrationWarning>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
       <body className={inter.className}>
         <SessionProvider>
           <div className="min-h-screen flex flex-col bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-50">
             <Navbar />
-            {/* <BackButtonFloating /> */}
             <main className="flex-1">{children}</main>
             <Footer />
           </div>
