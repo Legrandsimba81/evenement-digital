@@ -2,7 +2,7 @@ import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import NewCandidatePostClient from "@/components/competition/NewCandidatePostClient";
-import { Lock, BookOpen } from "lucide-react";
+import { BookOpen, Gift, AlertCircle } from "lucide-react";
 import Link from "next/link";
 
 export default async function NewCandidatePostPage() {
@@ -13,38 +13,16 @@ export default async function NewCandidatePostPage() {
     where: { status: { in: ["PENDING", "APPROVED"] } },
   });
 
-  if (totalCandidates >= 10) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center p-6">
-        <div className="max-w-md text-center bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 p-8 rounded-3xl shadow-xl">
-          <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Lock size={32} />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Inscriptions Fermées</h1>
-          <p className="text-gray-600 dark:text-gray-400 text-sm mb-6">
-            Le nombre maximal de 10 candidats pour le concours de rédaction a été atteint. Suivez les publications et votez pour vos articles préférés !
-          </p>
-          <Link
-            href="/concours/regles"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-blue-600 hover:underline"
-          >
-            <BookOpen size={16} /> Lire le règlement du concours
-          </Link>
-        </div>
-      </div>
-    );
-  }
+  // Déterminer si le candidat bénéficie du bonus de bienvenue (10 premiers)
+  const isEligibleForWelcomeBonus = totalCandidates < 10;
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-8 border-b border-gray-200 dark:border-gray-800 pb-4">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-6 border-b border-gray-200 dark:border-gray-800 pb-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Participer au Concours</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Candidats enregistrés : <span className="font-semibold text-blue-600">{totalCandidates}/10</span>. Une fois approuvé, gagnez 1$ immédiatement + jusqu'à 20$ aux 200 likes et 50$ aux 1000 likes !
-          </p>
-          <p>
-            <span className="text-sm text-gray-500 dark:text-gray-400 mt-1">Important :</span> apres les 10 candidats, les inscriptions sont toujours ouvertes mais plus de prix de bienvenue. mai vous pouvez toujours gagner des prix de likes. <span className="font-semibold text-blue-600">Alors inscrivez-vous vite !</span> 
+            Candidats enregistrés : <span className="font-bold text-blue-600">{totalCandidates}</span>
           </p>
         </div>
         <Link
@@ -55,8 +33,28 @@ export default async function NewCandidatePostPage() {
         </Link>
       </div>
 
+      {/* Message indicatif selon le statut d'éligibilité au bonus */}
+      {isEligibleForWelcomeBonus ? (
+        <div className="mb-6 p-4 rounded-2xl bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-800/60 flex items-start gap-3">
+          <Gift className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
+          <p className="text-xs sm:text-sm text-green-800 dark:text-green-300">
+            <span className="font-bold">Félicitations !</span> Vous faites partie des 10 premiers candidats ({totalCandidates}/10). Une fois votre article approuvé, vous recevrez <span className="font-bold">1$ de bienvenue immédiat</span> + l'accès à l'ensemble des prix de la compétition (jusqu'à 50$).
+          </p>
+        </div>
+      ) : (
+        <div className="mb-6 p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+          <p className="text-xs sm:text-sm text-amber-800 dark:text-amber-300">
+            <span className="font-bold">Inscriptions toujours ouvertes !</span> Le quota des 10 premiers candidats est atteint, le bonus de bienvenue de 1$ n'est donc plus disponible. Cependant, <span className="font-bold">vous restez totalement éligible à tous les grands prix du concours</span> (jusqu'à 50$ selon vos résultats).
+          </p>
+        </div>
+      )}
+
       {/* Composant Client gérant le Formulaire et la Pop-up */}
-      <NewCandidatePostClient user={{ name: session.user.name, email: session.user.email }} />
+      <NewCandidatePostClient 
+        user={{ name: session.user.name, email: session.user.email }} 
+        isEligibleForWelcomeBonus={isEligibleForWelcomeBonus}
+      />
     </div>
   );
 }

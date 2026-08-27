@@ -18,13 +18,20 @@ interface InitialPostData {
   tags?: string[];
 }
 
+// 💡 FIX: Ajout de isEligibleForWelcomeBonus dans l'interface
 interface CandidatePostFormProps {
   authorName?: string;
   authorImage?: string;
   initialData?: InitialPostData; // Données d'origine pour le mode édition
+  isEligibleForWelcomeBonus?: boolean;
 }
 
-export default function CandidatePostForm({ authorName, authorImage, initialData }: CandidatePostFormProps) {
+export default function CandidatePostForm({ 
+  authorName, 
+  authorImage, 
+  initialData,
+  isEligibleForWelcomeBonus 
+}: CandidatePostFormProps) {
   const router = useRouter();
   const isEditing = Boolean(initialData);
 

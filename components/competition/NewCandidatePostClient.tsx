@@ -4,11 +4,15 @@ import { useState } from "react";
 import PaymentModal from "./PaymentModal";
 import CandidatePostForm from "./CandidatePostForm";
 
+interface NewCandidatePostClientProps {
+  user: { name?: string | null; email?: string | null };
+  isEligibleForWelcomeBonus: boolean;
+}
+
 export default function NewCandidatePostClient({
   user,
-}: {
-  user: { name?: string | null; email?: string | null };
-}) {
+  isEligibleForWelcomeBonus,
+}: NewCandidatePostClientProps) {
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [hasValidatedPayment, setHasValidatedPayment] = useState(false);
 
@@ -25,7 +29,7 @@ export default function NewCandidatePostClient({
       />
 
       {hasValidatedPayment ? (
-        <CandidatePostForm />
+        <CandidatePostForm isEligibleForWelcomeBonus={isEligibleForWelcomeBonus} />
       ) : (
         <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 p-6 rounded-2xl text-center">
           <p className="text-sm text-amber-800 dark:text-amber-300 font-medium mb-3">

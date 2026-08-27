@@ -47,6 +47,7 @@ export async function createCandidatePost(data: {
             tags: data.tags || [],
             authorId: session.user.id,
             status: "PENDING",
+            rewardAmount: 0.0,
         },
     });
 
@@ -75,12 +76,14 @@ export async function approvePost(slug: string) {
     });
 
     if (!entry) throw new Error("Article introuvable.");
-    if (entry.status === "APPROVED") return;
+    if (entry.status === "APPROVED") return; // Évite les doubles validations
 
+    // Compter combien d'articles ont déjà été approuvés
     const approvedCount = await db.competitionEntry.count({
         where: { status: "APPROVED" },
     });
 
+    // Seuls les 10 premiers approuvés reçoivent le bonus de bienvenue de 1$
     const isEligibleForWelcomeBonus = approvedCount < 10;
     const bonusAmount = isEligibleForWelcomeBonus ? 1.0 : 0.0;
 
@@ -106,8 +109,9 @@ export async function approvePost(slug: string) {
             : []),
     ]);
 
+    // Envoi de l'email de notification approprié
     if (entry.author.email) {
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://octaviaevent.com";
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.octaviaevent.com";
         const link = `${baseUrl}/concours/${slug}`;
 
         if (isEligibleForWelcomeBonus) {
@@ -203,7 +207,7 @@ export async function toggleLikePost(slug: string) {
         let isFirstTo200 = entry.firstTo200;
         let extraReward = 0;
 
-        // REGLE A : Premier article à atteindre 200 Likes (Bonus Unique 20$)
+        // RÈGLE A : Premier article à atteindre 200 Likes (Bonus Unique 20$)
         if (updatedLikesCount >= 200 && !entry.firstTo200) {
             const any200Winner = await db.competitionEntry.count({
                 where: { firstTo200: true },
@@ -215,7 +219,7 @@ export async function toggleLikePost(slug: string) {
             }
         }
 
-        // REGLE B : Classement des 3 premiers articles à atteindre 1000 Likes ($50, $20, $10)
+        // RÈGLE B : Classement des 3 premiers articles à atteindre 1000 Likes ($50, $20, $10)
         if (updatedLikesCount >= 1000 && !entry.rankWinner) {
             const previous1000WinnersCount = await db.competitionEntry.count({
                 where: { rankWinner: { not: null } },
@@ -261,7 +265,7 @@ export async function toggleLikePost(slug: string) {
 
         isLiked = true;
 
-        // Envoi des emails si une récompense à été débloquée
+        // Envoi des emails si une récompense a été débloquée
         if (extraReward > 0) {
             if (entry.author.email) {
                 await sendWinnerNotification({
@@ -302,7 +306,7 @@ export async function toggleLikePost(slug: string) {
 }
 
 // -----------------------------------------------------------------------------
-// 5. Gestion des Commentaires (Ajout & Édition)
+// 5. Gestion des Commentaires (Ajout, Édition, Suppression)
 // -----------------------------------------------------------------------------
 export async function addCompetitionComment(
     postSlug: string,
@@ -317,7 +321,6 @@ export async function addCompetitionComment(
 
     if (!entry) throw new Error("Article du concours introuvable.");
 
-    // Envoi de undefined au lieu de null si authorId n'est pas fourni
     const comment = await db.competitionComment.create({
         data: {
             content,
@@ -417,23 +420,28 @@ export async function closeCompetitionAndNotify() {
 // 7. Suppression d'une candidature par l'admin
 // -----------------------------------------------------------------------------
 export async function deleteCandidatePost(id: string) {
+  try {
     const session = await auth();
     if (session?.user?.role !== "ADMIN") {
-        throw new Error("Action réservée aux administrateurs.");
+      return { error: "Action réservée aux administrateurs." };
     }
 
     await db.$transaction([
-        db.competitionLike.deleteMany({
-            where: { postId: id },
-        }),
-        db.competitionEntry.delete({
-            where: { id },
-        }),
+      db.competitionLike.deleteMany({
+        where: { postId: id },
+      }),
+      db.competitionEntry.delete({
+        where: { id },
+      }),
     ]);
 
     revalidatePath("/concours");
     revalidatePath("/admin/concours");
     return { success: true };
+  } catch (err: any) {
+    console.error("Erreur suppression:", err);
+    return { error: "Impossible de supprimer cette candidature." };
+  }
 }
 
 // -----------------------------------------------------------------------------
@@ -464,7 +472,6 @@ export async function updateCandidatePost(
         throw new Error("Article introuvable.");
     }
 
-    // Vérification des permissions : seul l'auteur ou un admin peut modifier
     const isAuthor = entry.authorId === session.user.id;
     const isAdmin = session.user.role === "ADMIN";
 
@@ -472,9 +479,6 @@ export async function updateCandidatePost(
         throw new Error("Vous n'êtes pas autorisé à modifier cet article.");
     }
 
-    // Si on modifie le titre, on peut choisir de recalculer le slug ou de le garder.
-    // Généralement, il est préférable de GARDER le même slug pour ne pas casser les liens existants.
-    
     await db.competitionEntry.update({
         where: { slug },
         data: {
@@ -485,16 +489,12 @@ export async function updateCandidatePost(
             imageOrientation: data.imageOrientation,
             images: data.images ? data.images : undefined,
             tags: data.tags || [],
-            // Optionnel: Si l'article était approuvé et qu'un utilisateur (non-admin) le modifie,
-            // vous pourriez vouloir le repasser en "PENDING" pour re-modération.
-            // Si c'est le cas, décommentez la ligne suivante :
-            // status: isAdmin ? entry.status : "PENDING", 
         },
     });
 
     revalidatePath("/concours");
     revalidatePath(`/concours/${slug}`);
-    revalidatePath(`/concours/preview/${slug}`); // Si la page preview est utilisée
+    revalidatePath(`/concours/preview/${slug}`);
     revalidatePath("/admin/concours");
 
     return { success: true, slug: entry.slug };
