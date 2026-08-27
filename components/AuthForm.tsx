@@ -93,7 +93,7 @@ export default function AuthForm({ initialMode = "signin" }: AuthFormProps) {
       }
       setSuccess(
         result?.message ||
-          "Un email de vérification vous a été envoyé. Veuillez consulter votre boîte de réception avant de vous connecter."
+          "Un email de vérification vous a été envoyé. Veuillez consulter votre boîte de réception ou vos spams pour vérifier votre adresse email avant de vous connecter. Essayez de se connecter avant de vérifier votre email peut entraîner des problèmes d'accès."
       );
       setSigninForm({ email: registerForm.email, password: "" });
       setRegisterForm({ name: "", email: "", password: "", phone: "" });
