@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import Link from "next/link";
-import { BadgeCheck, Heart, Eye, Trophy, PlusCircle, ArrowRight, PenTool } from "lucide-react";
+import { BadgeCheck, Heart, Eye, Trophy, PlusCircle, ArrowRight, PenTool, Gift, Info } from "lucide-react";
 
 export const revalidate = 0; // Contenu dynamique toujours à jour
 
@@ -15,16 +15,22 @@ export default async function CompetitionListPage() {
         ],
     });
 
+    const totalApproved = await db.competitionEntry.count({
+        where: { status: "APPROVED" },
+    });
+
     const totalCandidates = await db.competitionEntry.count({
         where: { status: { in: ["APPROVED", "PENDING"] } },
     });
+
+    const isBonusAvailable = totalApproved < 10;
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-gray-950 dark:via-gray-900 dark:to-slate-950 py-10 px-4 md:py-14 md:px-8">
             <div className="max-w-7xl mx-auto">
 
                 {/* En-tête de la page */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12 border-b border-gray-200 dark:border-gray-800 pb-8">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6 border-b border-gray-200 dark:border-gray-800 pb-8">
                     <div>
                         <h1 className="text-2xl md:text-5xl font-black text-gray-900 dark:text-white tracking-tight">
                             Concours de Rédaction
@@ -35,21 +41,35 @@ export default async function CompetitionListPage() {
                     </div>
 
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                        {/* Bouton Participer & Créer un article */}
-                        {totalCandidates < 10 ? (
-                            <Link
-                                href="/concours/nouveau"
-                                className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold px-6 py-3.5 rounded-2xl shadow-lg shadow-blue-500/25 transition-all active:scale-95 shrink-0"
-                            >
-                                <PenTool size={20} />
-                                <span>Rédiger un article ({totalCandidates}/10)</span>
-                            </Link>
-                        ) : (
-                            <div className="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 rounded-2xl text-xs font-semibold text-center border border-gray-200 dark:border-gray-700">
-                                Inscriptions fermées (10/10)
-                            </div>
-                        )}
+                        {/* Bouton Participer & Créer un article (Toujours disponible) */}
+                        <Link
+                            href="/concours/nouveau"
+                            className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold px-6 py-3.5 rounded-2xl shadow-lg shadow-blue-500/25 transition-all active:scale-95 shrink-0"
+                        >
+                            <PenTool size={20} />
+                            <span>Rédiger un article</span>
+                        </Link>
                     </div>
+                </div>
+
+                {/* Petite Alerte sur l'éligibilité au Bonus de 1$ */}
+                <div className="mb-10">
+                    {isBonusAvailable ? (
+                        <div className="flex items-center gap-3 p-4 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded-2xl text-emerald-800 dark:text-emerald-300 text-xs sm:text-sm">
+                            <Gift size={20} className="text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+                            <p>
+                                <strong className="font-bold">Bonus de bienvenue actif :</strong> Plus que{" "}
+                                <span className="font-extrabold underline">{10 - totalApproved} place(s)</span> pour faire partie des 10 premiers candidats et recevoir automatiquement <strong className="font-bold">1.0$</strong> à la publication de votre article !
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-3 p-4 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-2xl text-amber-800 dark:text-amber-300 text-xs sm:text-sm">
+                            <Info size={20} className="text-amber-600 dark:text-amber-400 flex-shrink-0" />
+                            <p>
+                                <strong className="font-bold">Note d'information :</strong> Le quota des 10 premiers articles gratifiés du bonus de bienvenue (1$) est atteint. Vous pouvez toujours rédiger votre article pour concourir et tenter de gagner les grands prix du concours (<strong className="font-bold">50$</strong>, <strong className="font-bold">20$</strong>, <strong className="font-bold">10$</strong> et le bonus de <strong className="font-bold">20$</strong> au 1er à 200 likes) !
+                            </p>
+                        </div>
+                    )}
                 </div>
 
                 {/* Grille des articles */}
@@ -61,15 +81,13 @@ export default async function CompetitionListPage() {
                             Les candidatures sont en cours de modération. Soyez le premier à poster votre rédaction !
                         </p>
 
-                        {totalCandidates < 10 && (
-                            <Link
-                                href="/concours/nouveau"
-                                className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-3 rounded-2xl transition-all shadow-md shadow-blue-600/20"
-                            >
-                                <PlusCircle size={18} />
-                                Participer au concours
-                            </Link>
-                        )}
+                        <Link
+                            href="/concours/nouveau"
+                            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-3 rounded-2xl transition-all shadow-md shadow-blue-600/20"
+                        >
+                            <PlusCircle size={18} />
+                            Participer au concours
+                        </Link>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
