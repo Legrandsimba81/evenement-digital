@@ -3,6 +3,8 @@
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { randomBytes } from "crypto";
+import { sendWelcomeEmail } from "@/lib/email";
+import { sendEmailVerification } from "@/actions/email-verification";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 
@@ -29,50 +31,38 @@ export async function registerUser(formData: FormData) {
 
     const hashed = await bcrypt.hash(password, 10);
     const newUser = await prisma.user.create({
-      data: { name, email, password: hashed, phone, role: "USER" },
+      data: {
+        name,
+        email,
+        password: hashed,
+        phone,
+        role: "USER",
+        emailVerified: null, // L'email reste non vérifié au départ
+      },
     });
 
-    // Envoyer l'email de bienvenue via API
+    // Envoi de l'email de bienvenue
     try {
-      await fetch(`${BASE_URL}/api/send-email`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "welcome",
-          to: email,
-          data: { name: name || "Utilisateur" },
-        }),
-      });
+      await sendWelcomeEmail(email, name || "Utilisateur");
     } catch (err) {
       console.error("Erreur envoi bienvenue:", err);
-      // On continue
     }
 
-    // Créer le token de vérification
+    // Envoi de l'email de vérification
     try {
-      const token = randomBytes(32).toString("hex");
-      const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24);
-      await prisma.emailVerification.create({
-        data: { token, userId: newUser.id, expiresAt },
-      });
-
-      const verifyLink = `${BASE_URL}/verify-email/${token}`;
-
-      await fetch(`${BASE_URL}/api/send-email`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "verify",
-          to: email,
-          data: { verifyLink },
-        }),
-      });
+      await sendEmailVerification(newUser.id, email);
     } catch (err) {
       console.error("Erreur envoi vérification:", err);
-      return { success: true, warning: "L'email de vérification n'a pas pu être envoyé. Veuillez contacter le support." };
+      return {
+        success: true,
+        warning: "Compte créé, mais l'email de vérification n'a pas pu être envoyé. Contactez le support.",
+      };
     }
 
-    return { success: true };
+    return {
+      success: true,
+      message: "Un email de vérification vous a été envoyé. Veuillez valider votre compte avant de vous connecter.",
+    };
   } catch (error: any) {
     console.error("Erreur registerUser:", error);
     return { error: error.message || "Erreur lors de l'inscription." };

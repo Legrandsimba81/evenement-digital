@@ -26,8 +26,8 @@ model User {
   comments           BlogComment[]
   likes              BlogLike[]
   posts              BlogPost[]
-  competitionEntries CompetitionEntry[]  // 👈 AJOUTÉ ICI pour lier avec le modèle CompetitionEntry
-  competitionLikes   CompetitionLike[]   // 👈 À AJOUTER
+  competitionEntries CompetitionEntry[]
+  competitionLikes   CompetitionLike[]   
   competitionComments CompetitionComment[]
   emailVerifications EmailVerification[]
   events             Event[]
