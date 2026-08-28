@@ -8,39 +8,40 @@ datasource db {
 }
 
 model User {
-  id                 String               @id @default(cuid())
-  email              String               @unique
-  name               String?
-  password           String?
-  image              String?
-  role               String               @default("USER")
-  createdAt          DateTime             @default(now())
-  updatedAt          DateTime             @updatedAt
-  emailVerified      DateTime?
-  canCreateEvents    Boolean              @default(true)
-  phone              String?              @unique
-  isSuperAdmin       Boolean              @default(false)
-  balance            Float                @default(0)
-  eventLimits        Json?
-  accounts           Account[]
-  comments           BlogComment[]
-  likes              BlogLike[]
-  posts              BlogPost[]
-  competitionEntries CompetitionEntry[]
-  competitionLikes   CompetitionLike[]   
+  id                  String               @id @default(cuid())
+  email               String               @unique
+  name                String?
+  password            String?
+  image               String?
+  role                String               @default("USER")
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  emailVerified       DateTime?
+  canCreateEvents     Boolean              @default(true)
+  phone               String?              @unique
+  isSuperAdmin        Boolean              @default(false)
+  balance             Float                @default(0)
+  eventLimits         Json?
+  accounts            Account[]
+  comments            BlogComment[]
+  likes               BlogLike[]
+  posts               BlogPost[]
+  competitionEntries  CompetitionEntry[]
+  competitionLikes    CompetitionLike[]
   competitionComments CompetitionComment[]
-  emailVerifications EmailVerification[]
-  events             Event[]
-  collaborators      EventCollaborator[]
-  collaboratorLimits Json?
-  logs               EventLog[]
-  notifications      Notification[]
-  resetTokens        PasswordResetToken[]
-  reservations       Reservation[]
-  reviews            Review[]
-  sessions           Session[]
-  shops              Shop[]
-  transactions       Transaction[]
+  faireParts          FairePart[]
+  emailVerifications  EmailVerification[]
+  events              Event[]
+  collaborators       EventCollaborator[]
+  collaboratorLimits  Json?
+  logs                EventLog[]
+  notifications       Notification[]
+  resetTokens         PasswordResetToken[]
+  reservations        Reservation[]
+  reviews             Review[]
+  sessions            Session[]
+  shops               Shop[]
+  transactions        Transaction[]
 }
 
 model Account {
@@ -95,11 +96,11 @@ model Event {
   updatedAt          DateTime            @updatedAt
   invitationImageUrl String?
   invitationNumber   String?
-  locationAddress String?  // Adresse textuelle
-  locationLat     Float?   // Latitude
-  locationLng     Float?   // Longitude
-  locationName    String?  // Nom du lieu (ex: "Salle des fêtes La Fontaine")
-  locationUrl     String?  // Lien externe (ex: Google Maps)
+  locationAddress    String?
+  locationLat        Float?
+  locationLng        Float?
+  locationName       String?
+  locationUrl        String?
   gateSecret         String?
   theme              Json?
   thesisTitle        String?
@@ -109,6 +110,7 @@ model Event {
   logs               EventLog[]
   guests             Guest[]
   messages           Message[]
+  faireParts         FairePart[]         // 👈 AJOUTÉ : permet à un Event d'avoir des Faire-parts optionnels
 }
 
 model EventCollaborator {
@@ -340,21 +342,21 @@ model ShopProfile {
 }
 
 model Reservation {
-  id              String   @id @default(cuid())
-  shopId          String
-  userId          String
-  clientName      String?  // Nom du client
-  clientEmail     String?  // Email du client
-  clientPhone     String?  // Téléphone
-  clientWhatsapp  String?  // WhatsApp
-  date            DateTime
-  message         String?
-  status          String   @default("pending") // pending, accepted, rejected
-  metadata        Json?    // pour stocker des infos supplémentaires si besoin
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  shop            Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id             String   @id @default(cuid())
+  shopId         String
+  userId         String
+  clientName     String?
+  clientEmail    String?
+  clientPhone    String?
+  clientWhatsapp String?
+  date           DateTime
+  message        String?
+  status         String   @default("pending")
+  metadata       Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  shop           Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([shopId])
   @@index([userId])
@@ -381,30 +383,28 @@ enum PostStatus {
   REJECTED
 }
 
-
 model CompetitionEntry {
-  id               String          @id @default(cuid())
+  id               String               @id @default(cuid())
   title            String
-  slug             String          @unique
+  slug             String               @unique
   content          String
   excerpt          String?
   imageUrl         String?
-  imageOrientation String?         @default("landscape")
+  imageOrientation String?              @default("landscape")
   images           String[]
   tags             String[]
-  published        Boolean         @default(false)
-  status           PostStatus      @default(PENDING)
-  views            Int             @default(0)
-  likes            Int             @default(0)
-  rewardAmount     Float           @default(0.0) // Cumul des gains ($1 bonus de bienvenue + $20 (200 likes) + $50/$20/$10)
-  firstTo200       Boolean         @default(false) // Indique si cet article a débloqué le bonus unique des 200 likes ($20)
-  rankWinner       Int?            // 1, 2, ou 3 selon l'ordre d'atteinte des 1000 likes
-  createdAt        DateTime        @default(now())
+  published        Boolean              @default(false)
+  status           PostStatus           @default(PENDING)
+  views            Int                  @default(0)
+  likes            Int                  @default(0)
+  rewardAmount     Float                @default(0.0)
+  firstTo200       Boolean              @default(false)
+  rankWinner       Int?
+  createdAt        DateTime             @default(now())
   publishedAt      DateTime?
-  comments  CompetitionComment[] // Ajouter la relation
-
+  comments         CompetitionComment[]
   authorId         String
-  author           User            @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  author           User                 @relation(fields: [authorId], references: [id], onDelete: Cascade)
   likesRecords     CompetitionLike[]
 }
 
@@ -412,12 +412,10 @@ model CompetitionComment {
   id        String           @id @default(uuid())
   content   String
   createdAt DateTime         @default(now())
-  
   postId    String
   post      CompetitionEntry @relation(fields: [postId], references: [id], onDelete: Cascade)
-  
-  userId    String? 
-  user      User?            @relation(fields: [userId], references: [id], onDelete: Cascade) // 👈 AJOUTER LE '?' ICI
+  userId    String?
+  user      User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model CompetitionLike {
@@ -425,11 +423,62 @@ model CompetitionLike {
   postId    String
   userId    String
   createdAt DateTime         @default(now())
-
   post      CompetitionEntry @relation(fields: [postId], references: [id], onDelete: Cascade)
   user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([postId, userId]) // Empêche un utilisateur d'aimer 2 fois le même article
+  @@unique([postId, userId])
   @@index([postId])
   @@index([userId])
+}
+
+model FairePart {
+  id                String          @id @default(cuid())
+  title             String
+  slug              String          @unique
+  imageUrl          String?
+  eventType         String          @default("MARRIAGE")
+  groomName         String?
+  brideName         String?
+  organizerName     String?
+  announcementText  String          @db.Text
+  eventDate         DateTime
+  eventTime         String
+  locationName      String
+  mapsUrl           String?
+  invitationLink    String?
+  rsvpDeadline      DateTime?
+  mobileMoneyNumber  String?
+  mobileMoneyName    String?
+  contactPhone      String?
+  contactEmail      String?
+  importantNote     String?         @db.Text
+  
+  userId            String
+  user              User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Relation optionnelle vers Event :
+  eventId           String?
+  event             Event?          @relation(fields: [eventId], references: [id], onDelete: SetNull)
+
+  rsvps             FairePartRsvp[]
+
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+}
+
+// 👈 AJOUTÉ : Modèle pour les réponses/confirmations d'invités
+model FairePartRsvp {
+  id          String    @id @default(cuid())
+  fairePartId String
+  guestName   String
+  guestEmail  String?
+  guestPhone  String?
+  status      String    @default("PENDING") // PENDING, CONFIRMED, DECLINED
+  plusOne     Int       @default(0)
+  message     String?   @db.Text
+  createdAt   DateTime  @default(now())
+  
+  fairePart   FairePart @relation(fields: [fairePartId], references: [id], onDelete: Cascade)
+
+  @@index([fairePartId])
 }

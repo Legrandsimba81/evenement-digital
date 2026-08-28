@@ -11,6 +11,7 @@ export default async function GatePage({
 }) {
   const session = await auth();
   if (!session?.user) redirect("/login");
+  if (!session.user.id) redirect("/login");
 
   const { eventSlug } = await params;
   const event = await prisma.event.findUnique({
