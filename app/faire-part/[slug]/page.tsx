@@ -8,12 +8,21 @@ import DownloadFairePartButton from "@/components/faire-part/DownloadFairePartBu
 import FairePartActions from "@/components/faire-part/FairePartActions";
 
 interface Props {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
 export default async function PublicFairePartPage({ params }: Props) {
+  // 🟢 ATTENDRE LA PROMESSE PARAMS (Obligatoire dans Next.js)
+  const resolvedParams = await params;
+  const slug = resolvedParams.slug;
+
+  // Sécurité supplémentaire au cas où le slug manque
+  if (!slug) {
+    notFound();
+  }
+
   const fairePart = await prisma.fairePart.findUnique({
-    where: { slug: params.slug },
+    where: { slug },
   });
 
   if (!fairePart) {
