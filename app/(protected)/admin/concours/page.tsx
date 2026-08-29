@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import Link from "Next/link";
+import Link from "next/link";
 import { Eye, Heart, Trophy, CheckCircle, Award, Users, Lock, Unlock, AlertTriangle } from "lucide-react";
 import ApprovePostButton from "@/components/admin/ApprovePostButton";
 import DeletePostButton from "@/components/admin/DeletePostButton";
