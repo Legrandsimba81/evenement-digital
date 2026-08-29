@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import html2canvas from "html2canvas";
+import html2canvas from 'html2canvas-pro';
 
 interface DownloadFairePartButtonProps {
   /** L'ID HTML du conteneur du faire-part à capturer */

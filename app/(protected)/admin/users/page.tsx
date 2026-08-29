@@ -1,4 +1,3 @@
-// app/(protected)/admin/users/page.tsx
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
@@ -12,6 +11,8 @@ import {
   CalendarDays,
   X,
   Search,
+  CheckCircle2,
+  AlertCircle,
 } from "lucide-react";
 import UserAdminControls from "@/components/admin/UserAdminControls";
 import UserLimitsButton from "@/components/admin/UserLimitsButton";
@@ -49,6 +50,7 @@ export default async function AdminUsersPage({
       id: true,
       name: true,
       email: true,
+      emailVerified: true, // 💡 Récupération du statut de vérification de l'email
       phone: true,
       role: true,
       canCreateEvents: true,
@@ -138,20 +140,34 @@ export default async function AdminUsersPage({
                       className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition"
                     >
                       <td className="py-3 px-3">
-                        <div className="flex flex-col">
+                        <div className="flex flex-col gap-1">
                           <span className="font-medium text-gray-900 dark:text-white">
                             {user.name || "Anonyme"}
                           </span>
-                          <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                            <Mail size={12} />
-                            {user.email}
+                          <div className="flex items-center gap-1.5 flex-wrap text-xs">
+                            <span className="text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                              <Mail size={12} />
+                              {user.email}
+                            </span>
+                            
+                            {/* Status de vérification de l'email */}
+                            {user.emailVerified ? (
+                              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 rounded-md text-[10px] font-medium" title={`Vérifié le ${formatDate(user.emailVerified)}`}>
+                                <CheckCircle2 size={10} /> Vérifié
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 rounded-md text-[10px] font-medium">
+                                <AlertCircle size={10} /> Non vérifié
+                              </span>
+                            )}
+
                             {isGoogle && (
-                              <span className="ml-1 px-1.5 py-0.5 bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 rounded-full text-[10px] font-medium">
+                              <span className="px-1.5 py-0.5 bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 rounded-md text-[10px] font-medium">
                                 Google
                               </span>
                             )}
-                          </span>
-                          <span className="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1 mt-0.5">
+                          </div>
+                          <span className="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1">
                             <CalendarDays size={12} />
                             {formatDate(user.createdAt)}
                           </span>
