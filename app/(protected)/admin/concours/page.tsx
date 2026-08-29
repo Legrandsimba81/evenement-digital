@@ -1,8 +1,9 @@
 import { db } from "@/lib/db";
-import Link from "next/link";
-import { Eye, Heart, Trophy, CheckCircle, Award, Users, Lock, Unlock } from "lucide-react";
+import Link from "Next/link";
+import { Eye, Heart, Trophy, CheckCircle, Award, Users, Lock, Unlock, AlertTriangle } from "lucide-react";
 import ApprovePostButton from "@/components/admin/ApprovePostButton";
 import DeletePostButton from "@/components/admin/DeletePostButton";
+import ToggleSuspensionButton from "@/components/admin/ToggleSuspensionButton";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +13,12 @@ export default async function AdminCompetitionPage() {
     orderBy: [{ rankWinner: "asc" }, { likes: "desc" }, { createdAt: "desc" }],
   });
 
+  // Récupération des réglages globaux du concours
+  const settings = await db.competitionSettings.findUnique({
+    where: { id: "global" },
+  });
+
+  const isSuspended = settings?.isSuspended || false;
   const totalCandidates = entries.filter((e) => e.status !== "REJECTED").length;
   const pendingCount = entries.filter((e) => e.status === "PENDING").length;
   const approvedCount = entries.filter((e) => e.status === "APPROVED").length;
@@ -19,8 +26,20 @@ export default async function AdminCompetitionPage() {
 
   return (
     <div className="space-y-6">
-      {/* En-tête */}
-      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+      {/* Alerte si le concours est actuellement suspendu */}
+      {isSuspended && (
+        <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-400 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <AlertTriangle className="h-6 w-6 flex-shrink-0" />
+            <p className="text-sm font-semibold">
+              Le concours est actuellement <strong>SUSPENDU</strong>. Les votes et participations publiques sont désactivés.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* En-tête avec bouton de suspension */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <Trophy className="text-amber-500" /> Concours de Rédaction
@@ -29,7 +48,11 @@ export default async function AdminCompetitionPage() {
             Validez les soumissions des 10 candidats, suivez les votes et la distribution des prix.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Bouton pour activer/désactiver la suspension */}
+          <ToggleSuspensionButton initialSuspended={isSuspended} initialReason={settings?.reason} />
+
           {totalCandidates >= 10 ? (
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 font-semibold text-xs">
               <Lock size={14} /> Concours Complet (10/10)
@@ -195,10 +218,8 @@ export default async function AdminCompetitionPage() {
 
                       <td className="py-3 px-4">
                         <div className="flex items-center justify-center gap-2">
-                          {/* Bouton pour Approuver / Rejeter */}
                           <ApprovePostButton slug={entry.slug} currentStatus={entry.status} />
 
-                          {/* Consulter l'article (Aperçu si PENDING, Article public si APPROVED) */}
                           <Link
                             href={previewHref}
                             target="_blank"
@@ -208,7 +229,6 @@ export default async function AdminCompetitionPage() {
                             <Eye size={16} />
                           </Link>
 
-                          {/* Bouton pour Supprimer l'article */}
                           <DeletePostButton slug={entry.slug} title={entry.title} />
                         </div>
                       </td>

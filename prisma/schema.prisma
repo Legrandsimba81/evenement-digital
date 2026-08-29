@@ -431,6 +431,13 @@ model CompetitionLike {
   @@index([userId])
 }
 
+model CompetitionSettings {
+  id          String   @id @default("global")
+  isSuspended Boolean  @default(false)
+  reason      String?  @default("Suspension temporaire du concours par manque d'implication de plusieurs candidats.")
+  updatedAt   DateTime @updatedAt
+}
+
 model FairePart {
   id                String          @id @default(cuid())
   title             String

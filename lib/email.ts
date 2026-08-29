@@ -80,3 +80,20 @@ export async function sendWelcomeEmail(to: string, name: string) {
   `;
   return sendEmail({ to, subject: "Bienvenue sur Octavia Event", html });
 }
+
+export async function sendCompetitionSuspensionEmail(to: string, name: string, reason?: string) {
+  const html = `
+    <div style="font-family: sans-serif; padding: 20px; line-height: 1.6; color: #333;">
+      <h2 style="color: #d97706;">Bonjour ${name || "Candidat"},</h2>
+      <p>Nous vous informons que le concours de rédaction a été <strong>temporairement suspendu</strong>.</p>
+      <p><strong>Motif :</strong> ${reason || "Manque d'implication de plusieurs candidats."}</p>
+      <p>Les votes et participations sont mis en pause jusqu'à nouvel ordre.</p>
+      <p>Merci de votre compréhension.<br/>L'équipe Octavia Event</p>
+    </div>
+  `;
+  return sendEmail({ 
+    to, 
+    subject: "⚠️ Suspension temporaire du Concours de Rédaction", 
+    html 
+  });
+}

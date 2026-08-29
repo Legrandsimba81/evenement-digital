@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import { notFound } from "next/navigation";
-import { Calendar, Eye, Clock, Award, Trophy, BadgeCheck, PlusCircle, Edit3, MessageSquare } from "lucide-react";
+import { Calendar, Eye, Clock, Award, Trophy, BadgeCheck, PlusCircle, Edit3, MessageSquare, AlertOctagon } from "lucide-react";
 import CommentSection from "@/components/competition/CommentSection";
 import ShareModal from "@/components/competition/ShareModal";
 import LikeButton from "@/components/competition/LikeButton";
@@ -66,7 +66,13 @@ export default async function CompetitionPostPage({ params }: Props) {
     const { slug } = await params;
     const session = await auth();
 
-    // 💡 FIX 1: Sélection complète des champs du commentaire et de la relation user
+    // Vérifier si le concours est actuellement suspendu
+    const settings = await db.competitionSettings.findUnique({
+        where: { id: "global" },
+    });
+    const isSuspended = settings?.isSuspended || false;
+
+    // Sélection complète des champs du commentaire et de la relation user
     const post = await db.competitionEntry.findUnique({
         where: { slug },
         include: { 
@@ -121,7 +127,7 @@ export default async function CompetitionPostPage({ params }: Props) {
 
     const commentsCount = post.comments?.length || 0;
 
-    // 💡 FIX 2: Formater le tableau des commentaires pour correspondre à ce qu'attend CommentSection
+    // Formater le tableau des commentaires
     const formattedComments = post.comments.map((c) => ({
         id: c.id,
         content: c.content,
@@ -132,16 +138,31 @@ export default async function CompetitionPostPage({ params }: Props) {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-gray-950 dark:via-gray-900 dark:to-slate-950 py-6 px-3 sm:py-12 sm:px-6 transition-colors">
-            {/* Bannière d'appel à participation */}
-            <div className="max-w-4xl mx-auto mb-6 px-4 text-center">
-                <Link
-                    href="/concours/regles"
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-bold text-sm sm:text-base px-4 sm:px-6 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl transition-all shadow-md shadow-blue-600/20"
-                >
-                    <PlusCircle className="w-5 h-5 flex-shrink-0" />
-                    <span className="truncate">Participer au concours et gagner 50$ !</span>
-                </Link>
-            </div>
+            
+            {/* Bandeau d'état : Alerte suspension OU Appel à participation standard */}
+            {isSuspended ? (
+                <div className="max-w-4xl mx-auto mb-8 p-6 bg-amber-500/10 border-2 border-amber-500/40 rounded-3xl text-center space-y-2 backdrop-blur-md">
+                    <div className="inline-flex items-center justify-center p-3 bg-amber-500 text-white rounded-2xl shadow-lg shadow-amber-500/20 mb-1">
+                        <AlertOctagon size={28} />
+                    </div>
+                    <h2 className="text-xl sm:text-2xl font-black text-amber-800 dark:text-amber-300">
+                        Concours Temporairement Suspendu
+                    </h2>
+                    <p className="text-xs sm:text-sm text-amber-700 dark:text-amber-400 max-w-2xl mx-auto leading-relaxed">
+                        {settings?.reason || "Le concours est temporairement mis en pause par l'administration par manque d'implication de plusieurs candidats. Les votes et participations sont momentanément désactivés."}
+                    </p>
+                </div>
+            ) : (
+                <div className="max-w-4xl mx-auto mb-6 px-4 text-center">
+                    <Link
+                        href="/concours/regles"
+                        className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-bold text-sm sm:text-base px-4 sm:px-6 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl transition-all shadow-md shadow-blue-600/20"
+                    >
+                        <PlusCircle className="w-5 h-5 flex-shrink-0" />
+                        <span className="truncate">Participer au concours et gagner 50$ !</span>
+                    </Link>
+                </div>
+            )}
 
             <article className="max-w-4xl mx-auto">
                 <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md rounded-3xl shadow-xl border border-gray-200/80 dark:border-gray-800 p-4 sm:p-8 md:p-10">
@@ -204,7 +225,7 @@ export default async function CompetitionPostPage({ params }: Props) {
                         </div>
                     </div>
 
-                    {/* Image de couverture avec fallback */}
+                    {/* Image de couverture */}
                     <div
                         className={`w-full rounded-2xl overflow-hidden mb-8 shadow-md border border-gray-100 dark:border-gray-800 ${post.imageOrientation === "portrait" ? "max-w-md mx-auto aspect-[3/4]" : "aspect-[16/9]"
                             }`}
@@ -231,11 +252,17 @@ export default async function CompetitionPostPage({ params }: Props) {
                         {/* Barre d'interaction immédiate */}
                         <div className="flex flex-wrap items-center justify-between gap-4 mt-6 p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800">
                             <div className="flex items-center gap-3">
-                                <LikeButton
-                                    postSlug={slug}
-                                    initialLikes={post.likes}
-                                    likedByCurrentUser={likedByCurrentUser}
-                                />
+                                {!isSuspended ? (
+                                    <LikeButton
+                                        postSlug={slug}
+                                        initialLikes={post.likes}
+                                        likedByCurrentUser={likedByCurrentUser}
+                                    />
+                                ) : (
+                                    <span className="text-xs font-semibold text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-950/50 px-3 py-2 rounded-xl border border-amber-200 dark:border-amber-800">
+                                        Votes suspendus ({post.likes} J'aime)
+                                    </span>
+                                )}
                                 <ShareModal postSlug={slug} title={post.title} />
                             </div>
 
@@ -270,9 +297,8 @@ export default async function CompetitionPostPage({ params }: Props) {
                         </div>
                     )}
 
-                    {/* Section Commentaires en bas d'article */}
+                    {/* Section Commentaires */}
                     <div id="comments" className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-800">
-                        {/* 💡 FIX 3: Envoi du tableau formater les commentaires */}
                         <CommentSection postSlug={slug} comments={formattedComments} />
                     </div>
 
