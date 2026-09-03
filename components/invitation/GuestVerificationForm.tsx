@@ -29,7 +29,7 @@ export default function GuestVerificationForm({ slug }: { slug: string }) {
         Bienvenue
       </h2>
       <p className="text-center text-gray-600 dark:text-gray-400 mb-6">
-        Veuillez entrer votre prénom et nom pour accéder à l'invitation. <br/> Ex: Moise Kasereka
+        Veuillez entrer votre prénom et nom d'un invité qui est déjà sur la liste pour accéder à l'invitation. <br/> Ex: Moise Kasereka
       </p>
       <form onSubmit={handleSubmit} className="space-y-4">
         <input

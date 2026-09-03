@@ -29,11 +29,11 @@ export async function sendGuestInvitation({
       // OPTIMISATION : On passe les variables séparées à la fonction WhatsApp
       await sendWhatsAppTemplate(phone, guestName, eventTitle, invitationLink);
       success = true;
-      console.log(`✅ WhatsApp envoyé à ${formattedPhone}`);
+      console.log(`WhatsApp envoyé à ${formattedPhone}`);
     } catch (error) {
       const msg = error instanceof Error ? error.message : 'Erreur inconnue';
       errors.push(`WhatsApp (${formattedPhone}): ${msg}`);
-      console.error(`❌ Erreur WhatsApp ${formattedPhone}:`, error);
+      console.error(`Erreur WhatsApp ${formattedPhone}:`, error);
     }
   }
 
@@ -41,11 +41,11 @@ export async function sendGuestInvitation({
     try {
       await sendEmail(email, `Invitation pour "${eventTitle}"`, textMessage);
       success = true;
-      console.log(`✅ Email envoyé à ${email}`);
+      console.log(`Email envoyé à ${email}`);
     } catch (error) {
       const msg = error instanceof Error ? error.message : 'Erreur inconnue';
       errors.push(`Email (${email}): ${msg}`);
-      console.error(`❌ Erreur Email ${email}:`, error);
+      console.error(`Erreur Email ${email}:`, error);
     }
   }
 

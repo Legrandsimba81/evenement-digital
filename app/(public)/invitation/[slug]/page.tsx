@@ -17,7 +17,7 @@ import {
 import MessageSuggestions from "@/components/invitation/MessageSuggestions";
 import MessageItem from "@/components/invitation/MessageItem";
 
-// ✅ Métadonnées dynamiques
+// Métadonnées dynamiques
 export async function generateMetadata({
   params,
 }: {
@@ -109,7 +109,7 @@ export default async function InvitationPage({
   const { slug } = await params;
   const { firstName, lastName } = await searchParams;
 
-  // ✅ Requête explicite avec tous les champs nécessaires
+  //  Requête explicite avec tous les champs nécessaires
   const event = await prisma.event.findUnique({
     where: { slug },
     select: {
@@ -134,7 +134,7 @@ export default async function InvitationPage({
       theme: true,
       thesisTitle: true,
       format: true,
-      // ✅ Nouveaux champs de localisation
+      // Nouveaux champs de localisation
       locationName: true,
       locationAddress: true,
       locationLat: true,

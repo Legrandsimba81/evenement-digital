@@ -144,7 +144,7 @@ export default function ReservationForm({ shopSlug }: { shopSlug: string }) {
       </div>
 
       {error && <div className="text-red-600 dark:text-red-400 text-sm bg-red-50 dark:bg-red-900/20 p-3 rounded-xl">{error}</div>}
-      {success && <div className="text-green-600 dark:text-green-400 text-sm bg-green-50 dark:bg-green-900/20 p-3 rounded-xl">✅ Demande envoyée ! Redirection...</div>}
+      {success && <div className="text-green-600 dark:text-green-400 text-sm bg-green-50 dark:bg-green-900/20 p-3 rounded-xl">Demande envoyée ! Redirection...</div>}
 
       <button
         type="submit"

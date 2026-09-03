@@ -66,7 +66,7 @@ export async function notifyCollaboratorAdded(userId: string, eventTitle: string
   });
 }
 
-// ✅ Nouvelle fonction pour la limite d'invités atteinte
+// Nouvelle fonction pour la limite d'invités atteinte
 export async function notifyLimitReached(userId: string, eventType: string, limit: number) {
   await createNotification({
     userId,

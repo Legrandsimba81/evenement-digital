@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 
 const categoriesData = [
-  
+
   // --- NIVEAU 1 : LES INCONTOURNABLES (Le cœur de tout événement) ---
 
   { name: "Salle", slug: "salle", description: "Location d'espaces événementiels", tags: ["Mariage", "Anniversaire", "Conférence", "Réception", "Extérieur", "Intérieur"] },
@@ -10,6 +10,8 @@ const categoriesData = [
   { name: "Vidéaste", slug: "videaste", description: "Enregistrement et post-production vidéo", tags: ["Mariage", "Événement", "Portrait", "Reportage"] },
   { name: "DJ", slug: "dj", description: "Programmation musicale et sonorisation", tags: ["Mariage", "Anniversaire", "Soirée", "Concert", "Musique électronique", "Animation"] },
   { name: "Agence de surprise", slug: "agence-surprise", description: "Création d'expériences de surprise", tags: ["Mariage", "Anniversaire", "Fête"] },
+  { name: "Agence évènementielle", slug: "agence-evenementielle", description: "Création d'expériences de surprise", tags: ["Mariage", "Anniversaire", "Fête"] },
+  { name: "Influenceur", slug: "influenceur", description: "Collaboration avec des influenceurs pour la promotion d'événements", tags: ["Mariage", "Anniversaire", "Fête"] },
 
   // --- NIVEAU 2 : AMBIANCE & SCÉNOGRAPHIE (Esthétique et confort) ---
 

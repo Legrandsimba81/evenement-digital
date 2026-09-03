@@ -42,13 +42,13 @@ export default async function CompetitionListPage() {
 
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                         {/* Bouton Participer & Créer un article (Toujours disponible) */}
-                        <Link
+                        {/* <Link
                             href="/concours/nouveau"
                             className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold px-6 py-3.5 rounded-2xl shadow-lg shadow-blue-500/25 transition-all active:scale-95 shrink-0"
                         >
                             <PenTool size={20} />
                             <span>Rédiger un article</span>
-                        </Link>
+                        </Link> */}
                     </div>
                 </div>
 

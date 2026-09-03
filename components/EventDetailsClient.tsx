@@ -18,6 +18,7 @@ import {
   Download,
   BookOpen,
   Share2,
+  QrCode,
 } from "lucide-react";
 import MessageItem from "@/components/invitation/MessageItem";
 import { SiWhatsapp } from "react-icons/si";
@@ -56,13 +57,18 @@ type Event = {
   userId: string;
   theme?: string | null;
   format?: string | null;
+  // ✅ Ajout des champs manquants
+  isPaid: boolean;
+  unlistedGuestsLimit?: number | null;
+  unlistedGuestsCount?: number;
+  unlistedQrToken?: string | null;
 };
 
 export default function EventDetailsClient({ event }: { event: Event }) {
   const { data: session } = useSession();
   const [activeTab, setActiveTab] = useState<"invitation" | "guests" | "messages">("invitation");
   const [isExporting, setIsExporting] = useState(false);
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.octaviaevent.com";
   const invitationLink = `${baseUrl}/invitation/${event.slug}`;
 
   const copyLink = () => {
@@ -180,6 +186,14 @@ export default function EventDetailsClient({ event }: { event: Event }) {
           >
             <Users size={14} /> Collab.
           </Link>
+          {event.isPaid && (
+            <Link
+              href={`/dashboard/${event.slug}/unlisted-qr`}
+              className="inline-flex items-center gap-1.5 bg-purple-500 hover:bg-purple-600 text-white px-3 py-1.5 rounded-full text-xs font-medium transition"
+            >
+              <QrCode size={14} /> QR invités hors liste
+            </Link>
+          )}
           <Link
             href={`/dashboard/event/${event.slug}/location`}
             className="inline-flex items-center gap-1.5 bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1.5 rounded-full text-xs font-medium transition"

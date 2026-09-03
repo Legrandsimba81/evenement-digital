@@ -2,10 +2,12 @@ generator client {
   provider = "prisma-client-js"
 }
 
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
+// 🟢 EN PRODUCTION : Décommentez ce bloc pour utiliser Neon/PostgreSQL (et commentez le bloc SQLite)
+ datasource db {
+   provider = "postgresql"
+   url      = env("DATABASE_URL")
+ }
+
 
 model User {
   id                  String               @id @default(cuid())
@@ -94,6 +96,10 @@ model Event {
   whatsappNumber     String?
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
+  isPaid              Boolean   @default(false)
+  unlistedGuestsLimit Int?      // Nombre max d'invités non listés (null = illimité)
+  unlistedGuestsCount Int       @default(0) // Compteur d'entrées
+  unlistedQrToken     String?   @unique   // Token unique pour le QR (généré à la demande)
   invitationImageUrl String?
   invitationNumber   String?
   locationAddress    String?

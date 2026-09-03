@@ -519,10 +519,10 @@ export default function InvitationCard({
         {status && (
           <p className="text-center text-sm text-gray-500">
             {status === "attending"
-              ? "✅ Présence confirmée – Merci !"
+              ? "Présence confirmée – Merci !"
               : status === "annule"
-                ? "❌ Indisponible – Nous avons bien noté votre réponse."
-                : "⏳ En attente de confirmation."}
+                ? "Indisponible – Nous avons bien noté votre réponse."
+                : "En attente de confirmation."}
           </p>
         )}
       </div>

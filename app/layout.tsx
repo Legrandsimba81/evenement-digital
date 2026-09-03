@@ -8,7 +8,7 @@ import Footer from "@/components/Footer";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://octaviaevent.com"),
+  metadataBase: new URL("https://www.octaviaevent.com"),
   title: {
     default: "Octavia Event | Invitations & Gestion d'événements numériques en RDC",
     template: "%s | Octavia Event",
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     "Octavia Event",
     "Octavia",
   ],
-  authors: [{ name: "Octavia Event", url: "https://octaviaevent.com" }],
+  authors: [{ name: "Octavia Event", url: "https://www.octaviaevent.com" }],
   creator: "Octavia Event",
   publisher: "Octavia Event",
   verification: {

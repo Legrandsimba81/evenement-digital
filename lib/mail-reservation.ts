@@ -32,10 +32,10 @@ const getTransporter = () => {
         rejectUnauthorized: false,
       },
     });
-    console.log(`✅ [Email] Transporteur SMTP configuré (${host}:${port})`);
+    console.log(`[Email] Transporteur SMTP configuré (${host}:${port})`);
     return transporter;
   } catch (error) {
-    console.error("❌ [Email] Erreur de configuration du transporteur :", error);
+    console.error("[Email] Erreur de configuration du transporteur :", error);
     return null;
   }
 };
@@ -104,9 +104,9 @@ export async function sendReservationEmail({
       html,
     });
 
-    console.log(`✅ [Email] Réservation envoyée à ${to} pour ${shopName}`);
+    console.log(`[Email] Réservation envoyée à ${to} pour ${shopName}`);
   } catch (error) {
-    console.error("❌ [Email] Erreur lors de l'envoi :", error);
+    console.error("[Email] Erreur lors de l'envoi :", error);
     // On ne relance pas l'erreur pour ne pas bloquer la réservation
   }
 }

@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
-import { usePathname } from "next/navigation"; // ← ajout
+import { usePathname } from "next/navigation";
 
 import {
   BellRing,
@@ -37,19 +37,19 @@ export default function Navbar() {
 
   // Détection mobile
   const [isMobile, setIsMobile] = useState(false);
-  const pathname = usePathname(); // ← récupération du chemin
+  const pathname = usePathname();
 
   // Détecter la taille d'écran
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
+      setIsMobile(window.innerWidth < 1024);
     };
     checkMobile();
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  // Thème (inchangé)
+  // Thème
   useEffect(() => {
     const storedTheme = window.localStorage.getItem("theme") as "light" | "dark" | null;
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -88,6 +88,15 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Fonction pour vérifier si un lien est actif
+  const isActive = (href: string) => {
+    if (href === "/") {
+      return pathname === "/";
+    }
+    return pathname.startsWith(href);
+  };
+
+  // Liste complète pour la navigation Desktop
   const navLinks = [
     { href: "/", label: "Accueil", icon: Home },
     { href: "/dashboard", label: "Mes événements", icon: LayoutGrid },
@@ -96,6 +105,14 @@ export default function Navbar() {
     { href: "/boutiques", label: "Prestataires", icon: Store },
     { href: "/blog", label: "Blog", icon: Newspaper },
     { href: "/concours", label: "Concours", icon: Trophy },
+  ];
+
+  // Liens spécifiques affichés sur la barre de navigation mobile
+  const mobileNavLinks = [
+    { href: "/dashboard", label: "Événements", icon: LayoutGrid },
+    { href: "/boutiques", label: "Prestataires", icon: Store },
+    { href: "/tarifs", label: "Tarifs", icon: Tag },
+    { href: "/contact", label: "Contact", icon: Mail },
   ];
 
   const handleSignOut = async () => {
@@ -132,20 +149,25 @@ export default function Navbar() {
             />
           </div>
           <span className="text-lg font-semibold tracking-tight text-gray-900 dark:text-white">
-            Octavia<span className="text-primary">Event</span>
+            Octavia<span className="text-primary-500">Event</span>
           </span>
         </Link>
 
-        <div className="flex">
+        <div className="flex gap-2 items-center">
           {/* Navigation desktop */}
-          <nav className="hidden md:flex md:items-center md:gap-2">
+          <nav className="hidden lg:flex lg:items-center lg:gap-2">
             {navLinks.map((link) => {
               const Icon = link.icon;
+              const active = isActive(link.href);
               return (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="flex min-w-max items-center gap-2 rounded-full border border-transparent px-3 py-2 text-sm font-normal text-gray-700 transition hover:border-gray-200 hover:bg-gray-50 hover:text-primary dark:text-gray-400 dark:hover:border-gray-800 dark:hover:bg-gray-900 dark:hover:text-white"
+                  className={`flex min-w-max items-center gap-2 rounded-full border px-3 py-2 text-sm transition ${
+                    active
+                      ? "border-primary-500/20 bg-primary-500/10 font-semibold text-primary-500 dark:bg-primary-500/20 dark:text-primary-500"
+                      : "border-transparent font-normal text-gray-700 hover:border-gray-200 hover:bg-gray-50 hover:text-primary-500 dark:text-gray-400 dark:hover:border-gray-800 dark:hover:bg-gray-900 dark:hover:text-white"
+                  }`}
                 >
                   <Icon size={16} />
                   <span>{link.label}</span>
@@ -160,7 +182,7 @@ export default function Navbar() {
               type="button"
               aria-label="Basculer le thème"
               onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 transition hover:border-primary hover:text-primary dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 transition hover:border-primary-500 hover:text-primary-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
             >
               {theme === "light" ? <Moon size={18} /> : <Sun size={18} />}
             </button>
@@ -171,10 +193,10 @@ export default function Navbar() {
                 <button
                   type="button"
                   onClick={() => setMenuOpen((value) => !value)}
-                  className="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-2 py-1.5 text-sm font-semibold text-gray-700 transition hover:border-primary hover:text-primary dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
+                  className="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-2 py-1.5 text-sm font-semibold text-gray-700 transition hover:border-primary-500 hover:text-primary-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
                   title={userName}
                 >
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-500/15 text-xs text-primary">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-500/15 text-xs text-primary-500">
                     {session.user?.image ? (
                       <img
                         src={session.user.image}
@@ -203,26 +225,38 @@ export default function Navbar() {
                       <Link
                         href="/profile"
                         onClick={() => setMenuOpen(false)}
-                        className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-gray-700 transition hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-900"
+                        className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition ${
+                          isActive("/profile")
+                            ? "bg-primary-500/10 font-medium text-primary-500 dark:bg-primary-500/20"
+                            : "text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-900"
+                        }`}
                       >
-                        <UserRound size={16} className="text-primary" />
+                        <UserRound size={16} className="text-primary-500" />
                         Mon profil
                       </Link>
                       <Link
                         href="/dashboard"
                         onClick={() => setMenuOpen(false)}
-                        className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-gray-700 transition hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-900"
+                        className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition ${
+                          isActive("/dashboard")
+                            ? "bg-primary-500/10 font-medium text-primary-500 dark:bg-primary-500/20"
+                            : "text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-900"
+                        }`}
                       >
-                        <UserRound size={16} className="text-primary" />
+                        <LayoutGrid size={16} className="text-primary-500" />
                         Mon tableau de bord
                       </Link>
                       {isAdmin && (
                         <Link
                           href="/admin"
                           onClick={() => setMenuOpen(false)}
-                          className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-gray-700 transition hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-900"
+                          className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition ${
+                            isActive("/admin")
+                              ? "bg-primary-500/10 font-medium text-primary-500 dark:bg-primary-500/20"
+                              : "text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-900"
+                          }`}
                         >
-                          <ShieldCheck size={16} className="text-primary" />
+                          <ShieldCheck size={16} className="text-primary-500" />
                           Dashboard admin
                         </Link>
                       )}
@@ -231,7 +265,7 @@ export default function Navbar() {
                         onClick={handleSignOut}
                         className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-gray-700 transition hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-900"
                       >
-                        <LogOut size={16} className="text-primary" />
+                        <LogOut size={16} className="text-primary-500" />
                         Déconnexion
                       </button>
                     </div>
@@ -250,78 +284,116 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile navigation - affichée sauf sur /boutiques en mobile */}
+      {/* Navigation mobile */}
       {!hideMobileNav && (
-        <div className="border-t border-gray-100 bg-white/90 dark:border-gray-900 dark:bg-gray-950 md:hidden">
-          <nav className="relative mx-auto flex max-w-7xl justify-around gap-1 px-2 py-2 sm:px-4">
-            {/* Bouton hamburger avec dropdown */}
+        <div className="border-t border-gray-100 bg-white/90 dark:border-gray-900 dark:bg-gray-950 lg:hidden">
+          <nav className="relative mx-auto flex items-center max-w-7xl justify-around gap-1 px-2 py-2 sm:px-4">
+            {/* Bouton Hamburger avec le dropdown */}
             <div className="relative" ref={mobileDropdownRef}>
               <button
                 onClick={() => setMobileDropdownOpen((prev) => !prev)}
-                className="flex flex-col items-center gap-0.5 rounded-full px-2 py-1 text-xs font-normal text-gray-700 transition hover:bg-gray-50 hover:text-primary dark:text-gray-400 dark:hover:bg-gray-900 dark:hover:text-white"
+                className={`flex flex-col items-center gap-0.5 rounded-2xl px-4 py-1 text-xs transition ${
+                  mobileDropdownOpen
+                    ? "font-semibold text-primary-500"
+                    : "font-normal text-gray-700 hover:px-4 hover:bg-primary-200 hover:text-primary-500 dark:text-gray-400 dark:hover:bg-gray-900 dark:hover:text-white"
+                }`}
                 aria-label="Menu"
               >
-                <Menu size={18} />
+                <Menu size={24} />
                 {/* <span className="text-[10px] leading-tight">Menu</span> */}
               </button>
 
               {mobileDropdownOpen && (
-                <div className="absolute top-full left-0 mt-2 w-48 rounded-2xl border border-gray-200 bg-white p-2 shadow-xl dark:border-gray-800 dark:bg-gray-950 z-[100]">
+                <div className="absolute top-full left-0 mt-2 w-52 rounded-2xl border border-gray-200 bg-white p-2 shadow-xl dark:border-gray-800 dark:bg-gray-950 z-[100]">
                   <Link
                     href="/"
                     onClick={() => setMobileDropdownOpen(false)}
-                    className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-gray-700 transition hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-900"
+                    className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition ${
+                      isActive("/")
+                        ? "bg-primary-500/10 font-medium text-primary-500 dark:bg-primary-500/20"
+                        : "text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-900"
+                    }`}
                   >
-                    <Home size={16} className="text-primary" />
+                    <Home size={16} className="text-primary-500" />
                     Accueil
                   </Link>
+
                   <Link
-                    href="/boutiques"
+                    href="/dashboard/event/new"
                     onClick={() => setMobileDropdownOpen(false)}
-                    className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-gray-700 transition hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-900"
+                    className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition ${
+                      isActive("/dashboard/event/new")
+                        ? "bg-primary-500/10 font-medium text-primary-500 dark:bg-primary-500/20"
+                        : "text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-900"
+                    }`}
                   >
-                    <Store size={16} className="text-primary" />
-                    Prestataires
+                    <PlusCircle size={16} className="text-primary-500" />
+                    Créer
                   </Link>
 
-                  {/* Nouveau lien vers le concours */}
+                  <Link
+                    href="/blog"
+                    onClick={() => setMobileDropdownOpen(false)}
+                    className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition ${
+                      isActive("/blog")
+                        ? "bg-primary-500/10 font-medium text-primary-500 dark:bg-primary-500/20"
+                        : "text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-900"
+                    }`}
+                  >
+                    <Newspaper size={16} className="text-primary-500" />
+                    Blog
+                  </Link>
+
                   <Link
                     href="/concours"
                     onClick={() => setMobileDropdownOpen(false)}
-                    className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-gray-700 transition hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-900"
+                    className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition ${
+                      isActive("/concours")
+                        ? "bg-primary-500/10 font-medium text-primary-500 dark:bg-primary-500/20"
+                        : "text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-900"
+                    }`}
                   >
-                    <Trophy size={16} className="text-primary" />
+                    <Trophy size={16} className="text-primary-500" />
                     Concours
                   </Link>
 
-                  <Link
-                    href="/contact"
-                    onClick={() => setMobileDropdownOpen(false)}
-                    className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-gray-700 transition hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-900"
-                  >
-                    <Mail size={16} className="text-primary" />
-                    Contact
-                  </Link>
+                  {session && (
+                    <Link
+                      href="/profile"
+                      onClick={() => setMobileDropdownOpen(false)}
+                      className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition border-t border-gray-100 dark:border-gray-800 mt-1 pt-2 ${
+                        isActive("/profile")
+                          ? "bg-primary-500/10 font-medium text-primary-500 dark:bg-primary-500/20"
+                          : "text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-900"
+                      }`}
+                    >
+                      <UserRound size={16} className="text-primary-500" />
+                      Mon profil
+                    </Link>
+                  )}
                 </div>
               )}
             </div>
 
-            {/* Les autres liens de navigation (sauf "Accueil" et "Prestataires") */}
-            {navLinks
-              .filter((link) => link.href !== "/" && link.href !== "/boutiques")
-              .map((link) => {
-                const Icon = link.icon;
-                return (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className="flex flex-col items-center gap-0.5 rounded-full px-2 py-1 text-xs font-normal text-gray-700 transition hover:bg-gray-50 hover:text-primary dark:text-gray-400 dark:hover:bg-gray-900 dark:hover:text-white"
-                  >
-                    <Icon size={18} />
-                    <span className="text-[10px] leading-tight">{link.label}</span>
-                  </Link>
-                );
-              })}
+            {/* Éléments visibles sur la ligne de navigation mobile */}
+            {mobileNavLinks.map((link) => {
+              const Icon = link.icon;
+              const active = isActive(link.href);
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`flex flex-col items-center gap-0.5 rounded-2xl px-4 py-1 text-xs transition ${
+                    active
+                      ? "font-semibold text-primary-500"
+                      : "font-normal text-gray-700 hover:px-4 hover:bg-primary-200 hover:text-primary-500 dark:text-gray-400 dark:hover:bg-gray-900 dark:hover:text-white"
+                  }`}
+                >
+                  <Icon size={18} className={active ? "text-primary-500" : ""} />
+                  <span className="text-[10px] leading-tight">{link.label}</span>
+                </Link>
+              );
+            })}
           </nav>
         </div>
       )}

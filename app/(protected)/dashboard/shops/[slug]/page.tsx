@@ -21,6 +21,7 @@ import {
   BadgeCheck,
   Sparkles,
   Shield,
+  FileText,
   Clock,
 } from "lucide-react";
 
@@ -112,6 +113,14 @@ export default async function DashboardShopDetail({
                 <ExternalLink size={16} />
                 Voir la page publique
               </Link>
+              {/* Nouveau bouton Devis & Services */}
+              <Link
+                href={`/dashboard/shops/${shop.slug}/services`}
+                className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition shadow-sm"
+              >
+                <FileText size={16} />
+                Services & Devis
+              </Link>
               <Link
                 href={`/dashboard/shops/${shop.slug}/edit`}
                 className="inline-flex items-center gap-1.5 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl text-sm font-medium transition shadow-sm"
@@ -136,8 +145,8 @@ export default async function DashboardShopDetail({
               <Link
                 href={`/dashboard/shops/${shop.slug}/subscription`}
                 className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition shadow-sm ${shop.isVerified
-                    ? "bg-emerald-500 hover:bg-emerald-600 text-white"
-                    : "bg-amber-500 hover:bg-amber-600 text-white"
+                  ? "bg-emerald-500 hover:bg-emerald-600 text-white"
+                  : "bg-amber-500 hover:bg-amber-600 text-white"
                   }`}
               >
                 {shop.isVerified ? <Shield size={16} /> : <Sparkles size={16} />}
@@ -186,8 +195,8 @@ export default async function DashboardShopDetail({
                         )}
                         <span
                           className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${shop.isActive
-                              ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
-                              : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
+                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
+                            : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
                             }`}
                         >
                           {shop.isActive ? "Actif" : "Inactif"}
@@ -425,6 +434,15 @@ export default async function DashboardShopDetail({
                   >
                     <span>Voir la page publique</span>
                     <ExternalLink size={16} />
+                  </Link>
+
+
+                  <Link
+                    href={`/dashboard/shops/${shop.slug}/services`}
+                    className="flex items-center justify-between w-full text-sm bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 px-4 py-2.5 rounded-xl transition"
+                  >
+                    <span>Gérer les prestations & devis</span>
+                    <FileText size={16} />
                   </Link>
                   <Link
                     href={`/dashboard/shops/${shop.slug}/edit`}

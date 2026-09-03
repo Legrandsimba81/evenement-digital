@@ -1,4 +1,5 @@
-// app/(protected)/admin/events/page.tsx
+// app/(protected)/admin/events/page.tsx (version avec modifications)
+
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
@@ -9,10 +10,10 @@ import {
   Users,
   MessageSquare,
   Eye,
-  X,
   Search,
 } from "lucide-react";
 import DeleteEventButton from "@/components/admin/DeleteEventButton";
+import TogglePaidButton from "@/components/admin/TogglePaidButton"; // ✅ Ajout
 
 export const dynamic = "force-dynamic";
 
@@ -60,55 +61,33 @@ export default async function AdminEventsPage({
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-            <Calendar size={24} className="text-green-500" />
-            Événements
-          </h1>
-          <p className="text-gray-500 dark:text-gray-400">Liste complète des événements créés</p>
-        </div>
-        <div className="text-sm text-gray-500">{events.length} événements</div>
-      </div>
+      {/* ... en-tête et formulaire de recherche ... */}
 
-      {/* Recherche */}
-      <form method="GET" className="mb-4 space-y-3">
-        <div className="relative">
-          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            name="search"
-            placeholder="Rechercher un événement (titre, lieu, organisateur)..."
-            defaultValue={search}
-            className="w-full pl-10 pr-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-        <div className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-950/60 dark:text-gray-300 md:flex-row md:items-center md:justify-between">
-          <div>
-            {search ? `Recherche active : “${search}”` : "Aucune recherche active"}
-          </div>
-          <button
-            type="submit"
-            className="inline-flex items-center justify-center rounded-lg bg-green-600 px-4 py-2 font-medium text-white transition hover:bg-green-700"
-          >
-            Rechercher
-          </button>
-        </div>
-      </form>
-
-      {/* Tableau */}
       <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden">
         <div className="overflow-x-auto overflow-y-auto max-h-150">
           {events.length === 0 ? (
-            <p className="text-gray-500 dark:text-gray-400 text-center py-8">Aucun événement trouvé</p>
+            <p className="text-gray-500 dark:text-gray-400 text-center py-8">
+              Aucun événement trouvé
+            </p>
           ) : (
             <table className="w-full text-sm">
               <thead className="sticky top-0 bg-gray-50 dark:bg-gray-800 z-10">
                 <tr>
-                  <th className="text-left py-3 px-3 font-semibold text-gray-600 dark:text-gray-300">Événement</th>
-                  <th className="text-left py-3 px-3 font-semibold text-gray-600 dark:text-gray-300">Organisateur</th>
-                  <th className="text-left py-3 px-3 font-semibold text-gray-600 dark:text-gray-300">Infos</th>
-                  <th className="text-center py-3 px-3 font-semibold text-gray-600 dark:text-gray-300">Actions</th>
+                  <th className="text-left py-3 px-3 font-semibold text-gray-600 dark:text-gray-300">
+                    Événement
+                  </th>
+                  <th className="text-left py-3 px-3 font-semibold text-gray-600 dark:text-gray-300">
+                    Organisateur
+                  </th>
+                  <th className="text-left py-3 px-3 font-semibold text-gray-600 dark:text-gray-300">
+                    Infos
+                  </th>
+                  <th className="text-center py-3 px-3 font-semibold text-gray-600 dark:text-gray-300">
+                    Statut
+                  </th>
+                  <th className="text-center py-3 px-3 font-semibold text-gray-600 dark:text-gray-300">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -119,16 +98,23 @@ export default async function AdminEventsPage({
                   >
                     <td className="py-3 px-3">
                       <div className="flex flex-col">
-                        <span className="font-medium text-gray-900 dark:text-white">{event.title}</span>
+                        <span className="font-medium text-gray-900 dark:text-white">
+                          {event.title}
+                        </span>
                         <span className="text-xs text-gray-500 dark:text-gray-400">
-                          {event.type} • {event.location || "Lieu non spécifié"} • {formatDate(event.date)}
+                          {event.type} • {event.location || "Lieu non spécifié"} •{" "}
+                          {formatDate(event.date)}
                         </span>
                       </div>
                     </td>
                     <td className="py-3 px-3">
                       <div className="flex flex-col">
-                        <span className="text-gray-900 dark:text-white">{event.user.name || "Anonyme"}</span>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">{event.user.email}</span>
+                        <span className="text-gray-900 dark:text-white">
+                          {event.user.name || "Anonyme"}
+                        </span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          {event.user.email}
+                        </span>
                       </div>
                     </td>
                     <td className="py-3 px-3">
@@ -140,6 +126,9 @@ export default async function AdminEventsPage({
                           <MessageSquare size={12} /> {event.messages.length}
                         </span>
                       </div>
+                    </td>
+                    <td className="py-3 px-3 text-center">
+                      <TogglePaidButton slug={event.slug} initialIsPaid={event.isPaid} />
                     </td>
                     <td className="py-3 px-3">
                       <div className="flex items-center justify-center gap-2">

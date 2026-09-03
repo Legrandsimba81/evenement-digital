@@ -283,3 +283,79 @@ export async function deleteEventAsAdmin(slug: string) {
     throw new Error(error.message || "Erreur lors de la suppression");
   }
 }
+
+// Générer ou récupérer le token QR pour les invités non listés
+export async function getOrCreateUnlistedQrToken(eventSlug: string) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("Non authentifié");
+
+  const event = await prisma.event.findUnique({
+    where: { slug: eventSlug },
+    select: { id: true, userId: true, unlistedQrToken: true, isPaid: true },
+  });
+  if (!event) throw new Error("Événement introuvable");
+  if (!event.isPaid) throw new Error("Fonctionnalité réservée aux événements payants");
+
+  const hasAccess = await canManageEvent(event.id, session.user.id);
+  if (!hasAccess) throw new Error("Non autorisé");
+
+  // Si le token n'existe pas, le générer
+  if (!event.unlistedQrToken) {
+    const token = randomBytes(32).toString("hex");
+    await prisma.event.update({
+      where: { id: event.id },
+      data: { unlistedQrToken: token },
+    });
+    return token;
+  }
+  return event.unlistedQrToken;
+}
+
+// Réinitialiser le compteur des invités non listés (pour l'admin)
+export async function resetUnlistedGuestsCount(eventSlug: string) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("Non authentifié");
+
+  const event = await prisma.event.findUnique({
+    where: { slug: eventSlug },
+    select: { id: true, userId: true, isPaid: true },
+  });
+  if (!event) throw new Error("Événement introuvable");
+  if (!event.isPaid) throw new Error("Fonctionnalité réservée aux événements payants");
+
+  const hasAccess = await canManageEvent(event.id, session.user.id);
+  if (!hasAccess) throw new Error("Non autorisé");
+
+  await prisma.event.update({
+    where: { id: event.id },
+    data: { unlistedGuestsCount: 0 },
+  });
+
+  revalidatePath(`/dashboard/${eventSlug}/unlisted-qr`);
+  return { success: true };
+}
+
+// ---------- Inverser le statut Payant / Gratuit ----------
+export async function toggleEventPaid(slug: string) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) throw new Error("Non authentifié");
+
+    const event = await prisma.event.findUnique({ where: { slug } });
+    if (!event) throw new Error("Événement non trouvé");
+
+    const hasAccess = await canManageEvent(event.id, session.user.id);
+    if (!hasAccess) throw new Error("Non autorisé");
+
+    const updated = await prisma.event.update({
+      where: { slug },
+      data: { isPaid: !event.isPaid },
+    });
+
+    revalidatePath(`/dashboard/${slug}`);
+    return { success: true, isPaid: updated.isPaid };
+  } catch (error: any) {
+    console.error("❌ Erreur toggleEventPaid:", error);
+    throw new Error(error.message || "Erreur lors de la modification du statut");
+  }
+}
