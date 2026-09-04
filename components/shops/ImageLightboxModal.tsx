@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Download, X, ArrowLeft } from "lucide-react";
+import { Download, X, ArrowLeft, Share2 } from "lucide-react";
 
 interface ImageLightboxModalProps {
   images: Array<{ url: string } | string>;
@@ -10,25 +10,45 @@ interface ImageLightboxModalProps {
 
 export default function ImageLightboxModal({ images, shopName }: ImageLightboxModalProps) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [downloading, setDownloading] = useState(false);
 
   const handleDownload = async (imageUrl: string) => {
     try {
-      const response = await fetch(imageUrl);
+      setDownloading(true);
+
+      const response = await fetch(imageUrl, { mode: "cors" });
       const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      // Extrait l'extension ou utilise jpg par défaut
       const extension = imageUrl.split(".").pop()?.split("?")[0] || "jpg";
-      link.download = `${shopName.toLowerCase().replace(/\s+/g, "-")}-realisation.${extension}`;
+      const fileName = `${shopName.toLowerCase().replace(/\s+/g, "-")}-realisation.${extension}`;
+      const file = new File([blob], fileName, { type: blob.type || "image/jpeg" });
+
+      // 1. Détection Web Share API (Natif Mobile : iOS Safari, Google App, Chrome Android)
+      if (
+        navigator.canShare &&
+        navigator.canShare({ files: [file] })
+      ) {
+        await navigator.share({
+          files: [file],
+          title: `Réalisation - ${shopName}`,
+        });
+        return;
+      }
+
+      // 2. Fallback pour navigateurs Web Desktop classiques
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = fileName;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      window.URL.revokeObjectURL(blobUrl);
     } catch (error) {
-      console.error("Erreur lors du téléchargement:", error);
-      // Fallback au téléchargement direct par fenêtre si blob échoue
+      console.error("Erreur lors du téléchargement/partage:", error);
+      // 3. Fallback ultime si blocage réseau/InAppBrowser : ouverture directe de l'image
       window.open(imageUrl, "_blank");
+    } finally {
+      setDownloading(false);
     }
   };
 
@@ -70,9 +90,18 @@ export default function ImageLightboxModal({ images, shopName }: ImageLightboxMo
             <div className="flex items-center gap-2">
               <button
                 onClick={() => handleDownload(selectedImage)}
-                className="inline-flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-xl text-sm font-medium transition shadow-lg"
+                disabled={downloading}
+                className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition shadow-lg disabled:opacity-50"
               >
-                <Download size={18} /> Télécharger
+                {downloading ? (
+                  <span>Préparation...</span>
+                ) : (
+                  <>
+                    <Download size={18} className="hidden sm:inline" />
+                    <Share2 size={18} className="sm:hidden" />
+                    <span>Enregistrer / Partager</span>
+                  </>
+                )}
               </button>
               <button
                 onClick={() => setSelectedImage(null)}
