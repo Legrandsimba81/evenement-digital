@@ -25,12 +25,12 @@ export default async function DashboardShopsPage() {
     const reviews = shop.reviews ?? [];
     const totalRating = reviews.reduce((sum, r) => sum + (r.rating || 0), 0);
     const avgRating = reviews.length > 0 ? (totalRating / reviews.length).toFixed(1) : "N/A";
-    
+
     // Sécurisation des images du profil
-    const profileImages = Array.isArray(shop.profile?.images) 
+    const profileImages = Array.isArray(shop.profile?.images)
       ? (shop.profile.images as any[]).filter((img: any): img is string => typeof img === "string")
       : [];
-    
+
     return { ...shop, avgRating, profileImages };
   });
 
@@ -43,7 +43,7 @@ export default async function DashboardShopsPage() {
         </div>
         <Link
           href="/dashboard/shops/new"
-          className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl transition shadow-sm hover:shadow"
+          className="inline-flex items-center gap-2 bg-primary-500 hover:bg-primary-700 text-white px-5 py-2.5 rounded-xl transition shadow-sm hover:shadow"
         >
           <Plus size={18} /> Créer une boutique
         </Link>
@@ -52,8 +52,8 @@ export default async function DashboardShopsPage() {
       {shops.length === 0 ? (
         <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 p-12 text-center">
           <div className="flex justify-center mb-4">
-            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-full">
-              <Plus size={40} className="text-blue-500" />
+            <div className="p-4 bg-primary-50 dark:bg-primary-900/20 rounded-full">
+              <Plus size={40} className="text-primary-500" />
             </div>
           </div>
           <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Aucune boutique</h3>
@@ -62,7 +62,7 @@ export default async function DashboardShopsPage() {
           </p>
           <Link
             href="/dashboard/shops/new"
-            className="inline-flex items-center gap-2 mt-6 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl transition"
+            className="inline-flex items-center gap-2 mt-6 bg-primary-500 hover:bg-primary-700 text-white px-6 py-2.5 rounded-xl transition"
           >
             <Plus size={18} /> Créer ma première boutique
           </Link>
@@ -144,11 +144,13 @@ export default async function DashboardShopsPage() {
                   >
                     Portfolio
                   </Link>
+                  <span className="text-gray-300 dark:text-gray-600">|</span>
+
                   <Link
                     href={`/dashboard/shops/${shop.slug}`}
-                    className="text-sm text-purple-600 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-300"
+                    className="text-sm text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300"
                   >
-                    stats
+                    Dashboard
                   </Link>
                   <span className="text-gray-300 dark:text-gray-600">|</span>
                   <Link

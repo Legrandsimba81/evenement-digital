@@ -13,6 +13,7 @@ import {
   MessageCircle,
 } from "lucide-react";
 import ReviewForm from "@/components/shops/ReviewForm";
+import ImageLightboxModal from "@/components/shops/ImageLightboxModal";
 
 export const dynamic = "force-dynamic";
 
@@ -74,7 +75,7 @@ export default async function BoutiquePage({ params }: { params: Promise<{ slug:
             <ArrowLeft size={18} /> Retour aux boutiques
           </Link>
 
-          {/* En-tête style Pinterest (Profil à gauche, Couverture à droite) */}
+          {/* En-tête style Pinterest */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             
             {/* Colonne gauche : Infos profil & CTA */}
@@ -191,7 +192,7 @@ export default async function BoutiquePage({ params }: { params: Promise<{ slug:
               </div>
             </div>
 
-            {/* Colonne droite : Couverture style Pinterest */}
+            {/* Couverture */}
             <div className="lg:col-span-7">
               <div className="relative w-full aspect-[4/3] sm:aspect-[16/10] rounded-3xl overflow-hidden bg-gray-100 dark:bg-gray-800 shadow-md">
                 {shop.coverImage ? (
@@ -209,27 +210,13 @@ export default async function BoutiquePage({ params }: { params: Promise<{ slug:
             </div>
           </div>
 
-          {/* Grille Portfolio Masonry */}
+          {/* Grille Portfolio Masonry avec Visionneuse */}
           {profileImages.length > 0 && (
             <div className="pt-8 border-t border-gray-100 dark:border-gray-800">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
                 Réalisations
               </h2>
-
-              <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-4 space-y-4">
-                {profileImages.map((img: any, idx: number) => (
-                  <div
-                    key={idx}
-                    className="break-inside-avoid overflow-hidden rounded-2xl bg-gray-100 dark:bg-gray-800 hover:opacity-90 transition duration-200 cursor-pointer border border-gray-100 dark:border-gray-800"
-                  >
-                    <img
-                      src={img.url}
-                      alt={`Portfolio ${idx + 1}`}
-                      className="w-full h-auto object-contain block"
-                    />
-                  </div>
-                ))}
-              </div>
+              <ImageLightboxModal images={profileImages} shopName={shop.name} />
             </div>
           )}
 

@@ -88,26 +88,26 @@ export default function PortfolioManagerWithUpload({
       {images.length === 0 ? (
         <p className="text-gray-500 dark:text-gray-400 text-center py-8">Aucune image.</p>
       ) : (
-        /* Grille Portfolio Masonry */
-        <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-4">
+        /* Grille Portfolio Masonry identique à la configuration CSS */
+        <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-[15px] max-w-[1200px] mx-auto">
           {images.map((img, index) => {
             const imageUrl = typeof img === "string" ? img : img.url;
 
             return (
               <div
                 key={index}
-                className="relative group break-inside-avoid mb-4 overflow-hidden rounded-2xl bg-gray-100 dark:bg-gray-800 border border-gray-100 dark:border-gray-800"
+                className="relative group break-inside-avoid mb-[15px] overflow-hidden rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-800 shadow-sm"
               >
                 <img
                   src={imageUrl}
                   alt={`Portfolio ${index + 1}`}
-                  className="w-full h-auto block"
+                  className="w-full h-auto object-contain block"
                   loading="lazy"
                 />
                 <button
                   onClick={() => handleRemove(imageUrl)}
                   disabled={isPending}
-                  className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition hover:bg-red-600 shadow-md"
+                  className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition hover:bg-red-600 shadow-md z-10"
                   title="Supprimer l'image"
                 >
                   <X size={16} />
