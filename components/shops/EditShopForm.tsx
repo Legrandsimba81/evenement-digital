@@ -1,4 +1,3 @@
-// components/shops/EditShopForm.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -7,7 +6,6 @@ import { updateShop } from "@/actions/shop-actions";
 import { Loader2, ArrowLeft, AlertCircle } from "lucide-react";
 import ImageUpload from "@/components/ui/ImageUpload";
 
-// mêmes PROVINCES, CITIES_BY_PROVINCE, AVAILABILITY_OPTIONS que dans NewShopPage
 const PROVINCES = [
   "Kinshasa", "Kongo Central", "Kwango", "Kwilu", "Mai-Ndombe",
   "Équateur", "Mongala", "Nord-Ubangi", "Sud-Ubangi", "Tshuapa",
@@ -161,6 +159,13 @@ export default function EditShopForm({
         availabilityValue = form.availabilityCustom;
       }
 
+      // ✅ Extraction sécurisée des images du portfolio sans risquer de les effacer
+      const currentImages = Array.isArray(shop.profile?.images)
+        ? shop.profile.images
+            .map((img: any) => (typeof img === "string" ? img : img?.url))
+            .filter(Boolean)
+        : [];
+
       await updateShop(shop.slug, {
         name: form.name.trim(),
         description: form.description.trim() || undefined,
@@ -179,9 +184,7 @@ export default function EditShopForm({
           availability: availabilityValue || undefined,
           experience: form.experience.trim() || undefined,
           tags: form.selectedTags,
-          images: Array.isArray(shop.profile?.images)
-            ? shop.profile.images.filter((img: any): img is string => typeof img === "string")
-            : [],
+          images: currentImages, // ✅ Réinjecte le portfolio sans modification
         },
       });
       setSuccessMessage("✅ Boutique mise à jour avec succès ! Redirection...");
@@ -199,6 +202,7 @@ export default function EditShopForm({
   return (
     <div className="max-w-5xl mx-auto p-6">
       <button
+        type="button"
         onClick={() => router.back()}
         className="inline-flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:text-primary-500 dark:hover:text-primary-400 mb-4"
       >
@@ -220,7 +224,6 @@ export default function EditShopForm({
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Le formulaire est identique à la création, avec les mêmes champs */}
         {/* Informations générales */}
         <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-6 space-y-4">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Informations générales</h2>
@@ -417,12 +420,12 @@ export default function EditShopForm({
           </div>
         </div>
 
-        {/* Boutons */}
+        {/* Boutons d'action */}
         <div className="flex flex-col sm:flex-row gap-4">
           <button
             type="submit"
             disabled={saving}
-            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl transition disabled:opacity-50 flex items-center justify-center gap-2"
+            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl transition disabled:opacity-50 flex items-center justify-center gap-2 font-medium"
           >
             {saving && <Loader2 size={18} className="animate-spin" />}
             {saving ? "Enregistrement..." : "Mettre à jour"}
@@ -430,7 +433,7 @@ export default function EditShopForm({
           <button
             type="button"
             onClick={() => router.push("/dashboard/shops")}
-            className="flex-1 sm:flex-none px-6 py-3 rounded-xl border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+            className="flex-1 sm:flex-none px-6 py-3 rounded-xl border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition font-medium"
           >
             Annuler
           </button>
