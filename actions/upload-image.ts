@@ -27,7 +27,9 @@ export async function uploadImage(formData: FormData) {
           folder: "simba-event/portfolios",
           resource_type: "image",
           transformation: [
-            { width: 1200, height: 630, crop: "fill", aspect_ratio: "16:9", quality: "auto" },
+            // ✅ Conserve le cadrage et le ratio d'origine (portrait ou paysage)
+            // Réduit la largeur à 1920px max si elle est plus grande
+            { width: 1920, crop: "limit", quality: "auto", fetch_format: "auto" },
           ],
         },
         (error, result) => {
