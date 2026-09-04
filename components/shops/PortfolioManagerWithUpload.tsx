@@ -97,7 +97,7 @@ export default function PortfolioManagerWithUpload({
       <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm space-y-4">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <label className="relative flex items-center justify-center gap-2 px-5 py-3 rounded-xl border border-dashed border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer transition w-full sm:w-auto text-gray-700 dark:text-gray-300 font-medium text-sm">
-            <ImagePlus size={18} className="text-blue-600 dark:text-blue-400" />
+            <ImagePlus size={18} className="text-primary-500 dark:text-primary-400" />
             <span>Sélectionner des images</span>
             <input
               type="file"
