@@ -24,6 +24,7 @@ import {
   Tag,
   UserRound,
   Mail,
+  Plus,
 } from "lucide-react";
 
 export default function Navbar() {
@@ -359,6 +360,21 @@ export default function Navbar() {
 
                   {session && (
                     <Link
+                      href="/dashboard/shops/new"
+                      onClick={() => setMobileDropdownOpen(false)}
+                      className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition border-t border-gray-100 dark:border-gray-800 mt-1 pt-2 ${
+                        isActive("/dashboard")
+                          ? "bg-primary-500/10 font-medium text-primary-500 dark:bg-primary-500/20"
+                          : "text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-900"
+                      }`}
+                    >
+                      <Plus size={16} className="text-primary-500" />
+                      Créer ma boutique
+                    </Link>
+                  )}
+
+                  {session && (
+                    <Link
                       href="/profile"
                       onClick={() => setMobileDropdownOpen(false)}
                       className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition border-t border-gray-100 dark:border-gray-800 mt-1 pt-2 ${
@@ -374,7 +390,6 @@ export default function Navbar() {
                 </div>
               )}
             </div>
-
             {/* Éléments visibles sur la ligne de navigation mobile */}
             {mobileNavLinks.map((link) => {
               const Icon = link.icon;

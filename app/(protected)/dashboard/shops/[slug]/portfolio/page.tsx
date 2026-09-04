@@ -55,7 +55,7 @@ export default async function DashboardPortfolioPage({
           </Link>
           <div className="flex items-center gap-3">
             <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">
-              Portfolio
+              Portfolio public de
             </h1>
             <span className="px-3 py-1 text-xs font-semibold rounded-full bg-blue-50 dark:bg-blue-950/50 text-primary-500 dark:text-primary-500 border border-blue-200 dark:border-blue-800/50">
               {shop.name}
@@ -64,7 +64,7 @@ export default async function DashboardPortfolioPage({
         </div>
 
         <Link
-          href={`/shops/${shop.slug}`}
+          href={`/boutiques/${shop.slug}`}
           target="_blank"
           className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition shadow-sm"
         >
@@ -73,27 +73,15 @@ export default async function DashboardPortfolioPage({
         </Link>
       </div>
 
-      {/* Bannière d'incitation (Call To Action) */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-6 sm:p-8 text-white shadow-xl">
-        <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-white/10 rounded-full blur-2xl pointer-events-none" />
-        <div className="relative z-10 max-w-2xl space-y-3">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-xs font-medium text-blue-100 border border-white/20">
-            <Sparkles size={14} className="text-amber-300" />
-            <span>Multipliez vos opportunités</span>
-          </div>
-          <h2 className="text-xl sm:text-2xl font-bold leading-tight">
-            Mettez en valeur votre savoir-faire avec de belles photos !
-          </h2>
-          <p className="text-blue-100 text-sm sm:text-base leading-relaxed">
-            Les boutiques avec un portfolio riche et récent attirent jusqu'à <strong className="text-white font-semibold">3x plus de contacts WhatsApp</strong>. Montrez vos plus belles réalisations pour rassurer vos clients et faire décoller vos commandes.
-          </p>
-        </div>
+      {/* Composant d'Upload et de Gestion */}
+      <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">
+        <PortfolioManagerWithUpload shopSlug={shop.slug} initialImages={images} />
       </div>
 
       {/* Résumé du Portfolio */}
       <div className="flex items-center justify-between bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400">
+          <div className="p-2.5 rounded-lg bg-primary-50 dark:bg-primary-950/50 text-primary-600 dark:text-primary-400">
             <ImageIcon size={20} />
           </div>
           <div>
@@ -107,10 +95,24 @@ export default async function DashboardPortfolioPage({
         </div>
       </div>
 
-      {/* Composant d'Upload et de Gestion */}
-      <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">
-        <PortfolioManagerWithUpload shopSlug={shop.slug} initialImages={images} />
+      {/* Bannière d'incitation (Call To Action) */}
+      <div className="relative overflow-hidden rounded-2xl  bg-gradient-to-br from-primary-500 via-primary-600 to-secondary-500 dark:from-primary-800 dark:via-primary-900 dark:to-secondary-900 p-6 sm:p-8 text-white shadow-xl">
+        <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+        <div className="relative z-10 max-w-2xl space-y-3">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-xs font-medium text-primary-100 border border-white/20">
+            <span>Multipliez vos opportunités</span>
+          </div>
+          <h2 className="text-xl sm:text-2xl font-bold leading-tight">
+            Mettez en valeur votre savoir-faire avec de belles photos !
+          </h2>
+          <p className="text-primary-100 text-sm sm:text-base leading-relaxed">
+            Les boutiques avec un portfolio riche et récent attirent jusqu'à <strong className="text-white font-semibold">3x plus de contacts WhatsApp</strong>. Montrez vos plus belles réalisations pour rassurer vos clients et faire décoller vos commandes.
+          </p>
+        </div>
       </div>
+
+
+      
     </div>
   );
 }
