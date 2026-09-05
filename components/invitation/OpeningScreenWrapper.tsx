@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Sparkles, Lock, Unlock } from "lucide-react";
+import { Sparkles } from "lucide-react";
 
 interface OpeningScreenWrapperProps {
   themeId?: string | null;
@@ -10,7 +10,10 @@ interface OpeningScreenWrapperProps {
   children: React.ReactNode;
 }
 
-const OPENING_THEMES: Record<string, { name: string; leftImg: string; rightImg: string; bg: string; sealText: string }> = {
+const OPENING_THEMES: Record<
+  string,
+  { name: string; leftImg: string; rightImg: string; bg: string; sealText: string }
+> = {
   "classic-gold": {
     name: "Doré Classique",
     leftImg: "/opening/gold-left.png",
@@ -43,23 +46,22 @@ export default function OpeningScreenWrapper({
   const [isOpen, setIsOpen] = useState(false);
   const [isFullyHidden, setIsFullyHidden] = useState(false);
 
-  // Si aucun thème configuré ou inconnu, afficher directement sans animation
   const theme = OPENING_THEMES[themeId || "classic-gold"] || OPENING_THEMES["classic-gold"];
 
   const handleOpen = () => {
     setIsOpen(true);
-    // Masquer définitivement le DOM de la porte après la fin de la transition (800ms)
+    // Masque définitivement le composant après la fin de l'animation (3000ms + léger délai de sécurité)
     setTimeout(() => {
       setIsFullyHidden(true);
-    }, 850);
+    }, 3100);
   };
 
   return (
     <div className="relative min-h-screen overflow-hidden">
-      {/* Contenu principal de l'invitation */}
+      {/* Contenu principal de l'invitation avec transition fluide de 3s */}
       <div
-        className={`transition-all duration-1000 ease-out transform ${
-          isOpen ? "scale-100 opacity-100" : "scale-95 opacity-90 filter blur-[1px]"
+        className={`transition-all duration-[3000ms] ease-[cubic-bezier(0.16,1,0.3,1)] transform ${
+          isOpen ? "scale-100 opacity-100 blur-0" : "scale-95 opacity-80 blur-[2px]"
         }`}
       >
         {children}
@@ -71,23 +73,23 @@ export default function OpeningScreenWrapper({
           {/* Battant GAUCHE */}
           <div
             style={{ backgroundImage: `url(${theme.leftImg})` }}
-            className={`w-1/2 h-full bg-cover bg-right border-r border-amber-500/30 shadow-2xl transition-transform duration-700 ease-in-out ${theme.bg} ${
+            className={`w-1/2 h-full z-10 bg-cover bg-right border-r border-amber-500/30 shadow-2xl transition-transform duration-[3000ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${theme.bg} ${
               isOpen ? "-translate-x-full" : "translate-x-0"
             }`}
           />
 
           {/* Sceau / Bouton Central */}
           <div
-            className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center gap-4 text-center px-4 transition-all duration-500 ${
-              isOpen ? "scale-0 opacity-0 pointer-events-none" : "scale-100 opacity-100"
+            className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 flex flex-col items-center gap-4 text-center px-4 transition-all duration-700 ease-in-out ${
+              isOpen ? "scale-50 opacity-0 pointer-events-none" : "scale-100 opacity-100"
             }`}
           >
             <div className="bg-white/10 backdrop-blur-md p-6 rounded-3xl border border-white/20 shadow-2xl max-w-sm w-full mx-auto">
-              <p className="text-xs uppercase tracking-widest text-amber-200/80 font-medium">
+              {/* <p className="text-xs uppercase tracking-widest text-amber-200/80 font-medium">
                 Invitation personnelle
               </p>
               <h3 className="text-xl font-bold text-white mt-1 line-clamp-1">{guestName}</h3>
-              <p className="text-xs text-white/70 mt-1 line-clamp-1">{eventTitle}</p>
+              <p className="text-xs text-white/70 mt-1 line-clamp-1">{eventTitle}</p> */}
 
               <button
                 onClick={handleOpen}
@@ -102,7 +104,7 @@ export default function OpeningScreenWrapper({
           {/* Battant DROIT */}
           <div
             style={{ backgroundImage: `url(${theme.rightImg})` }}
-            className={`w-1/2 h-full bg-cover bg-left border-l border-amber-500/30 shadow-2xl transition-transform duration-700 ease-in-out ${theme.bg} ${
+            className={`w-1/2 z-20 h-full bg-cover bg-left border-l border-amber-500/30 shadow-2xl transition-transform duration-[3000ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${theme.bg} ${
               isOpen ? "translate-x-full" : "translate-x-0"
             }`}
           />
