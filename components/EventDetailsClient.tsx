@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import GuestForm from "@/components/forms/GuestForm";
@@ -22,9 +22,8 @@ import {
   Menu,
   X,
   Info,
-  History,
-  ShieldCheck,
   ChevronRight,
+  History,
 } from "lucide-react";
 import MessageItem from "@/components/invitation/MessageItem";
 
@@ -72,15 +71,34 @@ export default function EventDetailsClient({ event }: { event: Event }) {
   const { data: session } = useSession();
   const [activeTab, setActiveTab] = useState<"invitation" | "guests" | "messages">("invitation");
   const [isExporting, setIsExporting] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [showMobileHint, setShowMobileHint] = useState(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showMobileTuto, setShowMobileTuto] = useState(true);
+
+  const sidebarRef = useRef<HTMLDivElement>(null);
+  const burgerButtonRef = useRef<HTMLButtonElement>(null);
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.octaviaevent.com";
   const invitationLink = `${baseUrl}/invitation/${event.slug}`;
 
+  // Fermeture du menu mobile lors d'un clic à l'extérieur
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        mobileMenuOpen &&
+        sidebarRef.current &&
+        !sidebarRef.current.contains(e.target as Node) &&
+        burgerButtonRef.current &&
+        !burgerButtonRef.current.contains(e.target as Node)
+      ) {
+        setMobileMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [mobileMenuOpen]);
+
   const copyLink = () => {
     navigator.clipboard.writeText(invitationLink);
-    alert("Lien copié dans le presse-papier !");
   };
 
   const handleExport = async (format: "csv" | "pdf") => {
@@ -106,311 +124,303 @@ export default function EventDetailsClient({ event }: { event: Event }) {
   const label = isAutreBillet ? "billet" : "invitation";
   const isBillet = event.format === "BILLET";
 
-  // Navigation / Actions de la Sidebar
-  const sidebarLinks = [
+  const menuLinks = [
     {
-      title: "Gestion principale",
-      items: [
-        {
-          label: "Modifier l'événement",
-          href: `/dashboard/${event.slug}/edit`,
-          icon: <Edit size={18} />,
-          color: "hover:bg-amber-50 dark:hover:bg-amber-950/30 text-amber-600 dark:text-amber-400",
-        },
-        {
-          label: `Voir ${isBillet ? "le Billet" : "l'Invitation"}`,
-          href: `/invitation/${event.slug}`,
-          target: "_blank",
-          icon: <Eye size={18} />,
-          color: "hover:bg-blue-50 dark:hover:bg-blue-950/30 text-blue-600 dark:text-blue-400",
-        },
-        {
-          label: "Gérer le lieu",
-          href: `/dashboard/event/${event.slug}/location`,
-          icon: <MapPin size={18} />,
-          color: "hover:bg-emerald-50 dark:hover:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400",
-        },
-      ],
+      href: `/dashboard/${event.slug}/edit`,
+      label: "Modifier l'événement",
+      icon: <Edit size={16} />,
+      color: "hover:bg-yellow-50 dark:hover:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400",
     },
     {
-      title: "Contrôle & Accès",
-      items: [
-        {
-          label: "Scanner & Contrôle d'accès",
-          href: `/gate/${event.slug}`,
-          icon: <ShieldCheck size={18} />,
-          color: "hover:bg-purple-50 dark:hover:bg-purple-950/30 text-purple-600 dark:text-purple-400",
-        },
-        {
-          label: "Collaborateurs",
-          href: `/dashboard/${event.slug}/collaborators`,
-          icon: <Users size={18} />,
-          color: "hover:bg-indigo-50 dark:hover:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400",
-        },
-        ...(event.isPaid
-          ? [
-              {
-                label: "QR Invités Hors Liste",
-                href: `/dashboard/${event.slug}/unlisted-qr`,
-                icon: <QrCode size={18} />,
-                color: "hover:bg-fuchsia-50 dark:hover:bg-fuchsia-950/30 text-fuchsia-600 dark:text-fuchsia-400",
-              },
-            ]
-          : []),
-      ],
+      href: `/invitation/${event.slug}`,
+      label: isBillet ? "Aperçu du billet" : "Aperçu de l'invitation",
+      icon: <Eye size={16} />,
+      target: "_blank",
+      color: "hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-600 dark:text-blue-400",
     },
     {
-      title: "Suivi & Aide",
-      items: [
-        {
-          label: "Historique d'activité",
-          href: `/dashboard/${event.slug}/logs`,
-          icon: <History size={18} />,
-          color: "hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300",
-        },
-        {
-          label: "Guide du Tableau de bord",
-          href: "/guide-dashboard",
-          icon: <BookOpen size={18} />,
-          color: "hover:bg-sky-50 dark:hover:bg-sky-950/30 text-sky-600 dark:text-sky-400",
-        },
-      ],
+      href: `/gate/${event.slug}`,
+      label: "Contrôle d'accès",
+      icon: <Users size={16} />,
+      color: "hover:bg-purple-50 dark:hover:bg-purple-900/20 text-purple-600 dark:text-purple-400",
+    },
+    {
+      href: `/dashboard/${event.slug}/collaborators`,
+      label: "Collaborateurs",
+      icon: <Users size={16} />,
+      color: "hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400",
+    },
+    ...(event.isPaid
+      ? [
+          {
+            href: `/dashboard/${event.slug}/unlisted-qr`,
+            label: "QR invités hors liste",
+            icon: <QrCode size={16} />,
+            color: "hover:bg-purple-50 dark:hover:bg-purple-900/20 text-purple-600 dark:text-purple-400",
+          },
+        ]
+      : []),
+    {
+      href: `/dashboard/event/${event.slug}/location`,
+      label: "Gérer le lieu",
+      icon: <MapPin size={16} />,
+      color: "hover:bg-teal-50 dark:hover:bg-teal-900/20 text-teal-600 dark:text-teal-400",
+    },
+    {
+      href: `/dashboard/${event.slug}/logs`,
+      label: "Historique",
+      icon: <History size={16} />,
+      color: "hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400",
+    },
+    {
+      href: "/guide-dashboard",
+      label: "Guide du tableau de bord",
+      icon: <BookOpen size={16} />,
+      color: "hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-700 dark:text-blue-300",
     },
   ];
 
-  return (
-    <div className="min-h-screen bg-gray-50/50 dark:bg-gray-950">
-      {/* Barre supérieure mobile pour le bouton Hamburger */}
-      <div className="lg:hidden sticky top-0 z-30 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 px-4 py-3 flex items-center justify-between">
-        <button
-          onClick={() => setIsSidebarOpen(true)}
-          className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+  const ActionMenuContent = () => (
+    <div className="space-y-1 p-2">
+      <p className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+        Menu d'actions
+      </p>
+      {menuLinks.map((link, idx) => (
+        <Link
+          key={idx}
+          href={link.href}
+          target={link.target || "_self"}
+          onClick={() => setMobileMenuOpen(false)}
+          className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition ${link.color}`}
         >
-          <Menu size={18} />
-          <span>Menu Actions</span>
-        </button>
-        <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
-          {event.type}
-        </span>
-      </div>
+          {link.icon}
+          <span className="flex-1">{link.label}</span>
+          <ChevronRight size={14} className="opacity-40" />
+        </Link>
+      ))}
+    </div>
+  );
 
-      {/* Tuto / Banner Mobile */}
-      {showMobileHint && (
-        <div className="lg:hidden mx-4 mt-4 p-3 bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800/60 rounded-xl flex items-start justify-between gap-3 text-xs text-blue-900 dark:text-blue-200">
-          <div className="flex items-start gap-2">
-            <Info size={16} className="text-blue-500 shrink-0 mt-0.5" />
-            <p>
-              <strong>Astuce :</strong> Touchez le bouton <span className="underline font-semibold">« Menu Actions »</span> en haut pour accéder aux paramètres, scanner, collaborateurs et historiques.
-            </p>
-          </div>
-          <button onClick={() => setShowMobileHint(false)} className="text-blue-400 hover:text-blue-600 p-0.5">
-            <X size={14} />
-          </button>
+  const InvitationPreview = () => (
+    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-lg overflow-hidden max-w-lg mx-auto">
+      {event.imageUrl && (
+        <div className="relative w-full aspect-[4/3] overflow-hidden bg-gray-100 dark:bg-gray-800">
+          <img
+            src={event.imageUrl}
+            alt="Événement"
+            className="w-full h-full object-contain"
+          />
         </div>
       )}
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col lg:flex-row gap-8">
-        {/* Overlay d'arrière-plan pour fermer la sidebar sur mobile en cliquant à l'extérieur */}
-        {isSidebarOpen && (
-          <div
-            onClick={() => setIsSidebarOpen(false)}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden transition-opacity"
-          />
+      <div className="p-6 space-y-4">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{event.title}</h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400">{event.type}</p>
+        <div className="grid grid-cols-1 gap-2 text-sm text-gray-700 dark:text-gray-300">
+          <div className="flex items-center gap-2">
+            <Calendar size={16} className="text-blue-500" />
+            <span>{new Date(event.date).toLocaleDateString('fr-FR')}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Clock size={16} className="text-blue-500" />
+            <span>{event.time}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <MapPin size={16} className="text-blue-500" />
+            <span>{event.location}</span>
+          </div>
+        </div>
+        {event.invitationText && (
+          <div className="p-4 bg-gray-50 dark:bg-gray-800/60 rounded-xl italic text-gray-700 dark:text-gray-300 border border-gray-100 dark:border-gray-800">
+            {event.invitationText}
+          </div>
         )}
-
-        {/* Sidebar d'actions (Desktop Fixe / Mobile Tiroir) */}
-        <aside
-          className={`fixed lg:sticky top-0 lg:top-6 left-0 h-full lg:h-auto z-50 lg:z-auto w-72 bg-white dark:bg-gray-900 border-r lg:border border-gray-200 dark:border-gray-800 lg:rounded-2xl p-5 shadow-2xl lg:shadow-sm transform transition-transform duration-300 ease-in-out shrink-0 ${
-            isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-          }`}
-        >
-          <div className="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-gray-800 lg:hidden">
-            <h2 className="font-bold text-gray-900 dark:text-white text-base">Actions d'événement</h2>
-            <button
-              onClick={() => setIsSidebarOpen(false)}
-              className="p-1.5 text-gray-500 hover:text-gray-900 dark:hover:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
-            >
-              <X size={20} />
-            </button>
-          </div>
-
-          <div className="space-y-6 mt-4 lg:mt-0">
-            {sidebarLinks.map((section, idx) => (
-              <div key={idx} className="space-y-2">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 px-2">
-                  {section.title}
-                </p>
-                <div className="space-y-1">
-                  {section.items.map((item, itemIdx) => (
-                    <Link
-                      key={itemIdx}
-                      href={item.href}
-                      target={item.target}
-                      onClick={() => setIsSidebarOpen(false)}
-                      className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-all ${item.color}`}
-                    >
-                      <div className="flex items-center gap-2.5">
-                        {item.icon}
-                        <span>{item.label}</span>
-                      </div>
-                      <ChevronRight size={14} className="opacity-40" />
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </aside>
-
-        {/* Contenu Principal */}
-        <main className="flex-1 space-y-6">
-          {/* Header de l'événement */}
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <span className="inline-block px-2.5 py-0.5 text-xs font-semibold rounded-md bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 mb-2">
-                  {event.type}
-                </span>
-                <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">
-                  {event.title}
-                </h1>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-1.5">
-                  <MapPin size={15} className="text-gray-400" />
-                  {event.location}
-                </p>
-              </div>
-
-              <div className="flex items-center gap-3 border-t sm:border-t-0 pt-3 sm:pt-0 border-gray-100 dark:border-gray-800">
-                <div className="text-left sm:text-right">
-                  <p className="text-xs text-gray-400">Date de l'événement</p>
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                    {new Date(event.date).toLocaleDateString("fr-FR")} à {event.time}
-                  </p>
-                </div>
-              </div>
+        {event.program && (
+          <div>
+            <h4 className="font-semibold text-gray-900 dark:text-white mb-1">Programme</h4>
+            <div className="p-4 bg-gray-50 dark:bg-gray-800/60 rounded-xl whitespace-pre-line text-sm text-gray-700 dark:text-gray-300 border border-gray-100 dark:border-gray-800">
+              {event.program}
             </div>
           </div>
-
-          {/* Système d'onglets */}
-          <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as any)} className="w-full">
-            <TabsList className="grid grid-cols-3 w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 p-1 rounded-2xl shadow-sm mb-6">
-              <TabsTrigger value="invitation" className="flex items-center justify-center gap-2 text-xs sm:text-sm py-2.5 rounded-xl">
-                <Eye size={16} /> <span className="hidden sm:inline">Aperçu</span>
-              </TabsTrigger>
-              <TabsTrigger value="guests" className="flex items-center justify-center gap-2 text-xs sm:text-sm py-2.5 rounded-xl">
-                <Users size={16} /> <span className="hidden sm:inline">{isAutreBillet ? "Billets" : "Invités"}</span> ({event.guests.length})
-              </TabsTrigger>
-              <TabsTrigger value="messages" className="flex items-center justify-center gap-2 text-xs sm:text-sm py-2.5 rounded-xl">
-                <MessageSquare size={16} /> <span className="hidden sm:inline">Messages</span> ({event.messages.length})
-              </TabsTrigger>
-            </TabsList>
-
-            {/* Onglet Invitation */}
-            <TabsContent value="invitation" className="space-y-6">
-              <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
-                <h2 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-3">
-                  <Share2 size={18} className="text-blue-500" />
-                  Partager {label}
-                </h2>
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <input
-                    readOnly
-                    value={invitationLink}
-                    className="flex-1 px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white text-xs sm:text-sm font-mono"
-                  />
-                  <button
-                    onClick={copyLink}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl transition flex items-center justify-center gap-2 text-xs sm:text-sm font-medium"
-                  >
-                    <Link2 size={16} /> Copier le lien
-                  </button>
-                </div>
-              </div>
-
-              <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
-                <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-4">
-                  Aperçu {isAutreBillet ? "du billet" : "de l'invitation"}
-                </h2>
-                <div className="bg-gray-50 dark:bg-gray-950 p-4 sm:p-6 rounded-2xl border border-gray-100 dark:border-gray-800 max-w-md mx-auto shadow-inner">
-                  {event.imageUrl && (
-                    <div className="relative w-full aspect-[4/3] overflow-hidden rounded-xl bg-gray-200 dark:bg-gray-800 mb-4">
-                      <img src={event.imageUrl} alt="Événement" className="w-full h-full object-cover" />
-                    </div>
-                  )}
-                  <div className="space-y-3">
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">{event.title}</h3>
-                    <div className="grid grid-cols-1 gap-2 text-xs text-gray-600 dark:text-gray-300">
-                      <div className="flex items-center gap-2">
-                        <Calendar size={14} className="text-blue-500" />
-                        <span>{new Date(event.date).toLocaleDateString("fr-FR")}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Clock size={14} className="text-blue-500" />
-                        <span>{event.time}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <MapPin size={14} className="text-blue-500" />
-                        <span>{event.location}</span>
-                      </div>
-                    </div>
-                    {event.invitationText && (
-                      <p className="p-3 bg-white dark:bg-gray-900 rounded-xl italic text-xs text-gray-700 dark:text-gray-300 border border-gray-100 dark:border-gray-800">
-                        "{event.invitationText}"
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </TabsContent>
-
-            {/* Onglet Invités */}
-            <TabsContent value="guests" className="space-y-6">
-              <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
-                <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Gestion des invités</h2>
-                <GuestForm eventId={event.id} />
-                <div className="mt-6">
-                  <GuestList guests={event.guests} eventId={event.id} eventSlug={event.slug} event={event} />
-                </div>
-                <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-800 flex flex-wrap items-center justify-between gap-3">
-                  <span className="text-xs text-gray-500">Exporter la liste des invités :</span>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleExport("csv")}
-                      disabled={isExporting}
-                      className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs font-medium transition disabled:opacity-50"
-                    >
-                      <Download size={14} /> CSV
-                    </button>
-                    <button
-                      onClick={() => handleExport("pdf")}
-                      disabled={isExporting}
-                      className="inline-flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white px-3.5 py-2 rounded-xl text-xs font-medium transition disabled:opacity-50"
-                    >
-                      <Download size={14} /> PDF
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </TabsContent>
-
-            {/* Onglet Messages */}
-            <TabsContent value="messages" className="space-y-6">
-              <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
-                <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Livre d'or / Messages</h2>
-                {event.messages.length === 0 ? (
-                  <p className="text-gray-500 dark:text-gray-400 text-center py-8 text-sm">Aucun message d'invité pour le moment.</p>
-                ) : (
-                  <div className="space-y-4">
-                    {event.messages.map((msg) => (
-                      <MessageItem key={msg.id} message={msg} isOrganizer={true} eventId={event.id} />
-                    ))}
-                  </div>
-                )}
-              </div>
-            </TabsContent>
-          </Tabs>
-        </main>
+        )}
       </div>
+    </div>
+  );
+
+  return (
+    <div className="relative flex flex-col lg:flex-row min-h-screen">
+      {/* Overlay mobile flouté */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden" />
+      )}
+
+      {/* Sidebar - Desktop (Fixe/Normal) & Mobile (Drawer Coulissant) */}
+      <aside
+        ref={sidebarRef}
+        className={`fixed top-0 left-0 bottom-0 z-50 w-72 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 transition-transform duration-300 transform lg:translate-x-0 lg:static lg:z-auto ${
+          mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between lg:hidden">
+          <span className="font-bold text-gray-900 dark:text-white text-base">Actions de gestion</span>
+          <button
+            onClick={() => setMobileMenuOpen(false)}
+            className="p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white rounded-lg"
+          >
+            <X size={20} />
+          </button>
+        </div>
+        <div className="p-2 lg:pt-4">
+          <ActionMenuContent />
+        </div>
+      </aside>
+
+      {/* Zone de contenu principale */}
+      <main className="flex-1 max-w-5xl p-4 sm:p-6 lg:p-8 space-y-6">
+        {/* En-tête avec bouton Burger pour Mobile */}
+        <div className="flex items-center justify-between gap-4 border-b border-gray-200 dark:border-gray-800 pb-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+              {event.title}
+            </h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              {event.type} — {event.location}
+            </p>
+          </div>
+
+          <button
+            ref={burgerButtonRef}
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="lg:hidden p-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+            aria-label="Ouvrir le menu d'actions"
+          >
+            <Menu size={22} />
+          </button>
+        </div>
+
+        {/* Bannière d'astuce mobile pour localiser le burger */}
+        {showMobileTuto && (
+          <div className="lg:hidden bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/60 rounded-2xl p-4 flex items-start gap-3 text-blue-900 dark:text-blue-200 text-sm shadow-sm relative">
+            <Info size={18} className="text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+            <div className="flex-1 pr-6">
+              <p className="font-semibold text-xs uppercase tracking-wide text-blue-700 dark:text-blue-300">Astuce</p>
+              <p className="text-xs sm:text-sm mt-0.5">
+                Toutes les actions d'édition, de gestion du lieu et de contrôle d'accès sont regroupées dans le menu burger <Menu size={14} className="inline mx-0.5" /> en haut à droite.
+              </p>
+            </div>
+            <button
+              onClick={() => setShowMobileTuto(false)}
+              className="absolute top-3 right-3 text-blue-400 hover:text-blue-600 dark:hover:text-blue-200 transition"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        )}
+
+        {/* Onglets de contenu */}
+        <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as any)} className="w-full">
+          <TabsList className="grid grid-cols-3 w-full max-w-md mx-auto lg:mx-0 mb-6">
+            <TabsTrigger value="invitation" className="flex items-center gap-2 text-sm">
+              <Eye size={16} /> Aperçu
+            </TabsTrigger>
+            <TabsTrigger value="guests" className="flex items-center gap-2 text-sm">
+              <Users size={16} /> {isAutreBillet ? "Billets" : "Invités"}
+            </TabsTrigger>
+            <TabsTrigger value="messages" className="flex items-center gap-2 text-sm">
+              <MessageSquare size={16} /> Messages
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="invitation" className="space-y-8">
+            {/* Partager */}
+            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-4">
+                <Share2 size={20} className="text-blue-500" />
+                Partager {label}
+              </h2>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <input
+                  readOnly
+                  value={invitationLink}
+                  className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-sm"
+                />
+                <button
+                  onClick={copyLink}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-xl transition flex items-center justify-center gap-2 text-sm font-medium"
+                >
+                  <Link2 size={18} /> Copier
+                </button>
+              </div>
+            </div>
+
+            {/* Aperçu */}
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                Aperçu {isAutreBillet ? "du billet" : "de l'invitation"}
+              </h2>
+              <InvitationPreview />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="guests" className="space-y-6">
+            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                Gestion des invités
+              </h2>
+              <GuestForm eventId={event.id} />
+              <div className="mt-6">
+                <GuestList
+                  guests={event.guests}
+                  eventId={event.id}
+                  eventSlug={event.slug}
+                  event={event}
+                />
+              </div>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <button
+                  onClick={() => handleExport("csv")}
+                  disabled={isExporting}
+                  className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl text-sm transition disabled:opacity-50 font-medium"
+                >
+                  <Download size={18} />
+                  {isExporting ? "Téléchargement..." : "CSV"}
+                </button>
+                <button
+                  onClick={() => handleExport("pdf")}
+                  disabled={isExporting}
+                  className="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl text-sm transition disabled:opacity-50 font-medium"
+                >
+                  <Download size={18} />
+                  {isExporting ? "Téléchargement..." : "PDF"}
+                </button>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="messages" className="space-y-6">
+            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                Messages des invités
+              </h2>
+              {event.messages.length === 0 ? (
+                <p className="text-gray-500 dark:text-gray-400 text-center py-8">
+                  Aucun message pour le moment.
+                </p>
+              ) : (
+                <div className="space-y-4">
+                  {event.messages.map((msg) => (
+                    <MessageItem
+                      key={msg.id}
+                      message={msg}
+                      isOrganizer={true}
+                      eventId={event.id}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
+      </main>
     </div>
   );
 }
