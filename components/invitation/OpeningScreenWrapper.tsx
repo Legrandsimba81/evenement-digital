@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Sparkles, Lock, Unlock } from "lucide-react";
+import { Sparkles } from "lucide-react";
 
 interface OpeningScreenWrapperProps {
   themeId?: string | null;
@@ -10,7 +10,10 @@ interface OpeningScreenWrapperProps {
   children: React.ReactNode;
 }
 
-const OPENING_THEMES: Record<string, { name: string; leftImg: string; rightImg: string; bg: string; sealText: string }> = {
+const OPENING_THEMES: Record<
+  string,
+  { name: string; leftImg: string; rightImg: string; bg: string; sealText: string }
+> = {
   "classic-gold": {
     name: "Doré Classique",
     leftImg: "/opening/gold-left.png",
@@ -20,15 +23,15 @@ const OPENING_THEMES: Record<string, { name: string; leftImg: string; rightImg: 
   },
   "wedding-rose": {
     name: "Mariage Rose & Fleurs",
-    leftImg: "/opening/gold-left.png",
-    rightImg: "/opening/gold-right.png",
+    leftImg: "/opening/gold-left.jpg",
+    rightImg: "/opening/gold-right.jpg",
     bg: "bg-rose-950",
     sealText: "Invitation",
   },
   "royal-blue": {
     name: "Bleu Royal & Or",
-    leftImg: "/opening/gold-left.png",
-    rightImg: "/opening/gold-right.png",
+    leftImg: "/opening/gold-left.jpg",
+    rightImg: "/opening/gold-right.jpg",
     bg: "bg-slate-950",
     sealText: "VIP",
   },
@@ -43,12 +46,10 @@ export default function OpeningScreenWrapper({
   const [isOpen, setIsOpen] = useState(false);
   const [isFullyHidden, setIsFullyHidden] = useState(false);
 
-  // Si aucun thème configuré ou inconnu, afficher directement sans animation
   const theme = OPENING_THEMES[themeId || "classic-gold"] || OPENING_THEMES["classic-gold"];
 
   const handleOpen = () => {
     setIsOpen(true);
-    // Masquer définitivement le DOM de la porte après la fin de la transition (800ms)
     setTimeout(() => {
       setIsFullyHidden(true);
     }, 850);
@@ -65,20 +66,33 @@ export default function OpeningScreenWrapper({
         {children}
       </div>
 
-      {/* RIDEAU D'OUVERTURE (Double Portes) */}
+      {/* RIDEAU D'OUVERTURE (Panneaux Superposés Haut/Bas) */}
       {!isFullyHidden && (
-        <div className="fixed inset-0 z-50 flex overflow-hidden pointer-events-auto">
-          {/* Battant GAUCHE */}
+        <div className="fixed inset-0 z-50 flex flex-col overflow-hidden pointer-events-auto">
+          
+          {/* PANNEAU SUPÉRIEUR (Image Droite - Au-dessus) */}
+          <div
+            style={{ backgroundImage: `url(${theme.rightImg})` }}
+            className={`w-full h-1/2 bg-cover bg-center shadow-2xl z-20 border-b border-amber-500/30 transition-transform duration-700 ease-in-out ${theme.bg} ${
+              isOpen ? "-translate-y-full" : "translate-y-0"
+            }`}
+          />
+
+          {/* 
+            PANNEAU INFÉRIEUR (Image Gauche - En-dessous)
+            POUR PERSONNALISER LA MARGE DE CHEVAUCHEMENT :
+            Modifiez la classe '-mt-10' ci-dessous (ex: -mt-6, -mt-12, -mt-16, -mt-20).
+          */}
           <div
             style={{ backgroundImage: `url(${theme.leftImg})` }}
-            className={`w-1/2 h-full bg-cover bg-right border-r border-amber-500/30 shadow-2xl transition-transform duration-700 ease-in-out ${theme.bg} ${
-              isOpen ? "-translate-x-full" : "translate-x-0"
+            className={`w-full h-1/2 bg-cover bg-center z-10 -mt-10 border-t border-amber-500/30 transition-transform duration-700 ease-in-out ${theme.bg} ${
+              isOpen ? "translate-y-full" : "translate-y-0"
             }`}
           />
 
           {/* Sceau / Bouton Central */}
           <div
-            className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center gap-4 text-center px-4 transition-all duration-500 ${
+            className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 flex flex-col items-center gap-4 text-center px-4 transition-all duration-500 ${
               isOpen ? "scale-0 opacity-0 pointer-events-none" : "scale-100 opacity-100"
             }`}
           >
@@ -99,13 +113,6 @@ export default function OpeningScreenWrapper({
             </div>
           </div>
 
-          {/* Battant DROIT */}
-          <div
-            style={{ backgroundImage: `url(${theme.rightImg})` }}
-            className={`w-1/2 h-full bg-cover bg-left border-l border-amber-500/30 shadow-2xl transition-transform duration-700 ease-in-out ${theme.bg} ${
-              isOpen ? "translate-x-full" : "translate-x-0"
-            }`}
-          />
         </div>
       )}
     </div>

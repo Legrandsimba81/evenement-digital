@@ -13,6 +13,11 @@ export async function PATCH(
     }
 
     const { slug } = await params;
+
+    if (!slug || slug === "undefined") {
+      return NextResponse.json({ error: "Slug de l'événement invalide" }, { status: 400 });
+    }
+
     const { openingScreen } = await req.json();
 
     const updatedEvent = await prisma.event.update({
@@ -22,6 +27,7 @@ export async function PATCH(
 
     return NextResponse.json(updatedEvent);
   } catch (error) {
-    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+    console.error("Erreur mise à jour opening-screen:", error);
+    return NextResponse.json({ error: "Erreur lors de la mise à jour" }, { status: 500 });
   }
 }
