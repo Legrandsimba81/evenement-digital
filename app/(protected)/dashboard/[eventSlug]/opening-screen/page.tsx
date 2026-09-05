@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useState, use } from "react";
+import { useRouter } from "next/navigation";
 import { ArrowLeft, Check, Sparkles, Eye } from "lucide-react";
 import Link from "next/link";
 
@@ -26,25 +26,20 @@ const OPENING_OPTIONS = [
   },
 ];
 
-export default function SelectOpeningScreenPage() {
+export default function SelectOpeningScreenPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = use(params);
   const router = useRouter();
-  const params = useParams();
-  
-  // Sécurisation de la récupération du slug
-  const slug = params?.slug as string;
-
   const [selected, setSelected] = useState<string>("classic-gold");
   const [loading, setLoading] = useState(false);
 
   const handleSave = async () => {
-    if (!slug || slug === "undefined") {
-      alert("Erreur : Identifiant de l'événement introuvable.");
-      return;
-    }
-
     setLoading(true);
     try {
-      const res = await fetch(`/api/events/${encodeURIComponent(slug)}/opening-screen`, {
+      const res = await fetch(`/api/events/${slug}/opening-screen`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ openingScreen: selected }),
@@ -53,8 +48,7 @@ export default function SelectOpeningScreenPage() {
       if (res.ok) {
         router.push(`/dashboard/event/${slug}`);
       } else {
-        const data = await res.json();
-        alert(data?.error || "Erreur lors de la sauvegarde.");
+        alert("Erreur lors de la sauvegarde.");
       }
     } catch {
       alert("Erreur de connexion.");
@@ -62,14 +56,6 @@ export default function SelectOpeningScreenPage() {
       setLoading(false);
     }
   };
-
-  if (!slug) {
-    return (
-      <div className="p-8 text-center text-gray-500">
-        Chargement des paramètres...
-      </div>
-    );
-  }
 
   return (
     <div className="max-w-4xl mx-auto p-4 sm:p-6 space-y-6">
@@ -104,6 +90,7 @@ export default function SelectOpeningScreenPage() {
               }`}
             >
               <div>
+                {/* Aperçu Visuel Fictif */}
                 <div
                   className={`w-full aspect-[4/3] rounded-xl bg-gradient-to-r ${option.previewColor} relative overflow-hidden flex items-center justify-between p-2 shadow-inner`}
                 >
@@ -116,9 +103,7 @@ export default function SelectOpeningScreenPage() {
                   </div>
                 </div>
 
-                <h3 className="font-bold text-gray-900 dark:text-white mt-4">
-                  {option.name}
-                </h3>
+                <h3 className="font-bold text-gray-900 dark:text-white mt-4">{option.name}</h3>
                 <p className="text-xs text-gray-500 mt-1">{option.description}</p>
               </div>
 
