@@ -40,27 +40,27 @@ export default async function EventPage({
 
   // Déterminer le plan
   let planLabel = "Gratuit";
-  let planColor = "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300";
+  let planColor = "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/50";
   let planIcon = <Users className="w-4 h-4" />;
 
   if (eventLimit === null) {
     planLabel = "Illimité";
-    planColor = "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300";
+    planColor = "bg-purple-100 text-purple-800 dark:bg-purple-950/50 dark:text-purple-300 border-purple-200 dark:border-purple-800/50";
   } else if (eventLimit > 50) {
     planLabel = "Premium (50+)";
-    planColor = "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300";
+    planColor = "bg-blue-100 text-blue-800 dark:bg-blue-950/50 dark:text-blue-300 border-blue-200 dark:border-blue-800/50";
   } else if (eventLimit > 5) {
     planLabel = `Standard (${eventLimit} invités)`;
-    planColor = "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300";
+    planColor = "bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300 border-amber-200 dark:border-amber-800/50";
   } else {
     planLabel = "Gratuit (5 invités)";
-    planColor = "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300";
+    planColor = "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/50";
   }
 
   let themeString = null;
   if (event.theme) {
     try {
-      themeString = typeof event.theme === 'string' ? event.theme : JSON.stringify(event.theme);
+      themeString = typeof event.theme === "string" ? event.theme : JSON.stringify(event.theme);
     } catch {
       themeString = null;
     }
@@ -79,35 +79,40 @@ export default async function EventPage({
   };
 
   return (
-    <>
+    <div className="space-y-4">
+      {/* Alerte événement passé */}
       {isPast && (
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
-          <div className="bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl p-4 flex items-center gap-3 text-gray-700 dark:text-gray-300">
-            <Calendar size={20} className="text-gray-500" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+          <div className="bg-gray-100 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-700 rounded-xl p-3.5 flex items-center gap-3 text-xs sm:text-sm text-gray-700 dark:text-gray-300">
+            <Calendar size={18} className="text-gray-500 shrink-0" />
             <span>
-              Cet événement a eu lieu le <strong>{new Date(event.date).toLocaleDateString('fr-FR')}</strong>.
+              Cet événement a eu lieu le <strong>{new Date(event.date).toLocaleDateString("fr-FR")}</strong>.
             </span>
           </div>
         </div>
       )}
 
       {/* Affichage du plan */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
-        <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${planColor}`}>
-          {planIcon}
-          Plan : {planLabel}
-        </div>
-        {eventLimit !== null && eventLimit <= 5 && (
-          <div className="mt-2 flex items-start gap-2 text-sm text-gray-600 dark:text-gray-400">
-            <AlertCircle size={16} className="text-yellow-500 flex-shrink-0 mt-0.5" />
-            <p>
-              Vous êtes sur le plan gratuit (5 invités maximum). Pour plus d'invités, contactez l'administration.
-            </p>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold border ${planColor}`}>
+              {planIcon}
+              Plan : {planLabel}
+            </div>
           </div>
-        )}
+          {eventLimit !== null && eventLimit <= 5 && (
+            <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+              <AlertCircle size={14} className="text-amber-500 shrink-0" />
+              <span>
+                Plan gratuit (5 invités max). Pour débloquer plus d'invités, veuillez consulter nos tarifs.
+              </span>
+            </div>
+          )}
+        </div>
       </div>
 
       <EventDetailsClient event={eventData} />
-    </>
+    </div>
   );
 }

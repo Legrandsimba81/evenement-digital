@@ -84,7 +84,7 @@ export default function ImageLightboxModal({ images, shopName }: ImageLightboxMo
               onClick={() => setSelectedImage(null)}
               className="inline-flex items-center gap-2 text-white bg-white/10 hover:bg-white/20 px-4 py-2 rounded-xl text-sm font-medium transition backdrop-blur-sm"
             >
-              <ArrowLeft size={18} /> Retour à la boutique
+              <ArrowLeft size={18} /> Retour
             </button>
 
             <div className="flex items-center gap-2">
@@ -99,7 +99,7 @@ export default function ImageLightboxModal({ images, shopName }: ImageLightboxMo
                   <>
                     <Download size={18} className="hidden sm:inline" />
                     <Share2 size={18} className="sm:hidden" />
-                    <span>Enregistrer / Partager</span>
+                    <span>Enregistrer</span>
                   </>
                 )}
               </button>
