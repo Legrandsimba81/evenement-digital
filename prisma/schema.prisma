@@ -96,6 +96,7 @@ model Event {
   whatsappNumber     String?
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
+  openingScreen String?  @default("classic-gold") // Identifiant de l'écran d'ouverture choisi
   isPaid              Boolean   @default(false)
   unlistedGuestsLimit Int?      // Nombre max d'invités non listés (null = illimité)
   unlistedGuestsCount Int       @default(0) // Compteur d'entrées

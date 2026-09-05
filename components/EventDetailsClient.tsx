@@ -10,6 +10,7 @@ import {
   Calendar,
   MapPin,
   Clock,
+  Sparkles,
   Users,
   MessageSquare,
   Link2,
@@ -166,6 +167,12 @@ export default function EventDetailsClient({ event }: { event: Event }) {
       icon: <MapPin size={16} />,
       color: "hover:bg-teal-50 dark:hover:bg-teal-900/20 text-teal-600 dark:text-teal-400",
     },
+    {
+    href: `/dashboard/${event.slug}/opening-screen`,
+    label: "Écran d'ouverture",
+    icon: <Sparkles size={16} />,
+    color: "hover:bg-amber-50 dark:hover:bg-amber-900/20 text-amber-600 dark:text-amber-400",
+  },
     {
       href: `/dashboard/${event.slug}/logs`,
       label: "Historique",

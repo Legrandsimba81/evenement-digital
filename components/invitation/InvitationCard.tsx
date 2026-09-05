@@ -1,7 +1,21 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Calendar, MapPin, Clock, Download, Check, X, Heart, Gift, Trophy, Music, User, Users, QrCode } from "lucide-react";
+import {
+  Calendar,
+  MapPin,
+  Clock,
+  Download,
+  Check,
+  X,
+  Heart,
+  Gift,
+  Trophy,
+  Music,
+  User,
+  Users,
+  QrCode,
+} from "lucide-react";
 import QRCode from "react-qr-code";
 import { captureElement } from "@/lib/captureImage";
 import { Theme, getThemeById } from "@/lib/themes";
@@ -103,7 +117,7 @@ export default function InvitationCard({
   const qrRef = useRef<HTMLDivElement>(null);
   const [imagesLoaded, setImagesLoaded] = useState(false);
 
-  // Animations
+  // Animations Observer
   const [heroRef, heroInView] = useInView({ triggerOnce: true, threshold: 0.1 });
   const [titleRef, titleInView] = useInView({ triggerOnce: true, threshold: 0.1 });
   const [textRef, textInView] = useInView({ triggerOnce: true, threshold: 0.1 });
@@ -115,7 +129,7 @@ export default function InvitationCard({
   const peopleIcon = guestInvitationType === "couple" ? Users : User;
 
   const fullName = guestTitle ? `${guestTitle} ${guestName}` : guestName;
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
+  const baseUrl = typeof window !== "undefined" ? window.location.origin : (process.env.NEXT_PUBLIC_BASE_URL || "");
   const levelParam = `&level=${encodeURIComponent(guestLevel || "STANDARD")}`;
   const invitationLink = `${baseUrl}/invitation/${event.slug}?firstName=${encodeURIComponent(
     guestName.split(" ")[0]
@@ -131,9 +145,14 @@ export default function InvitationCard({
   }
 
   if (!theme) {
-    const defaultThemeId = event.type === "MARIAGE" ? "wedding-romantic" :
-      event.type === "ANNIVERSAIRE" ? "birthday-colorful" :
-        event.type === "SOUTENANCE" ? "defense-academic" : "other-festive";
+    const defaultThemeId =
+      event.type === "MARIAGE"
+        ? "wedding-romantic"
+        : event.type === "ANNIVERSAIRE"
+        ? "birthday-colorful"
+        : event.type === "SOUTENANCE"
+        ? "defense-academic"
+        : "other-festive";
     const defaultTheme = getThemeById(defaultThemeId);
     if (defaultTheme) theme = defaultTheme;
   }
@@ -167,7 +186,8 @@ export default function InvitationCard({
   const config = defaultTypeConfigs[type] || defaultTypeConfigs["AUTRE"];
   const Icon = config.icon;
 
-  const defaultColors = defaultTypeConfigs[type]?.defaultColors || defaultTypeConfigs["AUTRE"].defaultColors;
+  const defaultColors =
+    defaultTypeConfigs[type]?.defaultColors || defaultTypeConfigs["AUTRE"].defaultColors;
   const colors = {
     hexPrimary: theme?.colors?.hexPrimary || defaultColors.hexPrimary,
     hexSecondary: theme?.colors?.hexSecondary || defaultColors.hexSecondary,
@@ -197,10 +217,11 @@ export default function InvitationCard({
       let loaded = 0;
       images.forEach((img) => {
         if (img.complete) loaded++;
-        else img.addEventListener("load", () => {
-          loaded++;
-          if (loaded === images.length) setImagesLoaded(true);
-        });
+        else
+          img.addEventListener("load", () => {
+            loaded++;
+            if (loaded === images.length) setImagesLoaded(true);
+          });
       });
       if (loaded === images.length) setImagesLoaded(true);
     };
@@ -209,9 +230,38 @@ export default function InvitationCard({
 
   // Marquer le QR comme prêt après rendu
   useEffect(() => {
-    const timer = setTimeout(() => setQrReady(true), 100);
+    const timer = setTimeout(() => setQrReady(true), 150);
     return () => clearTimeout(timer);
   }, []);
+
+  // Fonction universelle : Partage natif (iOS / Photos) ou téléchargement direct (PC)
+  const handleDownloadOrShare = async (blob: Blob, filename: string) => {
+    const file = new File([blob], filename, { type: "image/png" });
+
+    // Prise en charge du partage mobile (iPhone / Safari / Android)
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({
+          files: [file],
+          title: event.title,
+          text: "Voici mon invitation !",
+        });
+        return;
+      } catch (err) {
+        // L'utilisateur a annulé la feuille de partage
+        if ((err as Error).name === "AbortError") return;
+      }
+    }
+
+    // Téléchargement standard pour ordinateurs et navigateurs classiques
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
+  };
 
   const handleAttendance = async (newStatus: string) => {
     setIsLoading(true);
@@ -250,15 +300,18 @@ export default function InvitationCard({
     }
     setIsDownloading(true);
     try {
-      const canvas = await captureElement(cardRef.current, { backgroundColor: '#ffffff' });
-      const link = document.createElement("a");
-      link.download = `invitation-${event.slug}.png`;
-      link.href = canvas.toDataURL("image/png");
-      link.click();
+      const canvas = await captureElement(cardRef.current, { backgroundColor: "#ffffff" });
+      canvas.toBlob(async (blob) => {
+        if (blob) {
+          await handleDownloadOrShare(blob, `invitation-${event.slug}.png`);
+        } else {
+          alert("Erreur lors de la création de l'image.");
+        }
+        setIsDownloading(false);
+      }, "image/png");
     } catch (error) {
       console.error("Erreur de téléchargement:", error);
       alert("Erreur lors du téléchargement. Veuillez réessayer.");
-    } finally {
       setIsDownloading(false);
     }
   };
@@ -274,15 +327,18 @@ export default function InvitationCard({
     }
     setIsDownloadingQR(true);
     try {
-      const canvas = await captureElement(qrRef.current, { backgroundColor: '#ffffff' });
-      const link = document.createElement("a");
-      link.download = `qr-${event.slug}.png`;
-      link.href = canvas.toDataURL("image/png");
-      link.click();
+      const canvas = await captureElement(qrRef.current, { backgroundColor: "#ffffff" });
+      canvas.toBlob(async (blob) => {
+        if (blob) {
+          await handleDownloadOrShare(blob, `qr-${event.slug}.png`);
+        } else {
+          alert("Erreur lors de la génération du QR Code.");
+        }
+        setIsDownloadingQR(false);
+      }, "image/png");
     } catch (error) {
       console.error("Erreur de téléchargement du QR", error);
       alert("Erreur lors du téléchargement du QR.");
-    } finally {
       setIsDownloadingQR(false);
     }
   };
@@ -319,9 +375,16 @@ export default function InvitationCard({
       </div>
 
       {/* Contenu à capturer (fond blanc forcé) */}
-      <div ref={cardRef} className="bg-white p-4 sm:p-6 md:p-8 space-y-6" style={{ backgroundColor: '#ffffff' }}>
+      <div
+        ref={cardRef}
+        className="bg-white p-4 sm:p-6 md:p-8 space-y-6"
+        style={{ backgroundColor: "#ffffff" }}
+      >
         {/* Titre + sous-titre (icône + nb personnes) */}
-        <div ref={titleRef} className={`space-y-2 ${fadeInUp} ${titleInView ? fadeInUpVisible : fadeInUpHidden}`}>
+        <div
+          ref={titleRef}
+          className={`space-y-2 ${fadeInUp} ${titleInView ? fadeInUpVisible : fadeInUpHidden}`}
+        >
           {isBillet ? (
             <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">
               Billet de {event.title}
@@ -346,7 +409,10 @@ export default function InvitationCard({
         </div>
 
         {/* Salutation + niveau + numéro */}
-        <div ref={textRef} className={`${fadeInUp} ${textInView ? fadeInUpVisible : fadeInUpHidden}`}>
+        <div
+          ref={textRef}
+          className={`${fadeInUp} ${textInView ? fadeInUpVisible : fadeInUpHidden}`}
+        >
           <p className="text-base sm:text-lg text-gray-800">
             Bonjour <span className="font-semibold text-gray-900">{fullName}</span>
             {guestLevel && (
@@ -357,15 +423,18 @@ export default function InvitationCard({
           </p>
 
           {event.invitationNumber && (
-            <div className="mt-3 p-3 rounded-xl" style={{ backgroundColor: '#f9fafb' }}>
+            <div className="mt-3 p-3 rounded-xl" style={{ backgroundColor: "#f9fafb" }}>
               <span className="font-medium text-gray-800">
-                <span style={{ color: colors.hexPrimary }} className="font-bold">#</span> {event.invitationNumber}
+                <span style={{ color: colors.hexPrimary }} className="font-bold">
+                  #
+                </span>{" "}
+                {event.invitationNumber}
               </span>
             </div>
           )}
 
           {event.type === "SOUTENANCE" && event.thesisTitle && (
-            <div className="mt-4 p-4 rounded-xl" style={{ backgroundColor: '#f3e8ff' }}>
+            <div className="mt-4 p-4 rounded-xl" style={{ backgroundColor: "#f3e8ff" }}>
               <p className="text-sm text-gray-800">
                 <span className="font-semibold">Sujet de thèse :</span> {event.thesisTitle}
               </p>
@@ -377,8 +446,10 @@ export default function InvitationCard({
         {event.invitationText && (
           <div
             ref={textRef}
-            className={`p-5 rounded-xl ${fadeInUp} ${textInView ? fadeInUpVisible : fadeInUpHidden}`}
-            style={{ backgroundColor: colors.hexBackground || '#f8fafc' }}
+            className={`p-5 rounded-xl ${fadeInUp} ${
+              textInView ? fadeInUpVisible : fadeInUpHidden
+            }`}
+            style={{ backgroundColor: colors.hexBackground || "#f8fafc" }}
           >
             <p className="text-gray-800 italic text-base sm:text-lg leading-relaxed">
               {event.invitationText}
@@ -386,9 +457,14 @@ export default function InvitationCard({
           </div>
         )}
 
-        {/* Image d'invitation (deuxième photo) */}
+        {/* Image d'invitation */}
         {event.invitationImageUrl && (
-          <div ref={textRef} className={`rounded-xl overflow-hidden shadow-sm ${fadeInUp} ${textInView ? fadeInUpVisible : fadeInUpHidden}`}>
+          <div
+            ref={textRef}
+            className={`rounded-xl overflow-hidden shadow-sm ${fadeInUp} ${
+              textInView ? fadeInUpVisible : fadeInUpHidden
+            }`}
+          >
             <img
               src={event.invitationImageUrl}
               alt="Invitation"
@@ -404,22 +480,31 @@ export default function InvitationCard({
             detailsInView ? fadeInUpVisible : fadeInUpHidden
           }`}
         >
-          <div className="flex items-center gap-3 p-3 rounded-xl" style={{ backgroundColor: '#f9fafb' }}>
+          <div
+            className="flex items-center gap-3 p-3 rounded-xl"
+            style={{ backgroundColor: "#f9fafb" }}
+          >
             <Calendar size={20} style={{ color: colors.hexPrimary }} className="flex-shrink-0" />
             <span className="text-sm text-gray-800">
-              {new Date(event.date).toLocaleDateString('fr-FR', {
-                weekday: 'long',
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric'
+              {new Date(event.date).toLocaleDateString("fr-FR", {
+                weekday: "long",
+                day: "numeric",
+                month: "long",
+                year: "numeric",
               })}
             </span>
           </div>
-          <div className="flex items-center gap-3 p-3 rounded-xl" style={{ backgroundColor: '#f9fafb' }}>
+          <div
+            className="flex items-center gap-3 p-3 rounded-xl"
+            style={{ backgroundColor: "#f9fafb" }}
+          >
             <Clock size={20} style={{ color: colors.hexPrimary }} className="flex-shrink-0" />
             <span className="text-sm text-gray-800">{event.time}</span>
           </div>
-          <div className="flex items-center gap-3 p-3 rounded-xl" style={{ backgroundColor: '#f9fafb' }}>
+          <div
+            className="flex items-center gap-3 p-3 rounded-xl"
+            style={{ backgroundColor: "#f9fafb" }}
+          >
             <MapPin size={20} style={{ color: colors.hexPrimary }} className="flex-shrink-0" />
             <span className="text-sm text-gray-800">{event.location}</span>
           </div>
@@ -429,8 +514,10 @@ export default function InvitationCard({
         {event.program && (
           <div
             ref={programRef}
-            className={`p-5 rounded-xl ${fadeInUp} ${programInView ? fadeInUpVisible : fadeInUpHidden}`}
-            style={{ backgroundColor: colors.hexBackground || '#f8fafc' }}
+            className={`p-5 rounded-xl ${fadeInUp} ${
+              programInView ? fadeInUpVisible : fadeInUpHidden
+            }`}
+            style={{ backgroundColor: colors.hexBackground || "#f8fafc" }}
           >
             <h3
               className="font-semibold mb-3 inline-block px-3 py-1 rounded-lg text-white"
@@ -444,18 +531,20 @@ export default function InvitationCard({
           </div>
         )}
 
-        {/* QR Code - pleine largeur avec fond distinct */}
+        {/* QR Code - pleine largeur */}
         <div
           ref={qrRefObserver}
           className={`w-full -mx-4 sm:-mx-6 md:-mx-8 px-4 sm:px-6 md:px-8 py-6 ${fadeInUp} ${
             qrInView ? fadeInUpVisible : fadeInUpHidden
           }`}
-          style={{ background: `linear-gradient(to right, ${colors.hexPrimary}15, ${colors.hexSecondary}25)` }}
+          style={{
+            background: `linear-gradient(to right, ${colors.hexPrimary}15, ${colors.hexSecondary}25)`,
+          }}
         >
           <div
             ref={qrRef}
             className="flex flex-col items-center bg-white rounded-2xl p-6 shadow-lg max-w-xs mx-auto"
-            style={{ backgroundColor: '#ffffff' }}
+            style={{ backgroundColor: "#ffffff" }}
           >
             <QRCode value={invitationLink} size={180} />
             <p className="text-center text-sm text-gray-600 mt-3 font-medium">
@@ -465,7 +554,7 @@ export default function InvitationCard({
         </div>
       </div>
 
-      {/* Boutons d'action (en dehors de la capture) */}
+      {/* Boutons d'action (hors de la zone de capture) */}
       <div className="p-4 sm:p-6 md:p-8 pt-0 space-y-4 bg-white rounded-b-2xl">
         <div className="flex flex-col sm:flex-row gap-3">
           <button
@@ -473,11 +562,11 @@ export default function InvitationCard({
             disabled={isDownloading || !imagesLoaded}
             className="flex-1 flex items-center justify-center gap-2 text-white px-4 py-3 rounded-xl transition disabled:opacity-50 text-sm sm:text-base"
             style={{ backgroundColor: colors.hexPrimary }}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.hexSecondary}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = colors.hexPrimary}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = colors.hexSecondary)}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = colors.hexPrimary)}
           >
             <Download size={18} />
-            {isDownloading ? "Téléchargement..." : "Télécharger l'invitation"}
+            {isDownloading ? "Enregistrement..." : "Télécharger l'invitation"}
           </button>
           <button
             onClick={downloadQR}
@@ -485,7 +574,7 @@ export default function InvitationCard({
             className="flex-1 flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-3 rounded-xl transition disabled:opacity-50 text-sm sm:text-base"
           >
             <QrCode size={18} />
-            {isDownloadingQR ? "Téléchargement..." : "Télécharger le QR"}
+            {isDownloadingQR ? "Enregistrement..." : "Télécharger le QR"}
           </button>
         </div>
 
@@ -521,8 +610,8 @@ export default function InvitationCard({
             {status === "attending"
               ? "Présence confirmée – Merci !"
               : status === "annule"
-                ? "Indisponible – Nous avons bien noté votre réponse."
-                : "En attente de confirmation."}
+              ? "Indisponible – Nous avons bien noté votre réponse."
+              : "En attente de confirmation."}
           </p>
         )}
       </div>
