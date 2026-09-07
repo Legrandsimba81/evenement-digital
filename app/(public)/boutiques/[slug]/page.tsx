@@ -13,6 +13,8 @@ import {
   MessageCircle,
 } from "lucide-react";
 import ReviewForm from "@/components/shops/ReviewForm";
+import { FaWhatsapp } from 'react-icons/fa';
+
 import ImageLightboxModal from "@/components/shops/ImageLightboxModal";
 
 export const dynamic = "force-dynamic";
@@ -66,7 +68,7 @@ export default async function BoutiquePage({ params }: { params: Promise<{ slug:
     return (
       <div className="min-h-screen bg-white dark:bg-gray-950 py-4 sm:py-8 px-4 sm:px-6 lg:px-12">
         <div className="max-w-7xl mx-auto space-y-8">
-          
+
           {/* Bouton retour */}
           <Link
             href="/boutiques"
@@ -77,7 +79,7 @@ export default async function BoutiquePage({ params }: { params: Promise<{ slug:
 
           {/* En-tête style Pinterest */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            
+
             {/* Colonne gauche : Infos profil & CTA */}
             <div className="lg:col-span-5 space-y-5">
               <div className="flex items-center gap-4">
@@ -172,16 +174,26 @@ export default async function BoutiquePage({ params }: { params: Promise<{ slug:
 
               {/* Actions CTA : WhatsApp + Réserver */}
               <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                {shop.whatsapp && (
-                  <a
-                    href={`https://wa.me/${shop.whatsapp.replace(/[^0-9]/g, "")}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1 inline-flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-medium px-4 py-3 rounded-2xl transition shadow-sm text-sm"
-                  >
-                    <MessageCircle size={18} /> WhatsApp
-                  </a>
-                )}
+
+                {shop.whatsapp && (() => {
+                  const cleaned = shop.whatsapp.replace(/[^0-9]/g, "");
+
+                  const formattedNumber = (cleaned.startsWith("0") && cleaned.length === 10)
+                    ? `243${cleaned.substring(1)}`
+                    : cleaned;
+
+                  return (
+                    <a
+                      href={`https://wa.me/${formattedNumber}`} // <-- Correction ici : /${ ... }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20ba59] text-white font-semibold px-4 py-3 rounded-2xl transition shadow-sm text-sm"
+                    >
+                      <FaWhatsapp size={20} />
+                      WhatsApp
+                    </a>
+                  );
+                })()}
 
                 <Link
                   href={`/boutiques/${shop.slug}/reserver`}

@@ -82,7 +82,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-4 sm:p-6 md:p-8">
-      <div className="max-w-7xl mx-auto space-y-12">
+      <div className="max-w-7xl mx-auto space-y-7">
         {/* Entête avec Boutons de création */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -94,14 +94,7 @@ export default async function DashboardPage() {
             </p>
           </div>
           <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
-            {/* Nouveau Bouton : Créer un faire-part */}
-            <Link
-              href="/faire-part/new"
-              className="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 sm:px-5 py-3 rounded-xl transition w-full sm:w-auto text-sm font-medium"
-            >
-              <FileText size={18} />
-              Créer un faire-part
-            </Link>
+            
 
             {/* Bouton existant : Créer un événement */}
             <Link
@@ -109,12 +102,101 @@ export default async function DashboardPage() {
               className="inline-flex items-center justify-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-4 sm:px-5 py-3 rounded-xl transition w-full sm:w-auto text-sm font-medium"
             >
               <Plus size={18} />
-              Créer un événement
+              Génerer des invitations
+            </Link>
+
+            {/* Nouveau Bouton : Créer un faire-part */}
+            <Link
+              href="/faire-part/new"
+              className="inline-flex items-center justify-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-4 sm:px-5 py-3 rounded-xl transition w-full sm:w-auto text-sm font-medium"
+            >
+              <FileText size={18} />
+              Créer un faire-part
             </Link>
           </div>
         </div>
 
-        {/* SECTION 1 : MES FAIRE-PARTS */}
+        
+
+        {/* SECTION 1 : MES ÉVÉNEMENTS */}
+        <section>
+          <div className="flex items-center gap-2 mb-6">
+            <Calendar className="text-primary-500" size={24} />
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+              Mes événements ({events.length})
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            {events.map((event) => {
+              const Icon = typeIcons[event.type] || Calendar;
+              const isOwner = event.userId === userId;
+              const collabCount = event.collaborators.length;
+
+              return (
+                <Link
+                  key={event.id}
+                  href={`/dashboard/${event.slug}`}
+                  className="group bg-white dark:bg-gray-900 rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-gray-200 dark:border-gray-800"
+                >
+                  {event.imageUrl && (
+                    <div className="relative w-full aspect-video overflow-hidden bg-gray-100 dark:bg-gray-800">
+                      <img
+                        src={event.imageUrl}
+                        alt={event.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    </div>
+                  )}
+                  <div className="p-4 sm:p-5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-primary-500">
+                        <Icon size={18} />
+                        <span className="text-sm font-medium">{event.type}</span>
+                      </div>
+                      {!isOwner && (
+                        <span className="text-xs px-2 py-1 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300">
+                          Collaborateur
+                        </span>
+                      )}
+                      {isOwner && collabCount > 0 && (
+                        <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+                          {collabCount} collab.
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white group-hover:text-primary-500 transition-colors mt-1">
+                      {event.title}
+                    </h3>
+                    <div className="mt-3 space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                      <div className="flex items-center gap-2">
+                        <Calendar size={16} />
+                        <span>{new Date(event.date).toLocaleDateString('fr-FR')}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Clock size={16} />
+                        <span>{event.time}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <MapPin size={16} />
+                        <span>{event.location}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Users size={16} />
+                        <span>{event.guests.length} invités</span>
+                      </div>
+                    </div>
+                    <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 text-primary-500 font-medium text-sm">
+                      Gérer l'événement →
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* SECTION 2 : MES FAIRE-PARTS */}
         <section>
           <div className="flex items-center gap-2 mb-6">
             <FileText className="text-indigo-600" size={24} />
@@ -217,84 +299,6 @@ export default async function DashboardPage() {
               })}
             </div>
           )}
-        </section>
-
-        {/* SECTION 2 : MES ÉVÉNEMENTS */}
-        <section>
-          <div className="flex items-center gap-2 mb-6">
-            <Calendar className="text-primary-500" size={24} />
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-              Mes événements ({events.length})
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            {events.map((event) => {
-              const Icon = typeIcons[event.type] || Calendar;
-              const isOwner = event.userId === userId;
-              const collabCount = event.collaborators.length;
-
-              return (
-                <Link
-                  key={event.id}
-                  href={`/dashboard/${event.slug}`}
-                  className="group bg-white dark:bg-gray-900 rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-gray-200 dark:border-gray-800"
-                >
-                  {event.imageUrl && (
-                    <div className="relative w-full aspect-video overflow-hidden bg-gray-100 dark:bg-gray-800">
-                      <img
-                        src={event.imageUrl}
-                        alt={event.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                    </div>
-                  )}
-                  <div className="p-4 sm:p-5">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-primary-500">
-                        <Icon size={18} />
-                        <span className="text-sm font-medium">{event.type}</span>
-                      </div>
-                      {!isOwner && (
-                        <span className="text-xs px-2 py-1 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300">
-                          Collaborateur
-                        </span>
-                      )}
-                      {isOwner && collabCount > 0 && (
-                        <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
-                          {collabCount} collab.
-                        </span>
-                      )}
-                    </div>
-                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white group-hover:text-primary-500 transition-colors mt-1">
-                      {event.title}
-                    </h3>
-                    <div className="mt-3 space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                      <div className="flex items-center gap-2">
-                        <Calendar size={16} />
-                        <span>{new Date(event.date).toLocaleDateString('fr-FR')}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Clock size={16} />
-                        <span>{event.time}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <MapPin size={16} />
-                        <span>{event.location}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Users size={16} />
-                        <span>{event.guests.length} invités</span>
-                      </div>
-                    </div>
-                    <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 text-primary-500 font-medium text-sm">
-                      Gérer l'événement →
-                    </div>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
         </section>
       </div>
     </div>

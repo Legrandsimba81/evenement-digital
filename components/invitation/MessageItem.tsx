@@ -65,9 +65,9 @@ export default function MessageItem({
   };
 
   return (
-    <div className="bg-white dark:bg-gray-900 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 relative">
+    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 relative">
       <div className="flex items-center justify-between flex-wrap gap-1">
-        <p className="font-semibold text-gray-900 dark:text-white">
+        <p className="font-semibold text-gray-900">
           {message.guestName}
         </p>
         <div className="flex items-center gap-2">
@@ -101,7 +101,7 @@ export default function MessageItem({
           <textarea
             value={editedContent}
             onChange={(e) => setEditedContent(e.target.value)}
-            className="w-full p-2 border rounded dark:bg-gray-800 dark:border-gray-700"
+            className="w-full p-2 border rounded"
             rows={2}
             autoFocus
           />
@@ -123,7 +123,7 @@ export default function MessageItem({
           </div>
         </div>
       ) : (
-        <p className="text-gray-700 dark:text-gray-300 mt-1">{message.content}</p>
+        <p className="text-gray-700 mt-1">{message.content}</p>
       )}
     </div>
   );

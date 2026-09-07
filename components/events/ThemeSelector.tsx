@@ -77,7 +77,7 @@ export default function ThemeSelector({
                   <span className={`inline-block h-3 w-3 rounded-full bg-${theme.colors.secondary}`}></span>
                   <span className={`inline-block h-3 w-3 rounded-full bg-${theme.colors.accent}`}></span>
                   <span className="text-xs text-gray-400 ml-auto">
-                    {theme.animation === "none" ? "Statique" : `✨ ${theme.animation}`}
+                    {theme.animation === "none" ? "Statique" : `${theme.animation}`}
                   </span>
                 </div>
               </div>

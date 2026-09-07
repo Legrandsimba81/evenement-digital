@@ -450,29 +450,38 @@ model FairePart {
   title             String
   slug              String          @unique
   imageUrl          String?
-  eventType         String          @default("MARRIAGE")
+  
+  // Type d'événement : MARRIAGE, BIRTHDAY, PARTY, UNIVERSAL, etc.
+  eventType         String          @default("UNIVERSAL") 
+  
+  // Champs spécifiques aux mariages
   groomName         String?
   brideName         String?
-  organizerName     String?
+  
+  // Champ pour Anniversaire / Organisateur / Hôte
+  organizerName     String?         
+  
+  // Champs universels (Indispensables pour tous)
   announcementText  String          @db.Text
   eventDate         DateTime
   eventTime         String
   locationName      String
+  
+  // Champs optionnels génériques
   mapsUrl           String?
   invitationLink    String?
   rsvpDeadline      DateTime?
-  mobileMoneyNumber  String?
-  mobileMoneyName    String?
+  mobileMoneyNumber String?
+  mobileMoneyName   String?
   contactPhone      String?
   contactEmail      String?
   importantNote     String?         @db.Text
-  
+
   userId            String
   user              User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  // Relation optionnelle vers Event :
+
   eventId           String?
-  event             Event?          @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  event             Event?           @relation(fields: [eventId], references: [id], onDelete: SetNull)
 
   rsvps             FairePartRsvp[]
 

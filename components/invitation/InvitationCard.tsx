@@ -19,7 +19,6 @@ import {
 import QRCode from "react-qr-code";
 import { captureElement } from "@/lib/captureImage";
 import { Theme, getThemeById } from "@/lib/themes";
-import { useInView } from "react-intersection-observer";
 
 type Event = {
   id: string;
@@ -112,18 +111,16 @@ export default function InvitationCard({
   const [isDownloading, setIsDownloading] = useState(false);
   const [isDownloadingQR, setIsDownloadingQR] = useState(false);
   const [qrReady, setQrReady] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   const cardRef = useRef<HTMLDivElement>(null);
   const qrRef = useRef<HTMLDivElement>(null);
   const [imagesLoaded, setImagesLoaded] = useState(false);
 
-  // Animations Observer
-  const [heroRef, heroInView] = useInView({ triggerOnce: true, threshold: 0.1 });
-  const [titleRef, titleInView] = useInView({ triggerOnce: true, threshold: 0.1 });
-  const [textRef, textInView] = useInView({ triggerOnce: true, threshold: 0.1 });
-  const [detailsRef, detailsInView] = useInView({ triggerOnce: true, threshold: 0.1 });
-  const [programRef, programInView] = useInView({ triggerOnce: true, threshold: 0.1 });
-  const [qrRefObserver, qrInView] = useInView({ triggerOnce: true, threshold: 0.1 });
+  // Animation d'entrée au chargement de la page
+  useEffect(() => {
+    setIsLoaded(true);
+  }, []);
 
   const peopleLabel = guestInvitationType === "couple" ? "2 personnes" : "1 personne";
   const peopleIcon = guestInvitationType === "couple" ? Users : User;
@@ -228,17 +225,17 @@ export default function InvitationCard({
     checkImages();
   }, [event.imageUrl, event.invitationImageUrl]);
 
-  // Marquer le QR comme prêt après rendu
+  // Marquer le QR comme prêt
   useEffect(() => {
     const timer = setTimeout(() => setQrReady(true), 150);
     return () => clearTimeout(timer);
   }, []);
 
-  // Fonction universelle : Partage natif (iOS / Photos) ou téléchargement direct (PC)
+  // Fonction universelle d'enregistrement / partage adaptée pour iOS / Android / Navigateurs externes
   const handleDownloadOrShare = async (blob: Blob, filename: string) => {
     const file = new File([blob], filename, { type: "image/png" });
 
-    // Prise en charge du partage mobile (iPhone / Safari / Android)
+    // 1. Détection et tentative via la feuille de partage native (iOS Photos & Android Galerie)
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       try {
         await navigator.share({
@@ -248,19 +245,30 @@ export default function InvitationCard({
         });
         return;
       } catch (err) {
-        // L'utilisateur a annulé la feuille de partage
         if ((err as Error).name === "AbortError") return;
       }
     }
 
-    // Téléchargement standard pour ordinateurs et navigateurs classiques
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(link.href);
+    // 2. Fallback direct si le partage natif échoue ou est hors navigateur
+    try {
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (e) {
+      // 3. Fallback ultime pour WebViews bloquées : ouverture directe dans un nouvel onglet
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (typeof reader.result === "string") {
+          window.open(reader.result, "_blank");
+        }
+      };
+      reader.readAsDataURL(blob);
+    }
   };
 
   const handleAttendance = async (newStatus: string) => {
@@ -345,19 +353,14 @@ export default function InvitationCard({
 
   const invitationTitle = theme?.invitationTitle || config.invitationTitle;
 
-  const fadeInUp = "transition-all duration-700 ease-out transform";
-  const fadeInUpHidden = "opacity-0 translate-y-6";
-  const fadeInUpVisible = "opacity-100 translate-y-0";
-
   return (
-    <div className="rounded-2xl shadow-xl overflow-hidden bg-white">
-      {/* Image héros (non capturée) */}
-      <div
-        ref={heroRef}
-        className={`relative w-full aspect-video overflow-hidden bg-gray-100 ${fadeInUp} ${
-          heroInView ? fadeInUpVisible : fadeInUpHidden
-        }`}
-      >
+    <div
+      className={`rounded-2xl shadow-xl overflow-hidden bg-white transition-all duration-700 ease-out transform ${
+        isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
+      }`}
+    >
+      {/* Image héros */}
+      <div className="relative w-full aspect-video overflow-hidden bg-gray-100">
         {event.imageUrl ? (
           <img
             src={event.imageUrl}
@@ -374,17 +377,14 @@ export default function InvitationCard({
         )}
       </div>
 
-      {/* Contenu à capturer (fond blanc forcé) */}
+      {/* Contenu à capturer */}
       <div
         ref={cardRef}
         className="bg-white p-4 sm:p-6 md:p-8 space-y-6"
         style={{ backgroundColor: "#ffffff" }}
       >
-        {/* Titre + sous-titre (icône + nb personnes) */}
-        <div
-          ref={titleRef}
-          className={`space-y-2 ${fadeInUp} ${titleInView ? fadeInUpVisible : fadeInUpHidden}`}
-        >
+        {/* Titre + sous-titre */}
+        <div className="space-y-2">
           {isBillet ? (
             <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">
               Billet de {event.title}
@@ -409,10 +409,7 @@ export default function InvitationCard({
         </div>
 
         {/* Salutation + niveau + numéro */}
-        <div
-          ref={textRef}
-          className={`${fadeInUp} ${textInView ? fadeInUpVisible : fadeInUpHidden}`}
-        >
+        <div>
           <p className="text-base sm:text-lg text-gray-800">
             Bonjour <span className="font-semibold text-gray-900">{fullName}</span>
             {guestLevel && (
@@ -445,10 +442,7 @@ export default function InvitationCard({
         {/* Texte d'invitation */}
         {event.invitationText && (
           <div
-            ref={textRef}
-            className={`p-5 rounded-xl ${fadeInUp} ${
-              textInView ? fadeInUpVisible : fadeInUpHidden
-            }`}
+            className="p-5 rounded-xl"
             style={{ backgroundColor: colors.hexBackground || "#f8fafc" }}
           >
             <p className="text-gray-800 italic text-base sm:text-lg leading-relaxed">
@@ -459,12 +453,7 @@ export default function InvitationCard({
 
         {/* Image d'invitation */}
         {event.invitationImageUrl && (
-          <div
-            ref={textRef}
-            className={`rounded-xl overflow-hidden shadow-sm ${fadeInUp} ${
-              textInView ? fadeInUpVisible : fadeInUpHidden
-            }`}
-          >
+          <div className="rounded-xl overflow-hidden shadow-sm">
             <img
               src={event.invitationImageUrl}
               alt="Invitation"
@@ -474,12 +463,7 @@ export default function InvitationCard({
         )}
 
         {/* Détails (date, heure, lieu) */}
-        <div
-          ref={detailsRef}
-          className={`grid grid-cols-1 sm:grid-cols-3 gap-4 ${fadeInUp} ${
-            detailsInView ? fadeInUpVisible : fadeInUpHidden
-          }`}
-        >
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div
             className="flex items-center gap-3 p-3 rounded-xl"
             style={{ backgroundColor: "#f9fafb" }}
@@ -513,10 +497,7 @@ export default function InvitationCard({
         {/* Programme */}
         {event.program && (
           <div
-            ref={programRef}
-            className={`p-5 rounded-xl ${fadeInUp} ${
-              programInView ? fadeInUpVisible : fadeInUpHidden
-            }`}
+            className="p-5 rounded-xl"
             style={{ backgroundColor: colors.hexBackground || "#f8fafc" }}
           >
             <h3
@@ -531,12 +512,9 @@ export default function InvitationCard({
           </div>
         )}
 
-        {/* QR Code - pleine largeur */}
+        {/* QR Code */}
         <div
-          ref={qrRefObserver}
-          className={`w-full -mx-4 sm:-mx-6 md:-mx-8 px-4 sm:px-6 md:px-8 py-6 ${fadeInUp} ${
-            qrInView ? fadeInUpVisible : fadeInUpHidden
-          }`}
+          className="w-full -mx-4 sm:-mx-6 md:-mx-8 px-4 sm:px-6 md:px-8 py-6"
           style={{
             background: `linear-gradient(to right, ${colors.hexPrimary}15, ${colors.hexSecondary}25)`,
           }}
@@ -554,13 +532,13 @@ export default function InvitationCard({
         </div>
       </div>
 
-      {/* Boutons d'action (hors de la zone de capture) */}
+      {/* Boutons d'action */}
       <div className="p-4 sm:p-6 md:p-8 pt-0 space-y-4 bg-white rounded-b-2xl">
         <div className="flex flex-col sm:flex-row gap-3">
           <button
             onClick={downloadInvitation}
             disabled={isDownloading || !imagesLoaded}
-            className="flex-1 flex items-center justify-center gap-2 text-white px-4 py-3 rounded-xl transition disabled:opacity-50 text-sm sm:text-base"
+            className="flex-1 flex items-center justify-center gap-2 text-white px-4 py-3 rounded-xl transition disabled:opacity-50 text-sm sm:text-base cursor-pointer"
             style={{ backgroundColor: colors.hexPrimary }}
             onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = colors.hexSecondary)}
             onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = colors.hexPrimary)}
@@ -571,7 +549,7 @@ export default function InvitationCard({
           <button
             onClick={downloadQR}
             disabled={isDownloadingQR || !qrReady}
-            className="flex-1 flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-3 rounded-xl transition disabled:opacity-50 text-sm sm:text-base"
+            className="flex-1 flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-3 rounded-xl transition disabled:opacity-50 text-sm sm:text-base cursor-pointer"
           >
             <QrCode size={18} />
             {isDownloadingQR ? "Enregistrement..." : "Télécharger le QR"}
@@ -582,7 +560,7 @@ export default function InvitationCard({
           <button
             onClick={() => handleAttendance("attending")}
             disabled={isLoading}
-            className={`flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl border-2 transition text-sm sm:text-base font-medium ${
+            className={`flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl border-2 transition text-sm sm:text-base font-medium cursor-pointer ${
               status === "attending"
                 ? "bg-green-500 text-white border-green-500"
                 : "bg-white text-gray-800 border-gray-300 hover:border-green-500 hover:bg-green-50"
@@ -594,7 +572,7 @@ export default function InvitationCard({
           <button
             onClick={() => handleAttendance("annule")}
             disabled={isLoading}
-            className={`flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl border-2 transition text-sm sm:text-base font-medium ${
+            className={`flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl border-2 transition text-sm sm:text-base font-medium cursor-pointer ${
               status === "annule"
                 ? "bg-red-500 text-white border-red-500"
                 : "bg-white text-gray-800 border-gray-300 hover:border-red-500 hover:bg-red-50"
