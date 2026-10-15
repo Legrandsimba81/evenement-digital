@@ -39,10 +39,16 @@ const ShopCreateSchema = z.object({
     availability: z.string().optional().nullable(),
     experience: z.string().optional().nullable(),
     tags: z.array(z.string()).default([]),
-    images: z.array(z.object({
-      url: z.string().url("URL invalide"),
-      orientation: z.enum(['portrait', 'paysage']).default('paysage'),
-    })).default([]),
+    // ✅ Accepte à la fois les chaînes (legacy) et les objets { url, orientation }
+    images: z.array(
+      z.union([
+        z.string().url("URL invalide"),
+        z.object({
+          url: z.string().url("URL invalide"),
+          orientation: z.enum(['portrait', 'paysage']).default('paysage'),
+        }),
+      ])
+    ).default([]),
   }).optional().nullable(),
 });
 
@@ -76,6 +82,20 @@ function normalizeImageArray(value: Prisma.JsonValue): ImageItem[] {
   return result;
 }
 
+// ✅ Helper placé au niveau du module (plus en dehors d'updateShop)
+function normalizeImages(images: any[]): ImageItem[] {
+  if (!Array.isArray(images)) return [];
+  return images.map((img) => {
+    if (typeof img === "string") {
+      return { url: img, orientation: "paysage" as const };
+    }
+    return {
+      url: img.url,
+      orientation: img.orientation === "portrait" ? ("portrait" as const) : ("paysage" as const),
+    };
+  });
+}
+
 function normalizeProfile(profile: any) {
   if (!profile) return null;
   return {
@@ -100,7 +120,6 @@ async function syncToAlgolia(event: "CREATE" | "UPDATE" | "DELETE", shopId: stri
 
 // ---------- Liste ----------
 export async function getShops(params: ShopFilterParams = {}) {
-  // 🔍 LOG pour vérifier les paramètres reçus (visible dans les logs Vercel)
   console.log("[getShops] Params reçus:", JSON.stringify(params, null, 2));
 
   const { categoryId, city, search, page = 1, limit = 12, includeInactive = false } = params;
@@ -119,8 +138,6 @@ export async function getShops(params: ShopFilterParams = {}) {
     }),
   };
 
-  console.log("[getShops] Where clause:", JSON.stringify(where, null, 2));
-
   try {
     const [shops, total] = await Promise.all([
       prisma.shop.findMany({
@@ -136,8 +153,6 @@ export async function getShops(params: ShopFilterParams = {}) {
       }),
       prisma.shop.count({ where }),
     ]);
-
-    console.log(`[getShops] Trouvé ${shops.length} boutiques sur ${total} total`);
 
     const shopsWithAvg = shops.map((shop) => {
       const ratings = shop.reviews?.map((r) => r.rating) ?? [];
@@ -220,14 +235,13 @@ export async function createShop(data: z.infer<typeof ShopCreateSchema>) {
             availability: validated.profile.availability || undefined,
             experience: validated.profile.experience || undefined,
             tags: validated.profile.tags ?? [],
-            images: validated.profile.images ?? [],
+            images: normalizeImages(validated.profile.images ?? []),
           },
         } : undefined,
       },
       include: { profile: true },
     });
 
-    // Synchronisation Algolia
     await syncToAlgolia("CREATE", shop.id);
 
     revalidatePath("/boutiques");
@@ -276,7 +290,7 @@ export async function updateShop(slug: string, data: z.infer<typeof ShopUpdateSc
       availability: validated.profile.availability || undefined,
       experience: validated.profile.experience || undefined,
       tags: validated.profile.tags ?? [],
-      images: validated.profile.images ?? [],
+      images: normalizeImages(validated.profile.images ?? []),
     };
     if (existingProfile) {
       updateData.profile = { update: profileData };
@@ -292,7 +306,6 @@ export async function updateShop(slug: string, data: z.infer<typeof ShopUpdateSc
       include: { profile: true },
     });
 
-    // Synchronisation Algolia
     await syncToAlgolia("UPDATE", updated.id);
 
     revalidatePath(`/boutiques/${slug}`);

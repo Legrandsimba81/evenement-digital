@@ -4,26 +4,7 @@ import { auth } from "@/auth";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import {
-  Calendar,
-  MapPin,
-  Phone,
-  Globe,
-  Star,
-  User,
-  ArrowLeft,
-  Edit,
-  Image,
-  CheckCircle,
-  XCircle,
-  Users,
-  Store,
-  ExternalLink,
-  BadgeCheck,
-  Sparkles,
-  Shield,
-  FileText,
-  Clock,
-} from "lucide-react";
+  Calendar,MapPin,Phone,Globe,Star,User,ArrowLeft,Edit,Image,CheckCircle,XCircle,Users,Store,ExternalLink,BadgeCheck,Sparkles,Shield,FileText,Clock,} from "lucide-react";
 
 export const dynamic = "force-dynamic";
 

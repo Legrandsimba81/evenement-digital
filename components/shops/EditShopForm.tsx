@@ -159,13 +159,12 @@ export default function EditShopForm({
         availabilityValue = form.availabilityCustom;
       }
 
-      // ✅ Extraction sécurisée des images du portfolio sans risquer de les effacer
-      const currentImages = Array.isArray(shop.profile?.images)
-        ? shop.profile.images
-            .map((img: any) => (typeof img === "string" ? img : img?.url))
-            .filter(Boolean)
-        : [];
-
+      const normalizedImages = (shop.profile?.images || []).map((img: any) => {
+  if (typeof img === "string") {
+    return { url: img, orientation: "paysage" as const };
+  }
+  return img;
+});
       await updateShop(shop.slug, {
         name: form.name.trim(),
         description: form.description.trim() || undefined,
@@ -184,7 +183,7 @@ export default function EditShopForm({
           availability: availabilityValue || undefined,
           experience: form.experience.trim() || undefined,
           tags: form.selectedTags,
-          images: currentImages, // ✅ Réinjecte le portfolio sans modification
+          images: normalizedImages, // ✅ Réinjecte le portfolio sans modification
         },
       });
       setSuccessMessage("✅ Boutique mise à jour avec succès ! Redirection...");
