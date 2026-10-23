@@ -186,7 +186,7 @@ export default function EditShopForm({
           images: normalizedImages, // ✅ Réinjecte le portfolio sans modification
         },
       });
-      setSuccessMessage("✅ Boutique mise à jour avec succès ! Redirection...");
+      setSuccessMessage("Boutique mise à jour avec succès ! Redirection...");
       setTimeout(() => router.push("/dashboard/shops"), 1500);
     } catch (err: any) {
       console.error("Erreur mise à jour:", err);

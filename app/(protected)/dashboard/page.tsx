@@ -106,13 +106,13 @@ export default async function DashboardPage() {
             </Link>
 
             {/* Nouveau Bouton : Créer un faire-part */}
-            <Link
+            {/* <Link
               href="/faire-part/new"
               className="inline-flex items-center justify-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-4 sm:px-5 py-3 rounded-xl transition w-full sm:w-auto text-sm font-medium"
             >
               <FileText size={18} />
               Créer un faire-part
-            </Link>
+            </Link> */}
           </div>
         </div>
 
